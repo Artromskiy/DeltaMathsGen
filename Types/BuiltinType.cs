@@ -1,8 +1,6 @@
 ﻿using GLSHGenerator.Members;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
 
 namespace GLSHGenerator.Types
 {
@@ -94,14 +92,6 @@ namespace GLSHGenerator.Types
             HasOwnFunctions = true,
             IsFloatingPoint = true,
             TypeConstants = new[] { "MaxValue", "MinValue", "Epsilon", "NaN", "NegativeInfinity", "PositiveInfinity" },
-            TypeTestFuncs = new Dictionary<string, string>
-            {
-                { "IsInfinity", "Half.IsInfinity({0})" },
-                { "IsFinite", "!Half.IsNaN({0}) && !Half.IsInfinity({0})" },
-                { "IsNaN", "Half.IsNaN({0})" },
-                { "IsNegativeInfinity", "Half.IsNegativeInfinity({0})" },
-                { "IsPositiveInfinity", "Half.IsPositiveInfinity({0})" }
-            }
         };
         public static readonly BuiltinType TypeFloat = new BuiltinType
         {
@@ -110,14 +100,6 @@ namespace GLSHGenerator.Types
             ZeroValueConstant = "0f",
             IsFloatingPoint = true,
             TypeConstants = new[] { "MaxValue", "MinValue", "Epsilon", "NaN", "NegativeInfinity", "PositiveInfinity" },
-            TypeTestFuncs = new Dictionary<string, string>
-            {
-                { "IsInfinity", "float.IsInfinity({0})" },
-                { "IsFinite", "!float.IsNaN({0}) && !float.IsInfinity({0})" },
-                { "IsNaN", "float.IsNaN({0})" },
-                { "IsNegativeInfinity", "float.IsNegativeInfinity({0})" },
-                { "IsPositiveInfinity", "float.IsPositiveInfinity({0})" }
-            }
         };
         public static readonly BuiltinType TypeDouble = new BuiltinType
         {
@@ -128,14 +110,6 @@ namespace GLSHGenerator.Types
             ZeroValueConstant = "0.0",
             IsFloatingPoint = true,
             TypeConstants = new[] { "MaxValue", "MinValue", "Epsilon", "NaN", "NegativeInfinity", "PositiveInfinity" },
-            TypeTestFuncs = new Dictionary<string, string>
-            {
-                { "IsInfinity", "double.IsInfinity({0})" },
-                { "IsFinite", "!double.IsNaN({0}) && !double.IsInfinity({0})" },
-                { "IsNaN", "double.IsNaN({0})" },
-                { "IsNegativeInfinity", "double.IsNegativeInfinity({0})" },
-                { "IsPositiveInfinity", "double.IsPositiveInfinity({0})" }
-            }
         };
         public static readonly BuiltinType TypeDecimal = new BuiltinType
         {
@@ -197,8 +171,6 @@ namespace GLSHGenerator.Types
         public string OneValueConstant { get; set; } = "1";
         public string ZeroValueConstant { get; set; } = "0";
 
-        public override string MathClass => HasOwnFunctions ? Name : "Math";
-
         public override string OneValue => OneValueConstant;
         public override string ZeroValue => ZeroValueConstant;
 
@@ -219,47 +191,5 @@ namespace GLSHGenerator.Types
         }
 
         public string[] TypeConstants { get; set; } = new string[] { };
-
-        public Dictionary<string, string> TypeTestFuncs { get; set; } = new Dictionary<string, string>();
-
-        public IEnumerable<string> ValuesBorder
-        {
-            get
-            {
-                yield return ZeroValue;
-                if (!string.IsNullOrEmpty(OneValue))
-                    yield return OneValue;
-                if (IsSigned)
-                    yield return "-1";
-                foreach (var constant in TypeConstants)
-                    yield return Name + "." + constant;
-            }
-        }
-
-        public IEnumerable<string> ValuesSmallVals
-        {
-            get
-            {
-                yield return ZeroValue;
-
-                if (!string.IsNullOrEmpty(OneValue))
-                    yield return OneValue;
-
-                if (!HasArithmetics)
-                    yield break;
-
-                for (var i = 2; i < 10; ++i)
-                    yield return ConstantSuffixFor(i.ToString());
-
-                if (IsSigned)
-                    for (var i = 1; i < 10; ++i)
-                        yield return ConstantSuffixFor((-i).ToString());
-
-                if (IsFloatingPoint)
-                    for (var i = -10; i < 10; ++i)
-                        yield return ConstantSuffixFor((i + 0.5).ToString(CultureInfo.InvariantCulture));
-
-            }
-        }
     }
 }

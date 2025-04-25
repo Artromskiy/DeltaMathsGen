@@ -19,15 +19,14 @@ namespace GLSHGenerator.Types
         public IEnumerable<string> Fields => "xyzw".Substring(0, Components).Select(c => c.ToString());
         public override string Name => GetName(BaseType, Components);
         public override string Folder => "Vec" + Components;
-        public override string DataContractArg { get; } = "(Namespace = \"vec\")";
         public string CompString => "xyzw".Substring(0, Components);
         public override string TypeComment => $"A vector of type {BaseTypeName} with {Components} components.";
         public string CompArgString => CompString.CommaSeparated();
-        public char ArgOf(int c) => "xyzw"[c];
-        public string ArgOfs(int c) => "xyzw"[c].ToString();
-        public char ArgOfUpper(int c) => char.ToUpper("xyzw"[c]);
-
+        public static char ArgOf(int c) => "xyzw"[c];
+        public static string ArgOfs(int c) => "xyzw"[c].ToString();
+        public static char ArgOfUpper(int c) => char.ToUpper("xyzw"[c]);
         public static string GetName(BuiltinType type, int components) => type.Name + components;
+        public override IEnumerable<string> BaseClasses => new string[] { $"IEquatable<{Name}>" };
 
 
         public IEnumerable<string> SubCompParameters(int start, int end) => "xyzw".Substring(start, end - start + 1).Select(c => BaseTypeName + " " + c);

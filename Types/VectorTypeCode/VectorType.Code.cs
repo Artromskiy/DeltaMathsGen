@@ -40,39 +40,35 @@ namespace GLSHGenerator.Types
             foreach (var item in CommonFunctions())
                 yield return item;
 
-            // values
-            yield return new Function(new ArrayType(BaseType), "GetValues")
+            yield return new Function(BuiltinType.TypeInt, "GetHashCode")
             {
-                Static = true,
-                Extension = true,
-                Parameters = [$"this {Name} value"],
-                CodeString = $"new[] {{ {CompString.CommaSeparated("value")} }}",
-                Comment = "Returns an array with all values"
+                Override = true,
+                Readonly = true,
+                CodeString = $"HashCode.Combine({string.Join(", ", Fields)})",
+                Comment = "Returns HashCode"
             };
 
-            yield return new Function(new AnyType($"IEnumerator<{BaseTypeName}>"), "GetEnumerator")
-            {
-                Static = true,
-                Extension = true,
-                Parameters = [$"this {Name} value"],
-                Code = Fields.Select(f => $"yield return value.{f};"),
-                Comment = "Returns an enumerator that iterates through all fields."
-            };
-
-            // ToString
             yield return new Function(new AnyType("string"), "ToString")
             {
                 Override = true,
-                CodeString = "ToString(\", \")",
-                Comment = "Returns a string representation of this vector using ', ' as a seperator."
+                Readonly = true,
+                CodeString = $"{string.Join(" + \", \" + ", Fields)}",
+                Comment = "Returns a string representation of this vector."
             };
 
-            yield return new Function(new AnyType("string"), "ToString")
+            yield return new Function(BuiltinType.TypeBool, "Equals")
             {
-                ParameterString = "string sep",
-                Visibility = "private",
-                CodeString = Fields.Aggregated(" + sep + "),
-                Comment = "Returns a string representation of this vector using a provided seperator."
+                Readonly = true,
+                ParameterString = $"{Name} other",
+                CodeString = "other == this",
+            };
+
+            yield return new Function(BuiltinType.TypeBool, "Equals")
+            {
+                Override = true,
+                Readonly = true,
+                ParameterString = $"object? obj",
+                CodeString = $"obj is {Name} other && Equals(other)",
             };
 
             yield return new Field("Count", BuiltinType.TypeInt)
@@ -81,6 +77,8 @@ namespace GLSHGenerator.Types
                 DefaultValue = Components.ToString(),
                 Comment = $"Returns the number of components ({Components})."
             };
+
+
 
             yield return new Indexer(BaseType)
             {
@@ -93,7 +91,6 @@ namespace GLSHGenerator.Types
                           "Unsafe.Add(ref x, index) = value;"],
                 Comment = "Gets/Sets a specific indexed component (a bit slower than direct access)."
             };
-
         }
 
     }

@@ -91,7 +91,7 @@ namespace GLSHGenerator.Types
             };
         }
 
-        private string Sqrt(string s) => $"{BaseTypeName}.Sqrt({s})";
+        private string Sqrt(string s) => $"Maths.Sqrt({s})";
 
         public static string Sqr(string s, string variable) => $"{variable}.{s}*{variable}.{s}";
     }

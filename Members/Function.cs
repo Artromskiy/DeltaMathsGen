@@ -36,10 +36,10 @@ namespace GLSHGenerator.Members
         /// True if override property
         /// </summary>
         public bool Override { get; set; }
+        public bool Readonly { get; set; }
         public virtual string ReturnName => ReturnType.Name;
         public virtual string FunctionName => Name;
-
-        public override string MemberPrefix => base.MemberPrefix + (Override ? " override" : "");
+        public override string MemberPrefix => base.MemberPrefix + (Override ? " override" : "") + (Readonly ? " readonly" :"");
 
         public Function(AbstractType returnType, string name)
         {

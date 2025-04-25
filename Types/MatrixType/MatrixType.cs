@@ -21,7 +21,6 @@ namespace GLSHGenerator.Types
         public override IEnumerable<string> Attributes =>
         [
             "Serializable",
-            $"DataContract{DataContractArg}",
             $"InlineArray({Columns})"
         ];
 
@@ -29,8 +28,6 @@ namespace GLSHGenerator.Types
         public int Rows { get; set; }
         public int Columns { get; set; }
         public int FieldCount => Rows * Columns;
-        public override string DataContractArg { get; } = "(Namespace = \"mat\")";
-
         public override string Name => GetName(BaseType, Columns, Rows);
 
         public override string Folder => "Mat" + Columns + "x" + Rows;
@@ -76,7 +73,6 @@ namespace GLSHGenerator.Types
 
             return res;
         }
-        private string ClassNameTransposed => BaseType.Name + Rows + "x" + Columns;
 
         private IEnumerable<string> Fields
         {
@@ -106,20 +102,10 @@ namespace GLSHGenerator.Types
                         yield return $"[{x}, {y}]";
             }
         }
-        private IEnumerable<string> Column(int col)
-        {
-            for (var y = 0; y < Rows; ++y)
-                yield return $"[{col}, {y}]";
-        }
         private IEnumerable<string> Column(int col, string parameter)
         {
             for (var y = 0; y < Rows; ++y)
                 yield return $"{parameter}[{col}, {y}]";
-        }
-        private IEnumerable<string> Row(int row)
-        {
-            for (var x = 0; x < Columns; ++x)
-                yield return $"[{x}, {row}]";
         }
 
         private string FieldFor(int f) => $"[{f / Rows}, {f % Rows}]";
@@ -130,18 +116,6 @@ namespace GLSHGenerator.Types
         private int ColOf(string fieldName) => fieldName[1] - '0';
 
         private bool IsDiagonal(string fieldName) => fieldName[1] == fieldName[2];
-
-        private IEnumerable<string> Constructor(string comment, string args, IEnumerable<string> assignments)
-        {
-            foreach (var line in comment.AsComment())
-                yield return line;
-            yield return $"public {Name}({args})";
-            yield return "{";
-            var it = assignments.GetEnumerator();
-            foreach (var c in Fields)
-                yield return $"this.{c} = {(it.MoveNext() ? it.Current : (c[1] == c[2] ? BaseType.OneValue : BaseType.ZeroValue))};".Indent();
-            yield return "}";
-        }
 
         public string HashCodeFor(int c) => (c == 0 ? "" : $"(({HashCodeFor(c - 1)}) * {BaseType.HashCodeMultiplier}) ^ ") + HashCodeOf(FieldFor(c));
 
@@ -205,17 +179,19 @@ namespace GLSHGenerator.Types
 
         public override IEnumerable<Member> GenerateMembers()
         {
-            var colVecType = new VectorType(BaseType, Rows);
-            var rowVecType = new VectorType(BaseType, Columns);
+            var rowVecType = new VectorType(BaseType, Rows);
             var quatType = new VectorType(BaseType, 4); // dummy instead quaternion
             var diagonal = Rows == Columns;
-            
+
             // fields
-            yield return new Field("_buffer", colVecType)
+            for (int i = 0; i < Columns; i++)
             {
-                Visibility = "private",
-                Comment = $"First column of matrix"
-            };
+                yield return new Field($"_row{i}", rowVecType)
+                {
+                    Visibility = "private",
+                    Comment = $"{i} row of matrix"
+                };
+            }
 
             foreach (var item in Constructors())
                 yield return item;

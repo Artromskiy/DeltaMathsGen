@@ -51,14 +51,16 @@ namespace GLSHGenerator.Types
                 yield return new ComponentWiseOperator(Fields, this, "|", this, "lhs", this, "rhs", "{0} | {1}") {GlslName = "op_BitwiseOr", CanScalar0 = true, CanScalar1 = true };
                 yield return new ComponentWiseOperator(Fields, this, "&", this, "lhs", this, "rhs", "{0} & {1}") {GlslName = "op_BitwiseAnd", CanScalar0 = true, CanScalar1 = true };
             }
+
+            // TODO Disable for old dotnet
+            /*
+
             if (BaseType == BuiltinType.TypeInt)
             {
                 yield return new ComponentWiseOperator(Fields, this, "<<", this, "lhs", this, "rhs", "{0} << {1}") {GlslName = "op_LeftShift", CanScalar1 = true };
                 yield return new ComponentWiseOperator(Fields, this, ">>", this, "lhs", this, "rhs", "{0} >> {1}") {GlslName = "op_RightShift", CanScalar1 = true };
             }
 
-            // TODO Disable for old dotnet
-            /*
             if (BaseType == BuiltinType.TypeUint)
             {
                 yield return new ComponentWiseOperator(Fields, this, "<<", this, "lhs", this, "rhs", $"{{0}} << ({BuiltinType.TypeInt.Name}){{1}}") { GlslName = "op_LeftShift", CanScalar1 = true };

@@ -12,6 +12,7 @@ namespace GLSHGenerator.Types
         public const bool GenerateDecimals = false;
         public const bool GenerateLongs = false;
         public const bool GenerateQuaternions = false;
+        public const bool GenerateMatrices = false;
 
         public const bool FullUnmanaged = true;
 
@@ -23,17 +24,11 @@ namespace GLSHGenerator.Types
         public static readonly Dictionary<string, AbstractType> Types = new Dictionary<string, AbstractType>();
 
         /// <summary>
-        /// Math class prefix
-        /// </summary>
-        public virtual string MathClass => BaseType?.MathClass;
-
-        /// <summary>
         /// Additional Attributes for type
         /// </summary>
         public virtual IEnumerable<string> Attributes =>
         [
             "Serializable",
-            $"DataContract{DataContractArg}",
             "StructLayout(LayoutKind.Sequential)"
         ];
 
@@ -64,11 +59,6 @@ namespace GLSHGenerator.Types
         public static string Namespace { get; } = "DVG";
 
         /// <summary>
-        /// Additional arg for data contracts
-        /// </summary>
-        public virtual string DataContractArg { get; } = "";
-
-        /// <summary>
         /// Folder for this type
         /// </summary>
         public virtual string Folder { get; } = "";
@@ -80,7 +70,7 @@ namespace GLSHGenerator.Types
         /// Folder with trailing /
         /// </summary>
         public string PathOf(string basePath) => string.IsNullOrEmpty(Folder) ? Path.Combine(basePath, Name + ".cs") : Path.Combine(basePath, Folder, Name + ".cs");
-        public string GlmPathOf(string basePath) => string.IsNullOrEmpty(Folder) ? Path.Combine(basePath, Name + ".cs") : Path.Combine(basePath, Folder, Name + ".glm.cs");
+        public string GlmPathOf(string basePath) => string.IsNullOrEmpty(Folder) ? Path.Combine(basePath, Name + ".cs") : Path.Combine(basePath, Folder, Name + ".glsh.cs");
         public string ExtPathOf(string basePath) => string.IsNullOrEmpty(Folder) ? Path.Combine(basePath, Name + ".cs") : Path.Combine(basePath, Folder, Name + ".ext.cs");
         public static string InfoPathOf(string basePath, string Name) => Path.Combine(basePath, Name + ".cs");
 
@@ -156,59 +146,23 @@ namespace GLSHGenerator.Types
         /// </summary>
         public string Construct(AbstractType type, params string[] args) => $"new {type.Name}({args.CommaSeparated()})";
 
-        public IEnumerable<string> TestFile
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(Folder))
-                    throw new NotSupportedException();
-
-                yield return "using System;";
-                yield return "using System.Collections;";
-                yield return "using System.Collections.Generic;";
-                yield return "using System.Globalization;";
-                yield return "using System.Runtime.InteropServices;";
-                yield return "using System.Runtime.Serialization;";
-                yield return "using System.Numerics;";
-                yield return "using System.Linq;";
-                yield return "using NUnit.Framework;";
-                yield return "using Newtonsoft.Json;";
-                yield return "using GLSH;";
-                yield return "";
-                yield return "// ReSharper disable InconsistentNaming";
-                yield return "";
-                yield return "namespace GlmSharpTest.Generated." + Folder;
-                yield return "{";
-                yield return "    [TestFixture]";
-                yield return "    public class " + TestClassName;
-                yield return "    {";
-                yield return "";
-                yield return "    }";
-                yield return "}";
-            }
-        }
 
         public IEnumerable<string> GlmSharpFile
         {
             get
             {
                 yield return "using System;";
-                yield return "using System.Collections;";
                 yield return "using System.Collections.Generic;";
-                yield return "using System.Globalization;";
                 yield return "using System.Runtime.InteropServices;";
-                yield return "using System.Runtime.Serialization;";
                 yield return "using System.Numerics;";
-                yield return "using System.Linq;";
                 yield return "";
-                yield return "// ReSharper disable InconsistentNaming";
                 yield return "";
                 yield return "namespace " + Namespace;
                 yield return "{";
                 yield return "    /// <summary>";
-                yield return "    /// Static class that contains static glm functions";
+                yield return "    /// Static class that contains static glsh functions";
                 yield return "    /// </summary>";
-                yield return "    public static partial class glm";
+                yield return "    public static partial class glsh";
                 yield return "    {";
                 foreach (var member in glmMembers)
                     foreach (var line in member.Lines)
@@ -225,20 +179,14 @@ namespace GLSHGenerator.Types
             {
                 var baseclasses = BaseClasses.ToArray();
                 yield return "using System;";
-                yield return "using System.Collections;";
-                yield return "using System.Collections.Generic;";
-                yield return "using System.Globalization;";
                 yield return "using System.Runtime.InteropServices;";
-                yield return "using System.Runtime.Serialization;";
-                yield return "using System.Numerics;";
-                yield return "using System.Linq;";
+                yield return "using System.Collections.Generic;";
                 yield return "";
-                yield return "// ReSharper disable InconsistentNaming";
                 yield return "";
                 yield return "namespace " + Namespace + ".Extensions";
                 yield return "{";
                 foreach (var line in TypeComment.AsComment()) yield return line.Indent();
-                yield return "    public static class " + Name + "Extensions" + (baseclasses.Length == 0 ? "" : " : " + baseclasses.CommaSeparated());
+                yield return "    public static class " + Name + "Extensions";
                 yield return "    {";
 
 
@@ -264,18 +212,11 @@ namespace GLSHGenerator.Types
             get
             {
                 var baseclasses = BaseClasses.ToArray();
+                yield return "#pragma warning disable IDE1006";
                 yield return "using System;";
-                yield return "using System.Collections;";
-                yield return "using System.Collections.Generic;";
-                yield return "using System.Globalization;";
                 yield return "using System.Runtime.InteropServices;";
                 yield return "using System.Runtime.CompilerServices;";
-                yield return "using System.Diagnostics.CodeAnalysis;";
-                yield return "using System.Runtime.Serialization;";
-                yield return "using System.Numerics;";
-                yield return "using System.Linq;";
                 yield return "";
-                yield return "// ReSharper disable InconsistentNaming";
                 yield return "";
                 yield return "namespace " + Namespace;
                 yield return "{";
@@ -497,7 +438,8 @@ namespace GLSHGenerator.Types
                     for (var cols = 2; cols <= 4; ++cols)
                     {
                         var matt = new MatrixType(type, cols, rows);
-                        Types.Add(matt.Name, matt);
+                        if(GenerateMatrices)
+                            Types.Add(matt.Name, matt);
                     }
 
             // generate types

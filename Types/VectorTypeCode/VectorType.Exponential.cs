@@ -15,16 +15,16 @@ namespace GLSHGenerator.Types
         {
             if (BaseType == BuiltinType.TypeFloat)
             {
-                yield return new ComponentWiseStaticFunction(Fields, this, "Pow", this, "lhs", this, "rhs", $"{BaseTypeName}.Pow({{0}}, {{1}})") { GlslName = "pow" };
-                yield return new ComponentWiseStaticFunction(Fields, this, "Exp", this, "v", $"{BaseTypeName}.Exp({{0}})") { GlslName = "exp" };
-                yield return new ComponentWiseStaticFunction(Fields, this, "Log", this, "v", $"{BaseTypeName}.Log({{0}})") { GlslName = "log" };
-                yield return new ComponentWiseStaticFunction(Fields, this, "Exp2", this, "v", $"{BaseTypeName}.Exp2({{0}})") { GlslName = "exp2" };
-                yield return new ComponentWiseStaticFunction(Fields, this, "Log2", this, "v", $"{BaseTypeName}.Log2({{0}})") { GlslName = "log2" };
+                yield return new ComponentWiseStaticFunction(Fields, this, "Pow", this, "lhs", this, "rhs", $"Maths.Pow({{0}}, {{1}})") { GlslName = "pow" };
+                yield return new ComponentWiseStaticFunction(Fields, this, "Exp", this, "v", $"Maths.Exp({{0}})") { GlslName = "exp" };
+                yield return new ComponentWiseStaticFunction(Fields, this, "Log", this, "v", $"Maths.Log({{0}})") { GlslName = "log" };
+                yield return new ComponentWiseStaticFunction(Fields, this, "Exp2", this, "v", $"Maths.Exp2({{0}})") { GlslName = "exp2" };
+                yield return new ComponentWiseStaticFunction(Fields, this, "Log2", this, "v", $"Maths.Log2({{0}})") { GlslName = "log2" };
             }
             if (BaseType == BuiltinType.TypeFloat || BaseType == BuiltinType.TypeDouble)
             {
-                yield return new ComponentWiseStaticFunction(Fields, this, "Sqrt", this, "v", $"{BaseTypeName}.Sqrt({{0}})") { GlslName = "sqrt" };
-                yield return new ComponentWiseStaticFunction(Fields, this, "InverseSqrt", this, "v", $"{BaseTypeName}.ReciprocalSqrtEstimate({{0}})") { GlslName = "inversesqrt" };
+                yield return new ComponentWiseStaticFunction(Fields, this, "Sqrt", this, "v", $"Maths.Sqrt({{0}})") { GlslName = "sqrt" };
+                yield return new ComponentWiseStaticFunction(Fields, this, "InverseSqrt", this, "v", $"Maths.InverseSqrt({{0}})") { GlslName = "inversesqrt" };
             }
         }
     }
