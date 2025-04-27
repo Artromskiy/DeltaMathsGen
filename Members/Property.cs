@@ -95,11 +95,11 @@ namespace GLSHGenerator.Members
                 yield return "{";
                 if (getter.Length == 1)
                 {
-                    yield return $"get => {getter[0]};".Indent();
+                    yield return $"readonly get => {getter[0]};".Indent();
                 }
                 else
                 {
-                    yield return "get".Indent();
+                    yield return "readonly get".Indent();
                     yield return "{".Indent();
                     foreach (var line in getter)
                         yield return line.Indent(2);

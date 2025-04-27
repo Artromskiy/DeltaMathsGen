@@ -35,7 +35,7 @@ namespace GLSHGenerator.Types
                 //TODO Add Modf
                 yield return new ComponentWiseStaticFunction(Fields, this, "Lerp", this, "edge0", this, "edge1", this, "v", $"Maths.Lerp({{0}}, {{1}}, {{2}})") { CanScalar2 = true, GlslName = "mix" };
                 yield return new ComponentWiseStaticFunction(Fields, this, "Step", this, "edge", this, "x", $"{{1}} < {{0}} ? 0 : 1") { CanScalar0 = true, GlslName = "step" };
-                yield return new ComponentWiseStaticFunction(Fields, this, "Smoothstep", this, "edge0", this, "edge1", this, "x", $"Maths.Smoothstep({{0}}, {{1}}, {{2}})") { CanScalar2 = true, GlslName = "smoothstep"};
+                yield return new ComponentWiseStaticFunction(Fields, this, "SmoothStep", this, "edge0", this, "edge1", this, "x", $"Maths.SmoothStep({{0}}, {{1}}, {{2}})") { CanScalar2 = true, GlslName = "smoothstep"};
                 yield return new ComponentWiseStaticFunction(Fields, boolVec, "IsNaN", this, "v", $"{BaseTypeName}.IsNaN({{0}})") { GlslName = "isnan" };
                 yield return new ComponentWiseStaticFunction(Fields, boolVec, "IsInfinity", this, "v", $"{BaseTypeName}.IsInfinity({{0}})") { GlslName = "isinf" }; ;
                 yield return new ComponentWiseStaticFunction(Fields, this, "Fma", this, "a", this, "b", this, "c", $"Maths.Fma({{0}}, {{1}}, {{2}})") { GlslName = "fma" };

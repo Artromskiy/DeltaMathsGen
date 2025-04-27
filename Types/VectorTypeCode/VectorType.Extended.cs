@@ -73,6 +73,14 @@ namespace GLSHGenerator.Types
                     CanScalar2 = true
                 };
 
+
+                yield return new Function(this, "SmoothDamp")
+                {
+                    Static = true,
+                    Parameters = new string[] { $"{Name} source", $"{Name} target", $"ref {Name} velocity", $"{BaseType.Name} smoothTime", $"{BaseType.Name} deltaTime" },
+                    CodeString = $"{Construct(this, Fields.Select(f => $"Maths.SmoothDamp(source.{f}, target.{f}, ref velocity.{f}, smoothTime, deltaTime)"))}",
+                    DisableGlmGen = true
+                };
             }
 
             //TODO vector clamp length

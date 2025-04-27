@@ -196,9 +196,11 @@ namespace GLSHGenerator.Members
                     string invok;
                     if (arginfo.All(a => a.Scalar))
                         invok = string.Format(CompString, arginfo.Select(a => (object)a.ParaName).ToArray());
-                    else invok = Fields.Select(f => string.Format(CompString, arginfo.Select(a => (object)string.Format(a.ParaInvoke, a.ParaName, f)).ToArray())).CommaSeparated();
+                    else
+                        invok = Fields.Select(f => string.Format(CompString, arginfo.Select(a => (object)string.Format(a.ParaInvoke, a.ParaName, f)).ToArray())).CommaSeparated();
                     var ap = string.IsNullOrEmpty(FirstParameter) ? "" : FirstParameter + ", ";
-                    yield return string.Format("{0} {1} {2}({3}) => new {1}({4});",
+                    yield return
+                        string.Format("{0} {1} {2}({3}) => new {1}({4});",
                         MemberPrefix, ReturnType.Name, Name,
                         ap + arginfo.Select(a => a.Type.Name + " " + a.ParaName).CommaSeparated(),
                         invok).Trim();
