@@ -26,8 +26,8 @@ namespace GLSHGenerator.Types
                 yield return new Operator(resultType, "*")
                 {
                     Comment = $"Executes a matrix-matrix-multiplication {Name} * {rhs.Name} -> {resultType.Name}.",
-                    Parameters = [$"{Name} lhs", $"{rhs.Name} rhs"],
-                    Code = [$"new {resultType.Name}({ctrParams1})"],
+                    Parameters = new string[] { $"{Name} lhs", $"{rhs.Name} rhs" },
+                    Code = new string[] { $"new {resultType.Name}({ctrParams1})" },
                     GlslName = "op_Multiply",
                 };
             }
@@ -38,8 +38,8 @@ namespace GLSHGenerator.Types
             yield return new Operator(retType, "*")
             {
                 Comment = "Executes a matrix-vector-multiplication.",
-                Parameters = [$"{Name} m", $"{inpType.Name} v"],
-                Code = [$"new {retType.Name}({ctrParams2})"],
+                Parameters = new string[] { $"{Name} m", $"{inpType.Name} v" },
+                Code = new string[] { $"new {retType.Name}({ctrParams2})" },
                 GlslName = "op_Multiply",
             };
 
@@ -68,21 +68,21 @@ namespace GLSHGenerator.Types
                     {
                         Comment = $"Executes a component-wise {opComment}.",
                         Parameters = this.LhsRhs(),
-                        Code = [$"new {Name}({Fields.Select(f => $"lhs{f} {op} rhs{f}").CommaSeparated()})"],
+                        Code = new string[] { $"new {Name}({Fields.Select(f => $"lhs{f} {op} rhs{f}").CommaSeparated()})" },
                         GlslName = operatorToName[op]
                     };
                 yield return new Operator(this, op) // scalar * matrix
                 {
                     Comment = $"Executes a component-wise {opComment} with scalar.",
-                    Parameters = [$"{BaseTypeName} s", $"{Name} m"],
-                    Code = [$"new {Name}({Fields.Select(f => $"s {op} m{f}").CommaSeparated()})"],
+                    Parameters = new string[] { $"{BaseTypeName} s", $"{Name} m" },
+                    Code = new string[] { $"new {Name}({Fields.Select(f => $"s {op} m{f}").CommaSeparated()})" },
                     GlslName = operatorToName[op]
                 };
                 yield return new Operator(this, op) // matrix * scalar
                 {
                     Comment = $"Executes a component-wise {opComment} with scalar.",
-                    Parameters = [$"{Name} m", $"{BaseTypeName} s"],
-                    Code = [$"new {Name}({Fields.Select(f => $"m{f} {op} s").CommaSeparated()})"],
+                    Parameters = new string[] { $"{Name} m", $"{BaseTypeName} s" },
+                    Code = new string[] { $"new {Name}({Fields.Select(f => $"m{f} {op} s").CommaSeparated()})" },
                     GlslName = operatorToName[op]
                 };
             }

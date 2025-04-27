@@ -24,16 +24,16 @@ namespace GLSHGenerator.Members
         /// <summary>
         /// Setter code
         /// </summary>
-        public IEnumerable<string> Setter { get; set; }
+        public IEnumerable<string>? Setter { get; set; }
 
         /// <summary>
         /// Single-Line getter
         /// </summary>
-        public string GetterLine { set { Getter = new[] { value }; } }
+        public string GetterLine { set => Getter = new[] { value }; }
         /// <summary>
         /// Single-Line setter
         /// </summary>
-        public string SetterLine { set { Setter = new[] { value }; } }
+        public string SetterLine { set => Setter = new[] { value }; }
 
         /// <summary>
         /// Initial value
@@ -48,8 +48,10 @@ namespace GLSHGenerator.Members
             Type = type;
         }
 
-        public override IEnumerable<Member> GlmMembers()
+        public override IEnumerable<Member> GlshMembers()
         {
+            if (DisableGlmGen)
+                yield break;
             if (Static)
                 yield break; // nothing for static props
             if (Setter != null)
@@ -74,7 +76,7 @@ namespace GLSHGenerator.Members
 
                 if (!string.IsNullOrEmpty(Value))
                 {
-                    yield return $"{MemberPrefix} {Type.Name} {Name} {{ get; }} = {Value};";
+                    yield return $"{MemberPrefix} readonly {Type.Name} {Name} {{ get; }} = {Value};";
                     yield break;
                 }
 
@@ -84,36 +86,32 @@ namespace GLSHGenerator.Members
                 if (getter == null)
                     throw new NotSupportedException();
 
-                if (setter == null) // getter-only
+                if (getter.Length == 1 && setter == null)
                 {
-                    if (getter.Length == 1)
-                        yield return $"{MemberPrefix} {Type.Name} {Name} => {getter[0]};";
-                    else
-                    {
-                        yield return $"{MemberPrefix} {Type.Name} {Name}";
-                        yield return "{";
-                        yield return "    get";
-                        yield return "    {";
-                        foreach (var line in getter)
-                            yield return line.Indent(2);
-                        yield return "    }";
-                        yield return "}";
-                    }
+                    yield return $"{MemberPrefix} readonly {Type.Name} {Name} => {getter[0]};";
+                    yield break;
+                }
+                yield return $"{MemberPrefix} {Type.Name} {Name}";
+                yield return "{";
+                if (getter.Length == 1)
+                {
+                    yield return $"get => {getter[0]};".Indent();
                 }
                 else
                 {
-                    yield return $"{MemberPrefix} {Type.Name} {Name}";
-                    yield return "{";
-                    yield return "    get";
-                    yield return "    {";
+                    yield return "get".Indent();
+                    yield return "{".Indent();
                     foreach (var line in getter)
                         yield return line.Indent(2);
-                    yield return "    }";
-                    yield return "    set";
-                    yield return "    {";
+                    yield return "}".Indent();
+                }
+                if (setter != null)
+                {
+                    yield return "set".Indent();
+                    yield return "{".Indent();
                     foreach (var line in setter)
                         yield return line.Indent(2);
-                    yield return "    }";
+                    yield return "}".Indent();
                     yield return "}";
                 }
             }

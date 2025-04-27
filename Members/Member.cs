@@ -48,7 +48,7 @@ namespace GLSHGenerator.Members
         /// <summary>
         /// Attributes of this member
         /// </summary>
-        public string[] Attributes { get; set; } = new string[] { };
+        public string[] Attributes = new string[] { };
 
         /// <summary>
         /// All lines of this member
@@ -70,8 +70,13 @@ namespace GLSHGenerator.Members
         public virtual string MemberPrefix => Visibility + (Static ? " static" : "");
 
         /// <summary>
-        /// Returns an enumeration of members used for the "glm" class
+        /// Returns an enumeration of members used for the "glsh" class
         /// </summary>
-        public virtual IEnumerable<Member> GlmMembers() { yield break; }
+        public virtual IEnumerable<Member> GlshMembers() { yield break; }
+
+        /// <summary>
+        /// If true, does not generate glm versions
+        /// </summary>
+        public bool DisableGlmGen { get; set; }
     }
 }

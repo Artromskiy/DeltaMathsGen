@@ -19,16 +19,16 @@ namespace GLSHGenerator.Types
             yield return new Constructor(this, Fields)
             {
                 ParameterString = BaseTypeName + " v",
-                Initializers = "v".RepeatTimes(Components),
+                Initializers = "v".RepeatTimes(Length),
                 Comment = "all-same-value constructor"
             };
 
             for (var comps = 2; comps <= 4; ++comps)
             {
                 var commentAddition = "";
-                if (comps < Components)
+                if (comps < Length)
                     commentAddition = " (empty fields are zero/false)";
-                else if (comps > Components)
+                else if (comps > Length)
                     commentAddition = " (additional fields are truncated)";
 
                 yield return new Constructor(this, Fields)
@@ -38,10 +38,10 @@ namespace GLSHGenerator.Types
                     Comment = "from-vector constructor" + commentAddition
                 };
 
-                for (var ucomps = comps; ucomps < Components; ++ucomps)
+                for (var ucomps = comps; ucomps < Length; ++ucomps)
                 {
                     commentAddition = "";
-                    if (ucomps < Components - 1)
+                    if (ucomps < Length - 1)
                         commentAddition = " (empty fields are zero/false)";
 
                     yield return new Constructor(this, Fields)

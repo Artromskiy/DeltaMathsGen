@@ -26,11 +26,11 @@ namespace GLSHGenerator.Types
         /// <summary>
         /// Additional Attributes for type
         /// </summary>
-        public virtual IEnumerable<string> Attributes =>
-        [
+        public virtual IEnumerable<string> Attributes => new string[]
+        {
             "Serializable",
             "StructLayout(LayoutKind.Sequential)"
-        ];
+        };
 
         /// <summary>
         /// Name of corresponding type in GLSL
@@ -118,23 +118,25 @@ namespace GLSHGenerator.Types
             //if (members.Any(m => string.IsNullOrEmpty(m.Comment)))
             //    throw new InvalidOperationException("Missing comment");
 
+            string[] attributes = new string[] { "MethodImpl(MethodImplOptions.AggressiveInlining)" };
+
             foreach (var member in members)
                 member.OriginalType = this;
 
             fields = members.OfType<Field>().ToArray();
-            constructors = members.OfType<Constructor>().ToArray();
+            constructors = members.OfType<Constructor>().ForEach(e=>e.Attributes = attributes).ToArray();
             properties = members.Where(m => !m.Static).OfType<Property>().ToArray();
             staticProperties = members.Where(m => m.Static).OfType<Property>().ToArray();
-            implicitOperators = members.OfType<ImplicitOperator>().ToArray();
-            explicitOperators = members.OfType<ExplicitOperator>().ToArray();
-            operators = members.OfType<Operator>().ToArray();
-            functions = members.Where(m => !m.Static && !m.Extension && m.GetType() == typeof(Function)).OfType<Function>().ToArray();
-            staticFunctions = members.Where(m => m.Static && !m.Extension && m.GetType() == typeof(Function)).OfType<Function>().ToArray();
+            implicitOperators = members.OfType<ImplicitOperator>().ForEach(e => e.Attributes = attributes).ToArray();
+            explicitOperators = members.OfType<ExplicitOperator>().ForEach(e => e.Attributes = attributes).ToArray();
+            operators = members.OfType<Operator>().ForEach(e => e.Attributes = attributes).ToArray();
+            functions = members.Where(m => !m.Static && !m.Extension && m.GetType() == typeof(Function)).OfType<Function>().ForEach(e => e.Attributes = attributes).ToArray();
+            staticFunctions = members.Where(m => m.Static && !m.Extension && m.GetType() == typeof(Function)).OfType<Function>().ForEach(e => e.Attributes = attributes).ToArray();
             indexer = members.OfType<Indexer>().ToArray();
-            componentWiseStaticFunctions = members.OfType<ComponentWiseStaticFunction>().ToArray();
-            componentWiseOp = members.OfType<ComponentWiseOperator>().ToArray();
+            componentWiseStaticFunctions = members.OfType<ComponentWiseStaticFunction>().ForEach(e => e.Attributes = attributes).ToArray();
+            componentWiseOp = members.OfType<ComponentWiseOperator>().ForEach(e => e.Attributes = attributes).ToArray();
             extensionFunctions = members.Where(m => m.Static && m.Extension && m.GetType() == typeof(Function)).OfType<Function>().ToArray();
-            glmMembers = members.SelectMany(m => m.GlmMembers()).ToArray();
+            glmMembers = members.SelectMany(m => m.GlshMembers()).ForEach(e => e.Attributes = attributes).ToArray();
         }
 
         /// <summary>
@@ -223,15 +225,15 @@ namespace GLSHGenerator.Types
                 foreach (var line in TypeComment.AsComment()) yield return line.Indent();
                 foreach (var item in Attributes)
                     yield return $"[{item}]".Indent();
-                yield return "    public struct " + Name + (baseclasses.Length == 0 ? "" : " : " + baseclasses.CommaSeparated());
+                yield return "    public partial struct " + Name + (baseclasses.Length == 0 ? "" : " : " + baseclasses.CommaSeparated());
                 yield return "    {";
 
                 if (fields.Length > 0)
                 {
                     yield return "";
                     yield return "        #region Fields";
-                    foreach (var field in fields)
-                        foreach (var line in field.Lines)
+                    foreach (var f in fields)
+                        foreach (var line in f.Lines)
                             yield return line.Indent(2);
                     yield return "";
                     yield return "        #endregion";
@@ -370,54 +372,14 @@ namespace GLSHGenerator.Types
                     yield return "";
                 }
 
-                foreach (var line in Body)
-                    yield return line.Indent(2);
                 yield return "    }";
                 yield return "}";
             }
         }
 
-        protected virtual IEnumerable<string> Body { get { yield break; } }
-
         public virtual string ZeroValue => BaseType.ZeroValue;
         public virtual string OneValue => BaseType.OneValue;
-        public string HashCodeOf(string val) => $"{val}.GetHashCode()";
-
         public string DotFormatString => "lhs.{0} * rhs.{0}";
-
-        public string ConstantSuffixFor(string s)
-        {
-            var type = BaseType ?? this;
-
-            if (type.Name == "float")
-                return s + "f";
-
-            if (type.Name == "bool")
-                return s;
-
-            if (type.Name == "Complex")
-                return s;
-
-            if (type.Name == "Half")
-                return $"new Half({s})";
-
-            if (type.Name == "double")
-                return s + "d";
-
-            if (type.Name == "decimal")
-                return s + "m";
-
-            if (type.Name == "int")
-                return s + "";
-
-            if (type.Name == "uint")
-                return s + "u";
-
-            if (type.Name == "long")
-                return s + "L";
-
-            throw new InvalidOperationException("unknown type " + this + ", " + type.Name);
-        }
 
         public static void InitTypes()
         {
@@ -432,7 +394,7 @@ namespace GLSHGenerator.Types
                 }
 
             // matrices
-            BuiltinType[] matrixTypes = [BuiltinType.TypeFloat, BuiltinType.TypeDouble];
+            BuiltinType[] matrixTypes = new BuiltinType[] { BuiltinType.TypeFloat, BuiltinType.TypeDouble };
             foreach (var type in matrixTypes)
                 for (var rows = 2; rows <= 4; ++rows)
                     for (var cols = 2; cols <= 4; ++cols)

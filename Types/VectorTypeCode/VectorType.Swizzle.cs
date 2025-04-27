@@ -15,61 +15,79 @@ namespace GLSHGenerator.Types
         /// <returns></returns>
         private IEnumerable<Member> SwizzleProperties()
         {
-            // inline-swizzle XYZW
-            foreach (var swizzleBits in InlineSwizzle())
+            for (int i = 0; i < Length; i++)
             {
-                if (swizzleBits.Count(c => c == '1') < 2)
-                    continue; // at least two set
-
-                var swizzle = swizzleBits.Select((c, i) => c == '1' ? ArgOfs(i) : "").Aggregate((s1, s2) => s1 + s2);
-                var vecType = new VectorType(BaseType, swizzle.Length);
-
-                yield return new Property(swizzle, vecType)
-                {
-                    GetterLine = $"return {Construct(vecType, swizzle.Select(c => c.ToString()))};",
-                    Setter = swizzle.Select((c, i) => $"{c} = value.{ArgOf(i)};"),
-                    Comment = "Gets or sets the specified subset of components."
-                };
+                yield return RenameProperty(i, ArgOfRGBA);
+                yield return RenameProperty(i, ArgOfSTPQ);
             }
-            // inline-swizzle RGBA
-            foreach (var swizzleBits in InlineSwizzle())
+            foreach (var indices in Combinations(4).Concat(Combinations(3)).Concat(Combinations(2)))
             {
-                if (swizzleBits.Count(c => c == '1') < 2)
-                    continue; // at least two set
-
-                var swizzle = swizzleBits.Select((c, i) => c == '1' ? ArgOfs(i) : "").Aggregate((s1, s2) => s1 + s2);
-                var vecType = new VectorType(BaseType, swizzle.Length);
-
-                yield return new Property(ToRgba(swizzle), vecType)
-                {
-                    GetterLine = $"return {Construct(vecType, swizzle.Select(c => c.ToString()))};",
-                    Setter = swizzle.Select((c, i) => $"{c} = value.{ArgOf(i)};"),
-                    Comment = "Gets or sets the specified subset of components."
-                };
-            }
-            for (var c = 0; c < Components; ++c)
-            {
-                yield return new Property("rgba"[c].ToString(), BaseType)
-                {
-                    GetterLine = $"return {"xyzw"[c]};",
-                    SetterLine = $"{"xyzw"[c]} = value;",
-                    Comment = "Gets or sets the specified RGBA component."
-                };
+                var xyzw = SwizzleProperty(indices, ArgOf);
+                if (xyzw != null)
+                    yield return xyzw;
+                var rgba = SwizzleProperty(indices, ArgOfRGBA);
+                if (rgba != null)
+                    yield return rgba;
+                var stpq = SwizzleProperty(indices, ArgOfSTPQ);
+                if (stpq != null)
+                    yield return stpq;
             }
         }
 
-        private IEnumerable<string> InlineSwizzle(int nr = 0)
+        private Property? SwizzleProperty(List<int> combination, Func<int, char> rename)
         {
-            if (nr >= Components)
+            var swizzleRename = string.Concat(combination.Select(c => c == -1 ? '_' : rename.Invoke(c)));
+            var returnType = new VectorType(BaseType, combination.Count);
+            bool noSetter = combination.Contains(-1) || combination.Count > Length || combination.Distinct().Count() != combination.Count;
+            bool isGlsl = !combination.Contains(-1);
+            if (combination.All(c => c == -1))
+                return null;
+            return new Property(swizzleRename, returnType)
             {
-                yield return "";
-                yield break;
-            }
+                GetterLine = $"{Construct(returnType, combination.Select(c => c == -1 ? BaseType.ZeroValue : ArgOf(c).ToString()))}",
+                Setter = noSetter ? null : combination.Select((c, i) => $"{ArgOf(c)} = value.{ArgOf(i)};"),
+                Comment = "Gets or sets the specified subset of components.",
+                GlslName = isGlsl ? "Swizzle" : string.Empty,
+                DisableGlmGen = true
+            };
+        }
 
-            foreach (var sw in InlineSwizzle(nr + 1))
+        private Property RenameProperty(int index, Func<int, char> rename)
+        {
+            var prop = ArgOf(index);
+            var propRename = rename(index);
+            var returnType = BaseType;
+            return new Property(propRename.ToString(), returnType)
             {
-                yield return "0" + sw;
-                yield return "1" + sw;
+                GetterLine = $"{prop}",
+                SetterLine = $"{prop} = value;",
+                Comment = "Gets or sets the specified subset of components.",
+                GlslName = "Swizzle",
+                DisableGlmGen = true
+            };
+        }
+
+        private IEnumerable<List<int>> Combinations(int k)
+        {
+            int[] numbers = Enumerable.Range(-1, Length + 1).ToArray();
+            var indices = new int[k];
+            var totalCombinations = (int)Math.Pow(numbers.Length, k);
+            var combination = new List<int>(k);
+            for (int count = 0; count < totalCombinations; count++)
+            {
+                combination.Clear();
+                for (int i = 0; i < k; i++)
+                    combination.Add(numbers[indices[i]]);
+                yield return combination;
+
+                for (int i = k - 1; i >= 0; i--)
+                {
+                    indices[i]++;
+                    if (indices[i] < numbers.Length)
+                        break;
+
+                    indices[i] = 0;
+                }
             }
         }
     }

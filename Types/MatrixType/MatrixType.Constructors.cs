@@ -18,7 +18,7 @@ namespace GLSHGenerator.Types
 
             yield return new Constructor(this, Fields)
             {
-                Parameters = [$"{BaseTypeName} s"],
+                Parameters = new string[] { $"{BaseTypeName} s" },
                 Code = Fields.Select(f => $"this{f} = " + (IsDiagonal(f) ? "s;" : "0;")),
                 Comment = string.Format("Constructs diagonal matrix with scalar, non diagonal values are set to zero.")
             };

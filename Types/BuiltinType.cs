@@ -13,16 +13,15 @@ namespace GLSHGenerator.Types
                 yield return TypeInt;
                 yield return TypeUint;
                 yield return TypeFloat;
+                yield return TypeBool;
+                yield return TypeDouble;
+
                 if (GenerateHalfs)
                     yield return TypeHalf;
-                yield return TypeDouble;
                 if (GenerateDecimals)
                     yield return TypeDecimal;
-                //yield return TypeComplex;
                 if (GenerateLongs)
                     yield return TypeLong;
-                yield return TypeBool;
-                //yield return TypeGeneric;
             }
         }
 
@@ -70,7 +69,6 @@ namespace GLSHGenerator.Types
         {
             TypeName = "int",
             Prefix = "i",
-            IsInteger = true,
             TypeConstants = new[] { "MaxValue", "MinValue" }
         };
         public static readonly BuiltinType TypeUint = new BuiltinType
@@ -79,8 +77,6 @@ namespace GLSHGenerator.Types
             Prefix = "u",
             OneValueConstant = "1u",
             ZeroValueConstant = "0u",
-            IsSigned = false,
-            IsInteger = true,
             TypeConstants = new[] { "MaxValue", "MinValue" }
         };
         public static readonly BuiltinType TypeHalf = new BuiltinType
@@ -89,8 +85,6 @@ namespace GLSHGenerator.Types
             Prefix = "h",
             OneValueConstant = "Half.One",
             ZeroValueConstant = "Half.Zero",
-            HasOwnFunctions = true,
-            IsFloatingPoint = true,
             TypeConstants = new[] { "MaxValue", "MinValue", "Epsilon", "NaN", "NegativeInfinity", "PositiveInfinity" },
         };
         public static readonly BuiltinType TypeFloat = new BuiltinType
@@ -98,37 +92,28 @@ namespace GLSHGenerator.Types
             TypeName = "float",
             OneValueConstant = "1f",
             ZeroValueConstant = "0f",
-            IsFloatingPoint = true,
             TypeConstants = new[] { "MaxValue", "MinValue", "Epsilon", "NaN", "NegativeInfinity", "PositiveInfinity" },
         };
         public static readonly BuiltinType TypeDouble = new BuiltinType
         {
             TypeName = "double",
             Prefix = "d",
-            LengthType = "double",
             OneValueConstant = "1.0",
             ZeroValueConstant = "0.0",
-            IsFloatingPoint = true,
             TypeConstants = new[] { "MaxValue", "MinValue", "Epsilon", "NaN", "NegativeInfinity", "PositiveInfinity" },
         };
         public static readonly BuiltinType TypeDecimal = new BuiltinType
         {
             TypeName = "decimal",
             Prefix = "dec",
-            LengthType = "decimal",
             OneValueConstant = "1m",
             ZeroValueConstant = "0m",
-            Decimal = true,
-            IsFloatingPoint = true,
-            EpsilonFormat = "double.Epsilon",
             TypeConstants = new[] { "MaxValue", "MinValue", "MinusOne" }
         };
         public static readonly BuiltinType TypeLong = new BuiltinType
         {
             TypeName = "long",
             Prefix = "l",
-            LengthType = "double",
-            IsInteger = true,
             TypeConstants = new[] { "MaxValue", "MinValue" }
         };
         public static readonly BuiltinType TypeBool = new BuiltinType
@@ -136,35 +121,18 @@ namespace GLSHGenerator.Types
             TypeName = "bool",
             Prefix = "b",
             HasArithmetics = false,
-            HashCodeMultiplier = 2,
             OneValueConstant = "true",
             ZeroValueConstant = "false",
-            HasFormatString = false,
             IsBool = true,
-            IsSigned = false
         };
 
         public string TypeName { get; set; }
         public string Prefix { get; set; }
-        public bool Decimal { get; set; }
 
         public bool HasArithmetics { get; set; } = true;
-        public bool HasComparisons => HasArithmetics;
-        public string LengthType { get; set; } = "float";
-        public string AbsOverrideType { get; set; }
-        public string AbsOverrideTypePrefix { get; set; }
-        public bool IsSigned { get; set; } = true;
-        public bool IsInteger { get; set; } = false;
-        public bool IsFloatingPoint { get; set; }
-        public bool HasOwnFunctions { get; set; }
-
-        public string EpsilonFormat { get; set; } = "{0}.Epsilon";
-
 
         public string EqualFormat { get; set; } = "{0} == {1}";
         public string NotEqualFormat { get; set; } = "{0} != {1}";
-
-        public bool HasFormatString { get; set; } = false;
 
         public bool IsBool { get; set; }
 
@@ -174,8 +142,6 @@ namespace GLSHGenerator.Types
         public override string OneValue => OneValueConstant;
         public override string ZeroValue => ZeroValueConstant;
 
-        public int HashCodeMultiplier { get; set; } = 397;
-
         public override string Name => TypeName;
 
         public override string TypeComment => "Builtin " + Name;
@@ -183,11 +149,6 @@ namespace GLSHGenerator.Types
         public override IEnumerable<Member> GenerateMembers()
         {
             yield break; // no-op
-        }
-
-        protected override IEnumerable<string> Body
-        {
-            get { throw new InvalidOperationException("No body for builtin types"); }
         }
 
         public string[] TypeConstants { get; set; } = new string[] { };

@@ -14,10 +14,10 @@ namespace GLSHGenerator.Types
         /// <returns></returns>
         private IEnumerable<Member> CommonFunctions()
         {
-            var boolVec = new VectorType(BuiltinType.TypeBool, Components);
-            var intVec = new VectorType(BuiltinType.TypeInt, Components);
-            var uintVec = new VectorType(BuiltinType.TypeUint, Components);
-            var floatVec = new VectorType(BuiltinType.TypeFloat, Components);
+            var boolVec = new VectorType(BuiltinType.TypeBool, Length);
+            var intVec = new VectorType(BuiltinType.TypeInt, Length);
+            var uintVec = new VectorType(BuiltinType.TypeUint, Length);
+            var floatVec = new VectorType(BuiltinType.TypeFloat, Length);
             if (BaseType == BuiltinType.TypeFloat || BaseType == BuiltinType.TypeInt || BaseType == BuiltinType.TypeDouble)
             {
                 yield return new ComponentWiseStaticFunction(Fields, this, "Abs", this, "v", $"Maths.Abs({{0}})") { GlslName = "abs" };
@@ -35,7 +35,7 @@ namespace GLSHGenerator.Types
                 //TODO Add Modf
                 yield return new ComponentWiseStaticFunction(Fields, this, "Lerp", this, "edge0", this, "edge1", this, "v", $"Maths.Lerp({{0}}, {{1}}, {{2}})") { CanScalar2 = true, GlslName = "mix" };
                 yield return new ComponentWiseStaticFunction(Fields, this, "Step", this, "edge", this, "x", $"{{1}} < {{0}} ? 0 : 1") { CanScalar0 = true, GlslName = "step" };
-                yield return new ComponentWiseStaticFunction(Fields, this, "Smoothstep", this, "edge0", this, "edge1", this, "v", $"Maths.SmoothStep(Maths.Clamp(({{2}} - {{0}}) / ({{1}} - {{0}}), 0, 1))") { CanScalar2 = true, GlslName = "smoothstep"};
+                yield return new ComponentWiseStaticFunction(Fields, this, "Smoothstep", this, "edge0", this, "edge1", this, "x", $"Maths.Smoothstep({{0}}, {{1}}, {{2}})") { CanScalar2 = true, GlslName = "smoothstep"};
                 yield return new ComponentWiseStaticFunction(Fields, boolVec, "IsNaN", this, "v", $"{BaseTypeName}.IsNaN({{0}})") { GlslName = "isnan" };
                 yield return new ComponentWiseStaticFunction(Fields, boolVec, "IsInfinity", this, "v", $"{BaseTypeName}.IsInfinity({{0}})") { GlslName = "isinf" }; ;
                 yield return new ComponentWiseStaticFunction(Fields, this, "Fma", this, "a", this, "b", this, "c", $"Maths.Fma({{0}}, {{1}}, {{2}})") { GlslName = "fma" };
@@ -49,8 +49,8 @@ namespace GLSHGenerator.Types
                 {
                     GlslName = "clamp",
                     Static = true,
-                    Parameters = [$"{Name} v", $"{BaseType.Name} min", $"{BaseType.Name} max"],
-                    Code = [$"{Construct(this, Fields.Select(f => $"Maths.Clamp(v.{f}, min, max)"))}"],
+                    Parameters = new string[] { $"{Name} v", $"{BaseType.Name} min", $"{BaseType.Name} max" },
+                    Code = new string[] { $"{Construct(this, Fields.Select(f => $"Maths.Clamp(v.{f}, min, max)"))}" },
                     Comment = $"Returns a {Name} from component-wise application of Clamp (Maths.Clamp(v, min, max)).",
                 };
             }

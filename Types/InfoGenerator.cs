@@ -73,7 +73,7 @@ namespace GLSHGenerator.Types
         {
             foreach (var item in AbstractType.Types)
             {
-                HashSet<string> writtenFunctionNames = [];
+                HashSet<string> writtenFunctionNames = new HashSet<string>();
                 var allStaticFunctions = item.Value.members.Where
                     (member => (member.GetType() == typeof(Function) || member.GetType() == typeof(ComponentWiseStaticFunction)) &&
                     member.Static && !member.Extension);
@@ -93,7 +93,7 @@ namespace GLSHGenerator.Types
         {
             foreach (var item in AbstractType.Types)
             {
-                HashSet<string> writtenOperatorNames = [];
+                HashSet<string> writtenOperatorNames = new HashSet<string>();
                 var allOperators = item.Value.members.Where
                     (member => (member.GetType() == typeof(Operator) || member.GetType() == typeof(ComponentWiseOperator)) &&
                     member.Static && !member.Extension);

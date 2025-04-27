@@ -1,0 +1,83 @@
+﻿using GLSHGenerator.Members;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace GLSHGenerator.Types
+{
+    internal partial class VectorType
+    {
+        /// <summary>
+        /// Does not refers to GLSL
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerable<Member> ExtendedFunctions()
+        {
+            yield return new Function(BuiltinType.TypeInt, "GetHashCode")
+            {
+                Override = true,
+                Readonly = true,
+                CodeString = $"HashCode.Combine({string.Join(", ", Fields)})",
+                Comment = "Returns HashCode"
+            };
+
+            yield return new Function(new AnyType("string"), "ToString")
+            {
+                Override = true,
+                Readonly = true,
+                CodeString = $"{string.Join(" + \", \" + ", Fields)}",
+                Comment = "Returns a string representation of this vector."
+            };
+
+            yield return new Function(BuiltinType.TypeBool, "Equals")
+            {
+                Readonly = true,
+                ParameterString = $"{Name} other",
+                CodeString = "other == this",
+            };
+
+            yield return new Function(BuiltinType.TypeBool, "Equals")
+            {
+                Override = true,
+                Readonly = true,
+                ParameterString = $"object? obj",
+                CodeString = $"obj is {Name} other && Equals(other)",
+            };
+
+            yield return new Field("Count", BuiltinType.TypeInt)
+            {
+                Constant = true,
+                DefaultValue = Length.ToString(),
+                Comment = $"Returns the number of components ({Length})."
+            };
+
+            if (BaseType == BuiltinType.TypeFloat || BaseType == BuiltinType.TypeDouble)
+            {
+                yield return new Function(BaseType, "SqrLength")
+                {
+                    Static = true,
+                    Parameters = this.TypedArgs("v"),
+                    CodeString = $"{string.Join(" + ", Fields.Select(f => $"v.{f} * v.{f}"))}",
+                    Comment = "Returns the square length of this vector."
+                };
+
+                yield return new Function(BaseType, "SqrDistance")
+                {
+                    Static = true,
+                    Parameters = this.LhsRhs(),
+                    CodeString = $"{Name}.SqrLength(lhs - rhs)",
+                    Comment = "Returns the square distance between the two vectors."
+                };
+
+                yield return new ComponentWiseStaticFunction(Fields, this, "InvLerp", this, "edge0", this, "edge1", this, "v", $"Maths.InvLerp({{0}}, {{1}}, {{2}})")
+                {
+                    CanScalar2 = true
+                };
+
+            }
+
+            //TODO vector clamp length
+            //TODO add span enumerator
+            //TODO add smoothDamp
+        }
+    }
+}

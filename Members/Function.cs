@@ -47,8 +47,10 @@ namespace GLSHGenerator.Members
             Name = name;
         }
 
-        public override IEnumerable<Member> GlmMembers()
+        public override IEnumerable<Member> GlshMembers()
         {
+            if (DisableGlmGen)
+                yield break;
             if (Visibility != "public")
                 yield break;
             if (this is ExplicitOperator)

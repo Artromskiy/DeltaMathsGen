@@ -14,7 +14,7 @@ namespace GLSHGenerator.Types
         /// <returns></returns>
         private IEnumerable<Member> RelationalFunctions()
         {
-            var boolVType = new VectorType(BuiltinType.TypeBool, Components);
+            var boolVType = new VectorType(BuiltinType.TypeBool, Length);
 
             if (BaseType == BuiltinType.TypeFloat || BaseType == BuiltinType.TypeDouble || BaseType == BuiltinType.TypeInt || BaseType == BuiltinType.TypeUint)
             {
@@ -37,14 +37,14 @@ namespace GLSHGenerator.Types
                     GlslName = "any",
                     Static = true,
                     ParameterString = $"{Name} v",
-                    Code = [$"{string.Join("||", Fields.Select(s => $"v.{s}"))}"]
+                    Code = new string[] { $"{string.Join("||", Fields.Select(s => $"v.{s}"))}" }
                 };
                 yield return new Function(BuiltinType.TypeBool, "All")
                 {
                     GlslName = "all",
                     Static = true,
                     ParameterString = $"{Name} v",
-                    Code = [$"{string.Join("&&", Fields.Select(s => $"v.{s}"))}"]
+                    Code = new string[] { $"{string.Join("&&", Fields.Select(s => $"v.{s}"))}" }
                 };
                 yield return new ComponentWiseStaticFunction(Fields, boolVType, "Not", this, "v", "!{0}") { GlslName = "not" };
             }

@@ -15,12 +15,12 @@ namespace GLSHGenerator.Types
             {
                 var otherType = ukvp.Value;
                 implicits.Add(otherType);
-                var targetType = new VectorType(otherType, Components);
+                var targetType = new VectorType(otherType, Length);
 
                 yield return new ImplicitOperator(targetType)
                 {
                     ParameterString = Name + " v",
-                    CodeString = Construct(targetType, CompString.Select(c => TypeCast(otherType, "v." + c)).ExactlyN(Components, otherType.ZeroValue)),
+                    CodeString = Construct(targetType, CompString.Select(c => TypeCast(otherType, "v." + c)).ExactlyN(Length, otherType.ZeroValue)),
                     Comment = $"Implicitly converts this to a {targetType.Name}.",
                 };
             }
@@ -33,14 +33,14 @@ namespace GLSHGenerator.Types
 
                 for (var comps = 2; comps <= 4; ++comps)
                 {
-                    if (otherType == BaseType && comps == Components)
+                    if (otherType == BaseType && comps == Length)
                         continue; // same type and comps not useful
 
-                    if (comps == Components && implicits.Contains(otherType))
+                    if (comps == Length && implicits.Contains(otherType))
                         continue; // already has an implicit conversion
 
                     var commentAppendix = "";
-                    if (comps > Components)
+                    if (comps > Length)
                         commentAppendix = " (Higher components are zeroed)";
                     var targetType = new VectorType(otherType, comps);
                     yield return new ExplicitOperator(targetType)

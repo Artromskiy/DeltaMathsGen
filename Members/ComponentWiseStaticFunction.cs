@@ -52,10 +52,6 @@ namespace GLSHGenerator.Members
         /// </summary>
         public string CommentOverride { get; set; }
 
-        /// <summary>
-        /// If true, does not generate glm versions
-        /// </summary>
-        public bool DisableGlmGen { get; set; }
 
         private void BuildComment(bool allScalar)
         {
@@ -154,7 +150,7 @@ namespace GLSHGenerator.Members
             return info;
         }
 
-        public override IEnumerable<Member> GlmMembers()
+        public override IEnumerable<Member> GlshMembers()
         {
             if (DisableGlmGen)
                 yield break;
@@ -172,7 +168,7 @@ namespace GLSHGenerator.Members
             };
 
             // scalar version
-            if (OriginalType is VectorType && ((VectorType)OriginalType).Components == 3 &&
+            if (OriginalType is VectorType && ((VectorType)OriginalType).Length == 3 &&
                 CanScalar0 && CanScalar1 && CanScalar2)
             {
                 yield return new Function(ReturnType.BaseType ?? ReturnType, Name)

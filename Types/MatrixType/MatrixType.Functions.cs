@@ -20,7 +20,7 @@ namespace GLSHGenerator.Types
             {
                 GlslName = "outerProduct",
                 Static = true,
-                Parameters = [rows.Name + " col", cols.Name + " row"],
+                Parameters = new string[] { rows.Name + " col", cols.Name + " row" },
                 CodeString = $"{Construct(this, OutProduct(cols, rows, "row", "col"))}",
             };
             yield return new Function(transposedType, "Transpose")

@@ -14,7 +14,7 @@ namespace GLSHGenerator.Types
         /// <returns></returns>
         private IEnumerable<Member> Operators()
         {
-            var boolVType = new VectorType(BuiltinType.TypeBool, Components);
+            var boolVType = new VectorType(BuiltinType.TypeBool, Length);
 
             // TODO Vector_X_Matrix multiplication
 

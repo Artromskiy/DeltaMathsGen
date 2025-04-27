@@ -23,7 +23,7 @@ namespace GLSHGenerator.Types
                 GlslName = "length",
                 Static = true,
                 Parameters = this.TypedArgs("v"),
-                CodeString = Sqrt(Fields.Select(f => Sqr(f, "v")).Aggregated(" + ")),
+                CodeString = $"Maths.Sqrt({string.Join(" + ", Fields.Select(f => $"v.{f} * v.{f}"))})",
                 Comment = "Returns the euclidean length of this vector."
             };
             yield return new Function(BaseType, "Distance")
@@ -42,7 +42,7 @@ namespace GLSHGenerator.Types
                 CodeString = Fields.Format(DotFormatString).Aggregated(" + "),
                 Comment = "Returns the inner product (dot product, scalar product) of the two vectors."
             };
-            if (Components == 3)
+            if (Length == 3)
                 yield return new Function(this, "Cross")
                 {
                     GlslName = "cross",
@@ -85,14 +85,10 @@ namespace GLSHGenerator.Types
                     $"var dNI = {Name}.Dot(N, I);",
                     "var k = 1 - eta * eta * (1 - dNI * dNI);",
                     $"if (k < 0) return {Construct(this, BaseTypeCast + "0")};",
-                    $"return eta * I - (eta * dNI + {Sqrt("k")}) * N;",
+                    $"return eta * I - (eta * dNI + Maths.Sqrt(k)) * N;",
                 },
                 Comment = "Calculate the refraction direction for an incident vector (The input parameters I and N should be normalized in order to achieve the desired result)."
             };
         }
-
-        private string Sqrt(string s) => $"Maths.Sqrt({s})";
-
-        public static string Sqr(string s, string variable) => $"{variable}.{s}*{variable}.{s}";
     }
 }

@@ -17,6 +17,13 @@ namespace GLSHGenerator
             return true;
         }
 
+        public static IEnumerable<T> ForEach<T>(this IEnumerable<T> source, Action<T> action)
+        {
+            foreach (var item in source)
+                action(item);
+            return source;
+        }
+
         public static string ParameterNameExtract(this string s)
         {
             return s.Split('=')[0].Trim().Split(' ').Last().Trim();
@@ -62,13 +69,6 @@ namespace GLSHGenerator
             var cc = coll.Select(c => c.ToString()).ToArray();
             return cc.Length == 0 ? "" : cc.Aggregate((s1, s2) => s1 + ", " + s2);
         }
-
-        public static string CommaSeparated<T>(this IEnumerable<T> coll, string parameter)
-        {
-            var cc = coll.Select(c => parameter + "." + c.ToString()).ToArray();
-            return cc.Length == 0 ? "" : cc.Aggregate((s1, s2) => s1 + ", " + s2);
-        }
-
         public static string Aggregated<T>(this IEnumerable<T> coll, string seperator)
         {
             var cc = coll.Select(c => c.ToString()).ToArray();

@@ -17,7 +17,7 @@ namespace GLSHGenerator
             var extGenFolder = Path.Combine(folder, "Extensions");
             var infoGenFolder = Path.Combine(folder, "GLSH");
 
-            Console.WriteLine("GlmSharp Generator");
+            Console.WriteLine("GLSH Generator");
 
             string path = genFolder;
             string extPath = extGenFolder;

@@ -18,11 +18,11 @@ namespace GLSHGenerator.Types
             BaseType = type;
         }
 
-        public override IEnumerable<string> Attributes =>
-        [
+        public override IEnumerable<string> Attributes => new string[]
+        {
             "Serializable",
             $"InlineArray({Columns})"
-        ];
+        };
 
         private static string GetName(BuiltinType type, int cols, int rows) => type.Name + cols + "x" + rows;
         public int Rows { get; set; }
@@ -110,15 +110,10 @@ namespace GLSHGenerator.Types
 
         private string FieldFor(int f) => $"[{f / Rows}, {f % Rows}]";
 
-        private string ArgOf(int c) => "xyzw"[c].ToString();
-
         private int RowOf(string fieldName) => fieldName[2] - '0';
         private int ColOf(string fieldName) => fieldName[1] - '0';
 
         private bool IsDiagonal(string fieldName) => fieldName[1] == fieldName[2];
-
-        public string HashCodeFor(int c) => (c == 0 ? "" : $"(({HashCodeFor(c - 1)}) * {BaseType.HashCodeMultiplier}) ^ ") + HashCodeOf(FieldFor(c));
-
 
         public string ComponentWiseOperator(string op)
             => string.Format("public static {0} operator{2}({0} lhs, {0} rhs) => new {0}({1});", Name,
@@ -213,16 +208,21 @@ namespace GLSHGenerator.Types
             yield return new Indexer(BaseType)
             {
                 ParameterString = "int col, int row",
-                Getter = [$"if ((uint)col >= {Columns})",
-                          "    throw new ArgumentOutOfRangeException(nameof(col));",
-                          $"if ((uint)row >= {Rows})",
-                          "    throw new ArgumentOutOfRangeException(nameof(row));",
-                          $"return Unsafe.Add(ref Unsafe.As<{vecType.Name}, {BaseTypeName}>(ref _buffer), col * {Rows} + row);"],
-                Setter = [$"if ((uint)col >= {Columns})",
-                          "    throw new ArgumentOutOfRangeException(nameof(col));",
-                          $"if ((uint)row >= {Rows})",
-                          "    throw new ArgumentOutOfRangeException(nameof(row));",
-                          $"Unsafe.Add(ref Unsafe.As<{vecType.Name}, {BaseTypeName}>(ref _buffer), col * {Rows} + row) = value;"],
+                Getter = new string[]
+                {   
+                    $"if ((uint)col >= {Columns})",
+                    $"    throw new ArgumentOutOfRangeException(nameof(col));",
+                    $"if ((uint)row >= {Rows})",
+                    $"    throw new ArgumentOutOfRangeException(nameof(row));",
+                    $"return Unsafe.Add(ref Unsafe.As<{vecType.Name}, {BaseTypeName}>(ref _buffer), col * {Rows} + row);"
+                },
+                Setter = new string[]
+                {   $"if ((uint)col >= {Columns})",
+                    $"    throw new ArgumentOutOfRangeException(nameof(col));",
+                    $"if ((uint)row >= {Rows})",
+                    $"    throw new ArgumentOutOfRangeException(nameof(row));",
+                    $"Unsafe.Add(ref Unsafe.As<{vecType.Name}, {BaseTypeName}>(ref _buffer), col * {Rows} + row) = value;"
+                },
                 Comment = "Gets/Sets a specific indexed column."
             };
 
@@ -245,7 +245,7 @@ namespace GLSHGenerator.Types
             {
                 Static = true,
                 Extension = true,
-                Parameters = ["this " + Name + " value"],
+                Parameters = new string[] { "this " + Name + " value" },
                 Code = Fields.Select(f => $"yield return value{f};"),
                 Comment = "Returns an enumerator that iterates through all fields."
             };
@@ -254,7 +254,7 @@ namespace GLSHGenerator.Types
             {
                 Static = true,
                 Extension = true,
-                Parameters = ["this " + Name + " value"],
+                Parameters = new string[] { "this " + Name + " value" },
                 CodeString = $"new[,] {{ {Columns.ForIndexUpTo(col => "{ " + Column(col, "value").CommaSeparated() + " }").CommaSeparated()} }}",
                 Comment = "Creates a 2D array with all values (address: Values[x, y])"
             };
@@ -263,7 +263,7 @@ namespace GLSHGenerator.Types
             {
                 Static = true,
                 Extension = true,
-                Parameters = ["this " + Name + " value"],
+                Parameters = new string[] { "this " + Name + " value" },
                 CodeString = $"new[] {{ {string.Join(", ", Fields.Select(v => $"value{v}"))} }}",
                 Comment = "Creates a 1D array with all values (internal order)"
             };
