@@ -379,7 +379,6 @@ namespace GLSHGenerator.Types
 
         public virtual string ZeroValue => BaseType.ZeroValue;
         public virtual string OneValue => BaseType.OneValue;
-        public string DotFormatString => "lhs.{0} * rhs.{0}";
 
         public static void InitTypes()
         {
@@ -429,23 +428,6 @@ namespace GLSHGenerator.Types
                 return $"{c} != {BaseType.ZeroValue}";
 
             return $"({otherType.Name}){c}";
-        }
-
-
-        protected static string ToRgba(string xyzw)
-        {
-            var s = "";
-            foreach (var c in xyzw)
-            {
-                switch (c)
-                {
-                    case 'x': s += 'r'; break;
-                    case 'y': s += 'g'; break;
-                    case 'z': s += 'b'; break;
-                    case 'w': s += 'a'; break;
-                }
-            }
-            return s;
         }
     }
 }

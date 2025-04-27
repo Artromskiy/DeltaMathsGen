@@ -59,11 +59,6 @@ namespace GLSHGenerator
             return ss.Select(s => type.Name + " " + s);
         }
 
-        public static IEnumerable<string> Format<T>(this IEnumerable<T> ss, string format)
-        {
-            return ss.Select(s => string.Format(format, s));
-        }
-
         public static string CommaSeparated<T>(this IEnumerable<T> coll)
         {
             var cc = coll.Select(c => c.ToString()).ToArray();

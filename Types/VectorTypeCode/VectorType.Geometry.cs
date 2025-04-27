@@ -39,7 +39,7 @@ namespace GLSHGenerator.Types
                 GlslName = "dot",
                 Static = true,
                 Parameters = this.LhsRhs(),
-                CodeString = Fields.Format(DotFormatString).Aggregated(" + "),
+                CodeString = string.Join(" + ", Fields.Select(f => $"lhs.{f} * rhs.{f}")),
                 Comment = "Returns the inner product (dot product, scalar product) of the two vectors."
             };
             if (Length == 3)

@@ -50,6 +50,14 @@ namespace GLSHGenerator.Types
                 Comment = $"Returns the number of components ({Length})."
             };
 
+            yield return new Field("zero", this)
+            {
+                Static = true,
+                Readonly = true,
+                DefaultValue = Construct(this, Fields.Select(f => BaseType.ZeroValue)),
+                Comment = $"Returns new vector with every component set to default."
+            };
+
             if (BaseType == BuiltinType.TypeFloat || BaseType == BuiltinType.TypeDouble)
             {
                 yield return new Function(BaseType, "SqrLength")
