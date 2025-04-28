@@ -10,6 +10,7 @@ namespace GLSHGenerator.Types
         /// Refers to GLSL 450 specs.
         /// 8 Built-in Functions.
         /// 8.3 Common Functions.
+        /// https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.4.50.pdf
         /// </summary>
         /// <returns></returns>
         private IEnumerable<Member> CommonFunctions()

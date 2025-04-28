@@ -11,6 +11,7 @@ namespace GLSHGenerator.Types
         /// Refers to GLSL 450 specs.
         /// 5 Operators and Expressions.
         /// 5.5 Vector and Scalar Components and Length.
+        /// https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.4.50.pdf
         /// </summary>
         /// <returns></returns>
         private IEnumerable<Member> SwizzleProperties()
