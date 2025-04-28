@@ -89,6 +89,22 @@ namespace GLSHGenerator.Types
                     CodeString = $"{Construct(this, Fields.Select(f => $"Maths.SmoothDamp(source.{f}, target.{f}, ref velocity.{f}, smoothTime, deltaTime)"))}",
                     DisableGlmGen = true
                 };
+                yield return new Function(this, "ClampLength")
+                {
+                    Static = true,
+                    Parameters = new string[] {$"{Name} value, {BaseType.Name} maxLength"},
+                    Code = new string[]
+                    {
+                        $"var sqrLength = SqrLength(value);",
+                        $"if (sqrLength > maxLength * maxLength)",
+                        $"{{",
+                        $"    {BaseType.Name} ratio = maxLength / Maths.Sqrt(sqrLength);",
+                        $"    return {Construct(this, Fields.Select(f=>$"value.{f} * ratio"))};",
+                        $"}}",
+                        $"return value;"
+                    },
+                    Comment = "Returns the square length of this vector."
+                };
             }
 
             //TODO vector clamp length
