@@ -103,7 +103,15 @@ namespace GLSHGenerator.Types
                         $"}}",
                         $"return value;"
                     },
-                    Comment = "Returns the square length of this vector."
+                    Comment = "Returns this vector with length clamped to maxLength."
+                };
+
+                yield return new Function(this, "MoveTowards")
+                {
+                    Static = true,
+                    Parameters = new string[] { $"{Name} current, {Name} target, {BaseType.Name} maxDelta" },
+                    CodeString = $"{Construct(this, Fields.Select(f => $"Maths.MoveTowards(current.{f}, target.{f}, maxDelta)"))}",
+                    Comment = "Moves vector towards target."
                 };
             }
 
