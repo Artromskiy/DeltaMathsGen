@@ -1,7 +1,7 @@
-﻿using GLSHGenerator.Types;
+﻿using DVG.GLSH.Generator.Types;
 using System.Collections.Generic;
 
-namespace GLSHGenerator.Members
+namespace DVG.GLSH.Generator.Members
 {
     internal class Constructor : Member
     {

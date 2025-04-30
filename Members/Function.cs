@@ -1,9 +1,9 @@
-﻿using GLSHGenerator.Types;
+﻿using DVG.GLSH.Generator.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GLSHGenerator.Members
+namespace DVG.GLSH.Generator.Members
 {
     internal class Function : Member
     {
@@ -39,7 +39,7 @@ namespace GLSHGenerator.Members
         public bool Readonly { get; set; }
         public virtual string ReturnName => ReturnType.Name;
         public virtual string FunctionName => Name;
-        public override string MemberPrefix => base.MemberPrefix + (Override ? " override" : "") + (Readonly ? " readonly" :"");
+        public override string MemberPrefix => base.MemberPrefix + (Override ? " override" : "") + (Readonly ? " readonly" : "");
 
         public Function(AbstractType returnType, string name)
         {

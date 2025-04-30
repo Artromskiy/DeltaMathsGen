@@ -1,9 +1,9 @@
-﻿using GLSHGenerator.Members;
+﻿using DVG.GLSH.Generator.Members;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GLSHGenerator.Types
+namespace DVG.GLSH.Generator.Types
 {
     internal partial class VectorType
     {

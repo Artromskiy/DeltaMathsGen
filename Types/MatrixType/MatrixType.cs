@@ -1,10 +1,9 @@
-﻿using GLSHGenerator.Members;
+﻿using DVG.GLSH.Generator.Members;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Linq;
 
-namespace GLSHGenerator.Types
+namespace DVG.GLSH.Generator.Types
 {
     internal partial class MatrixType : AbstractType
     {
@@ -29,8 +28,6 @@ namespace GLSHGenerator.Types
         public int Columns { get; set; }
         public int FieldCount => Rows * Columns;
         public override string Name => GetName(BaseType, Columns, Rows);
-
-        public override string Folder => "Mat" + Columns + "x" + Rows;
 
         public override string TypeComment => $"A matrix of type {BaseTypeName} with {Columns} columns and {Rows} rows.";
 
@@ -170,7 +167,7 @@ namespace GLSHGenerator.Types
                     yield return "m" + x + y;
         }
 
-        
+
 
         public override IEnumerable<Member> GenerateMembers()
         {
@@ -209,7 +206,7 @@ namespace GLSHGenerator.Types
             {
                 ParameterString = "int col, int row",
                 Getter = new string[]
-                {   
+                {
                     $"if ((uint)col >= {Columns})",
                     $"    throw new ArgumentOutOfRangeException(nameof(col));",
                     $"if ((uint)row >= {Rows})",

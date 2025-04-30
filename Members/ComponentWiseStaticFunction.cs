@@ -1,8 +1,8 @@
-﻿using GLSHGenerator.Types;
+﻿using DVG.GLSH.Generator.Types;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GLSHGenerator.Members
+namespace DVG.GLSH.Generator.Members
 {
     internal class ComponentWiseStaticFunction : Member
     {
@@ -55,7 +55,7 @@ namespace GLSHGenerator.Members
 
         private void BuildComment(bool allScalar)
         {
-            Comment = string.Format("Returns a {0} from {3} application of {1} ({2}).", (allScalar ? ReturnType.BaseType.Name : ReturnType.Name), Name, (!string.IsNullOrEmpty(AdditionalComment) ? AdditionalComment : string.Format(CompString, ParameterNames.OfType<object>().ToArray())), allScalar ? "the" : "component-wise");
+            Comment = string.Format("Returns a {0} from {3} application of {1} ({2}).", allScalar ? ReturnType.BaseType.Name : ReturnType.Name, Name, !string.IsNullOrEmpty(AdditionalComment) ? AdditionalComment : string.Format(CompString, ParameterNames.OfType<object>().ToArray()), allScalar ? "the" : "component-wise");
             Comment = Comment.Replace("&", "&amp;");
             Comment = Comment.Replace(">", "&gt;");
             Comment = Comment.Replace("<", "&lt;");

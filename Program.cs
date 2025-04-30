@@ -1,10 +1,10 @@
-﻿using GLSHGenerator.Types;
+﻿using DVG.GLSH.Generator.Types;
 using System;
 using System.Globalization;
 using System.IO;
 using System.Threading;
 
-namespace GLSHGenerator
+namespace DVG.GLSH.Generator
 {
     internal class Program
     {
@@ -13,35 +13,30 @@ namespace GLSHGenerator
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
             string folder = args[0];
-            var genFolder = Path.Combine(folder, "Primitives");
-            var extGenFolder = Path.Combine(folder, "Extensions");
-            var infoGenFolder = Path.Combine(folder, "GLSH");
+            var genFolder = folder;
 
             Console.WriteLine("GLSH Generator");
 
-            string path = genFolder;
-            string extPath = extGenFolder;
-            string infoPath = infoGenFolder;
             AbstractType.InitTypes();
 
             foreach (var type in AbstractType.Types.Values)
             {
-                var basePath = type.PathOf(path);
-                new FileInfo(basePath).Directory?.Create();
-                if (type.CSharpFile.WriteToFileIfChanged(basePath))
-                    Console.WriteLine("    CHANGED " + basePath);
+                var path = Path.Combine(folder, type.Name + ".cs");
+                new FileInfo(path).Directory?.Create();
+                if (type.CSharpFile.WriteToFileIfChanged(path))
+                    Console.WriteLine("    CHANGED " + path);
 
-                var glmPath = type.GlmPathOf(path);
-                new FileInfo(glmPath).Directory?.Create();
-                if (type.GlmSharpFile.WriteToFileIfChanged(glmPath))
-                    Console.WriteLine("    CHANGED " + glmPath);
+                path = Path.Combine(folder, type.Name + ".glsh.cs");
+                new FileInfo(path).Directory?.Create();
+                if (type.GlmSharpFile.WriteToFileIfChanged(path))
+                    Console.WriteLine("    CHANGED " + path);
 
                 if (AbstractType.SeparateUnmanagedAsExtensions)
                 {
-                    var extendPath = type.ExtPathOf(extPath);
-                    new FileInfo(extendPath).Directory?.Create();
-                    if (type.ExtCSharpFile.WriteToFileIfChanged(extendPath))
-                        Console.WriteLine("    CHANGED " + extendPath);
+                    path = Path.Combine(folder, type.Name + ".ext.cs");
+                    new FileInfo(path).Directory?.Create();
+                    if (type.ExtCSharpFile.WriteToFileIfChanged(path))
+                        Console.WriteLine("    CHANGED " + path);
                 }
             }
             /*

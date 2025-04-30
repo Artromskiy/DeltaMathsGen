@@ -1,6 +1,6 @@
-﻿using GLSHGenerator.Types;
+﻿using DVG.GLSH.Generator.Types;
 
-namespace GLSHGenerator.Members
+namespace DVG.GLSH.Generator.Members
 {
     internal class StaticProperty : Property
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GLSHGenerator.Types
+namespace DVG.GLSH.Generator.Types
 {
     internal partial class VectorType : AbstractType
     {
@@ -17,14 +17,13 @@ namespace GLSHGenerator.Types
         public readonly int Length;
         public IEnumerable<string> Fields => "xyzw".Substring(0, Length).Select(c => c.ToString());
         public override string Name => GetName(BaseType, Length);
-        public override string Folder => "Vec" + Length;
         public override string TypeComment => $"A vector of type {BaseTypeName} with {Length} components.";
         public override IEnumerable<string> BaseClasses => new string[] { $"IEquatable<{Name}>" };
 
         public string CompString => "xyzw".Substring(0, Length);
         public static char ArgOf(int c) => "xyzw"[c];
-        public static char ArgOfRGBA(int c)=> "rgba"[c];
-        public static char ArgOfSTPQ(int c)=> "stpq"[c];
+        public static char ArgOfRGBA(int c) => "rgba"[c];
+        public static char ArgOfSTPQ(int c) => "stpq"[c];
         public static string ArgOfs(int c) => "xyzw"[c].ToString();
         public static char ArgOfUpper(int c) => char.ToUpper("xyzw"[c]);
         public static string GetName(BuiltinType type, int components) => type.Name + components;

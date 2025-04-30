@@ -1,8 +1,8 @@
-﻿using GLSHGenerator.Members;
+﻿using DVG.GLSH.Generator.Members;
 using System;
 using System.Collections.Generic;
 
-namespace GLSHGenerator.Types
+namespace DVG.GLSH.Generator.Types
 {
     internal class ArrayType : AbstractType
     {

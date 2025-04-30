@@ -1,10 +1,10 @@
-﻿using GLSHGenerator.Types;
+﻿using DVG.GLSH.Generator.Types;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace GLSHGenerator
+namespace DVG.GLSH.Generator
 {
     internal static class Extensions
     {

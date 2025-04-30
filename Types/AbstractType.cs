@@ -1,10 +1,8 @@
-﻿using GLSHGenerator.Members;
-using System;
+﻿using DVG.GLSH.Generator.Members;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
-namespace GLSHGenerator.Types
+namespace DVG.GLSH.Generator.Types
 {
     internal abstract class AbstractType
     {
@@ -59,22 +57,6 @@ namespace GLSHGenerator.Types
         public static string Namespace { get; } = "DVG";
 
         /// <summary>
-        /// Folder for this type
-        /// </summary>
-        public virtual string Folder { get; } = "";
-        /// <summary>
-        /// Class name for tests
-        /// </summary>
-        public virtual string TestClassName => BaseTypeName.Capitalized() + Folder + "Test";
-        /// <summary>
-        /// Folder with trailing /
-        /// </summary>
-        public string PathOf(string basePath) => string.IsNullOrEmpty(Folder) ? Path.Combine(basePath, Name + ".cs") : Path.Combine(basePath, Folder, Name + ".cs");
-        public string GlmPathOf(string basePath) => string.IsNullOrEmpty(Folder) ? Path.Combine(basePath, Name + ".cs") : Path.Combine(basePath, Folder, Name + ".glsh.cs");
-        public string ExtPathOf(string basePath) => string.IsNullOrEmpty(Folder) ? Path.Combine(basePath, Name + ".cs") : Path.Combine(basePath, Folder, Name + ".ext.cs");
-        public static string InfoPathOf(string basePath, string Name) => Path.Combine(basePath, Name + ".cs");
-
-        /// <summary>
         /// Comment of this type
         /// </summary>
         public abstract string TypeComment { get; }
@@ -124,7 +106,7 @@ namespace GLSHGenerator.Types
                 member.OriginalType = this;
 
             fields = members.OfType<Field>().ToArray();
-            constructors = members.OfType<Constructor>().ForEach(e=>e.Attributes = attributes).ToArray();
+            constructors = members.OfType<Constructor>().ForEach(e => e.Attributes = attributes).ToArray();
             properties = members.Where(m => !m.Static).OfType<Property>().ToArray();
             staticProperties = members.Where(m => m.Static).OfType<Property>().ToArray();
             implicitOperators = members.OfType<ImplicitOperator>().ForEach(e => e.Attributes = attributes).ToArray();
@@ -399,7 +381,7 @@ namespace GLSHGenerator.Types
                     for (var cols = 2; cols <= 4; ++cols)
                     {
                         var matt = new MatrixType(type, cols, rows);
-                        if(GenerateMatrices)
+                        if (GenerateMatrices)
                             Types.Add(matt.Name, matt);
                     }
 

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace GLSHGenerator.Types
+namespace DVG.GLSH.Generator.Types
 {
     internal static class OperatorTranslations
     {

@@ -1,7 +1,7 @@
-﻿using GLSHGenerator.Types;
+﻿using DVG.GLSH.Generator.Types;
 using System.Collections.Generic;
 
-namespace GLSHGenerator.Members
+namespace DVG.GLSH.Generator.Members
 {
     internal class Field : Member
     {
@@ -20,7 +20,7 @@ namespace GLSHGenerator.Members
         /// </summary>
         public bool Constant { get; set; }
 
-        public override string MemberPrefix => base.MemberPrefix + (Constant ? " const" : (Readonly ? " readonly" : ""));
+        public override string MemberPrefix => base.MemberPrefix + (Constant ? " const" : Readonly ? " readonly" : "");
 
         /// <summary>
         /// Value that will be used as initializer

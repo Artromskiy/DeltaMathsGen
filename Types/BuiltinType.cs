@@ -1,8 +1,7 @@
-﻿using GLSHGenerator.Members;
-using System;
+﻿using DVG.GLSH.Generator.Members;
 using System.Collections.Generic;
 
-namespace GLSHGenerator.Types
+namespace DVG.GLSH.Generator.Types
 {
     internal class BuiltinType : AbstractType
     {

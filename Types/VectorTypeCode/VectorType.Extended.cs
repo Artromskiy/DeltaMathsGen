@@ -1,8 +1,8 @@
-﻿using GLSHGenerator.Members;
+﻿using DVG.GLSH.Generator.Members;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GLSHGenerator.Types
+namespace DVG.GLSH.Generator.Types
 {
     internal partial class VectorType
     {
@@ -92,7 +92,7 @@ namespace GLSHGenerator.Types
                 yield return new Function(this, "ClampLength")
                 {
                     Static = true,
-                    Parameters = new string[] {$"{Name} value, {BaseType.Name} maxLength"},
+                    Parameters = new string[] { $"{Name} value, {BaseType.Name} maxLength" },
                     Code = new string[]
                     {
                         $"var sqrLength = SqrLength(value);",

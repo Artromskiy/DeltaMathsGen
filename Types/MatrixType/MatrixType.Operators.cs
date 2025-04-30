@@ -1,9 +1,10 @@
-﻿using GLSHGenerator.Members;
+﻿using DVG.GLSH.Generator.Members;
 using System.Collections.Generic;
 using System.Linq;
 using static System.Linq.Enumerable;
 using static System.String;
-namespace GLSHGenerator.Types
+
+namespace DVG.GLSH.Generator.Types
 {
     internal partial class MatrixType
     {

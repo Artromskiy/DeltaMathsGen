@@ -1,8 +1,8 @@
-﻿using GLSHGenerator.Members;
+﻿using DVG.GLSH.Generator.Members;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GLSHGenerator.Types
+namespace DVG.GLSH.Generator.Types
 {
     internal partial class VectorType
     {
@@ -38,19 +38,19 @@ namespace GLSHGenerator.Types
 
             if (BaseType != BuiltinType.TypeBool)
             {
-                yield return new ComponentWiseOperator(Fields, this, "+", this, "lhs", this, "rhs", "{0} + {1}") {GlslName = "op_Addition", CanScalar0 = true, CanScalar1 = true };
-                yield return new ComponentWiseOperator(Fields, this, "-", this, "lhs", this, "rhs", "{0} - {1}") {GlslName = "op_Subtraction", CanScalar0 = true, CanScalar1 = true };
-                yield return new ComponentWiseOperator(Fields, this, "*", this, "lhs", this, "rhs", "{0} * {1}") {GlslName = "op_Multiply", CanScalar0 = true, CanScalar1 = true };
-                yield return new ComponentWiseOperator(Fields, this, "/", this, "lhs", this, "rhs", "{0} / {1}") {GlslName = "op_Division", CanScalar0 = true, CanScalar1 = true };
+                yield return new ComponentWiseOperator(Fields, this, "+", this, "lhs", this, "rhs", "{0} + {1}") { GlslName = "op_Addition", CanScalar0 = true, CanScalar1 = true };
+                yield return new ComponentWiseOperator(Fields, this, "-", this, "lhs", this, "rhs", "{0} - {1}") { GlslName = "op_Subtraction", CanScalar0 = true, CanScalar1 = true };
+                yield return new ComponentWiseOperator(Fields, this, "*", this, "lhs", this, "rhs", "{0} * {1}") { GlslName = "op_Multiply", CanScalar0 = true, CanScalar1 = true };
+                yield return new ComponentWiseOperator(Fields, this, "/", this, "lhs", this, "rhs", "{0} / {1}") { GlslName = "op_Division", CanScalar0 = true, CanScalar1 = true };
             }
 
             if (BaseType == BuiltinType.TypeInt || BaseType == BuiltinType.TypeUint)
             {
                 yield return new ComponentWiseOperator(Fields, this, "~", this, "v", "~{0}") { GlslName = "op_OnesComplement" };
-                yield return new ComponentWiseOperator(Fields, this, "%", this, "lhs", this, "rhs", "{0} % {1}") {GlslName = "op_Modulus", CanScalar0 = true, CanScalar1 = true };
-                yield return new ComponentWiseOperator(Fields, this, "^", this, "lhs", this, "rhs", "{0} ^ {1}") {GlslName = "op_ExclusiveOr", CanScalar0 = true, CanScalar1 = true };
-                yield return new ComponentWiseOperator(Fields, this, "|", this, "lhs", this, "rhs", "{0} | {1}") {GlslName = "op_BitwiseOr", CanScalar0 = true, CanScalar1 = true };
-                yield return new ComponentWiseOperator(Fields, this, "&", this, "lhs", this, "rhs", "{0} & {1}") {GlslName = "op_BitwiseAnd", CanScalar0 = true, CanScalar1 = true };
+                yield return new ComponentWiseOperator(Fields, this, "%", this, "lhs", this, "rhs", "{0} % {1}") { GlslName = "op_Modulus", CanScalar0 = true, CanScalar1 = true };
+                yield return new ComponentWiseOperator(Fields, this, "^", this, "lhs", this, "rhs", "{0} ^ {1}") { GlslName = "op_ExclusiveOr", CanScalar0 = true, CanScalar1 = true };
+                yield return new ComponentWiseOperator(Fields, this, "|", this, "lhs", this, "rhs", "{0} | {1}") { GlslName = "op_BitwiseOr", CanScalar0 = true, CanScalar1 = true };
+                yield return new ComponentWiseOperator(Fields, this, "&", this, "lhs", this, "rhs", "{0} & {1}") { GlslName = "op_BitwiseAnd", CanScalar0 = true, CanScalar1 = true };
             }
 
             // TODO Disable for old dotnet
