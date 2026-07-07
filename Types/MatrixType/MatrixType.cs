@@ -194,11 +194,10 @@ namespace DVG.GLSH.Generator.Types
             foreach (var item in Functions())
                 yield return item;
 
-            yield return new Field("Count", BuiltinType.TypeInt)
+            yield return new Property("Count", BuiltinType.TypeInt)
             {
-                Constant = true,
                 Comment = $"Returns the number of Fields ({Columns} x {Rows} = {FieldCount}).",
-                DefaultValue = FieldCount.ToString(),
+                GetterLine = $"{FieldCount}",
             };
 
             var vecType = new VectorType(BaseType, Rows);

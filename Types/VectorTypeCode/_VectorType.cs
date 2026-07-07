@@ -18,8 +18,7 @@ namespace DVG.GLSH.Generator.Types
         public IEnumerable<string> Fields => "xyzw".Substring(0, Length).Select(c => c.ToString());
         public override string Name => GetName(BaseType, Length);
         public override string TypeComment => $"A vector of type {BaseTypeName} with {Length} components.";
-        public override IEnumerable<string> BaseClasses => new string[] { $"IEquatable<{Name}>" };
-
+        public override IEnumerable<string> BaseClasses => new string[] { $"IEquatable<{Name}>", $"IComparable<{Name}>" };
         public string CompString => "xyzw".Substring(0, Length);
         public static char ArgOf(int c) => "xyzw"[c];
         public static char ArgOfRGBA(int c) => "rgba"[c];

@@ -9,8 +9,17 @@ namespace DVG.GLSH.Generator.Types
         public override IEnumerable<Member> GenerateMembers()
         {
             // fields
+            int fieldIndex = 0;
             foreach (var f in Fields)
-                yield return new Field(f, BaseType) { Comment = $"{f}-component" };
+            {
+                var field = new Field(f, BaseType)
+                {
+                    Comment = $"{f}-component",
+                    Attributes = new string[] { $"DataMember(Order = {fieldIndex})" }
+                };
+                yield return field;
+                fieldIndex++;
+            }
 
             foreach (var item in Constructors())
                 yield return item;

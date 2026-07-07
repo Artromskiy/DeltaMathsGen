@@ -16,7 +16,9 @@ namespace DVG.GLSH.Generator.Types
         /// <returns></returns>
         private IEnumerable<Member> GeometryFunctions()
         {
-            if (BaseType != BuiltinType.TypeFloat && BaseType != BuiltinType.TypeDouble)
+            if (BaseType != BuiltinType.TypeFloat &&
+                BaseType != BuiltinType.TypeDouble &&
+                BaseType != BuiltinType.TypeFix)
                 yield break;
 
             yield return new Function(BaseType, "Length")

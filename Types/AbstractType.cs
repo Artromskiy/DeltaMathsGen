@@ -12,8 +12,6 @@ namespace DVG.GLSH.Generator.Types
         public const bool GenerateQuaternions = false;
         public const bool GenerateMatrices = false;
 
-        public const bool FullUnmanaged = true;
-
         public const bool SeparateUnmanagedAsExtensions = true;
 
         /// <summary>
@@ -27,7 +25,8 @@ namespace DVG.GLSH.Generator.Types
         public virtual IEnumerable<string> Attributes => new string[]
         {
             "Serializable",
-            "StructLayout(LayoutKind.Sequential)"
+            "StructLayout(LayoutKind.Sequential)",
+            "DataContract"
         };
 
         /// <summary>
@@ -135,10 +134,13 @@ namespace DVG.GLSH.Generator.Types
         {
             get
             {
+                yield return "#pragma warning disable IDE1006";
+                yield return "#nullable enable";
                 yield return "using System;";
                 yield return "using System.Collections.Generic;";
                 yield return "using System.Runtime.InteropServices;";
                 yield return "using System.Numerics;";
+                yield return "using System.Diagnostics;";
                 yield return "";
                 yield return "";
                 yield return "namespace " + Namespace;
@@ -162,9 +164,12 @@ namespace DVG.GLSH.Generator.Types
             get
             {
                 var baseclasses = BaseClasses.ToArray();
+                yield return "#pragma warning disable IDE1006";
+                yield return "#nullable enable";
                 yield return "using System;";
                 yield return "using System.Runtime.InteropServices;";
                 yield return "using System.Collections.Generic;";
+                yield return "using System.Diagnostics;";
                 yield return "";
                 yield return "";
                 yield return "namespace " + Namespace + ".Extensions";
@@ -197,9 +202,12 @@ namespace DVG.GLSH.Generator.Types
             {
                 var baseclasses = BaseClasses.ToArray();
                 yield return "#pragma warning disable IDE1006";
+                yield return "#nullable enable";
                 yield return "using System;";
                 yield return "using System.Runtime.InteropServices;";
                 yield return "using System.Runtime.CompilerServices;";
+                yield return "using System.Runtime.Serialization;";
+                yield return "using System.Diagnostics;";
                 yield return "";
                 yield return "";
                 yield return "namespace " + Namespace;

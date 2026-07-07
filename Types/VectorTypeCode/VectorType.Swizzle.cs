@@ -23,13 +23,13 @@ namespace DVG.GLSH.Generator.Types
             }
             foreach (var indices in Combinations(4).Concat(Combinations(3)).Concat(Combinations(2)))
             {
-                var xyzw = SwizzleProperty(indices, ArgOf);
+                var xyzw = SwizzleProperty(indices.ToList(), ArgOf);
                 if (xyzw != null)
                     yield return xyzw;
-                var rgba = SwizzleProperty(indices, ArgOfRGBA);
+                var rgba = SwizzleProperty(indices.ToList(), ArgOfRGBA);
                 if (rgba != null)
                     yield return rgba;
-                var stpq = SwizzleProperty(indices, ArgOfSTPQ);
+                var stpq = SwizzleProperty(indices.ToList(), ArgOfSTPQ);
                 if (stpq != null)
                     yield return stpq;
             }
@@ -49,7 +49,8 @@ namespace DVG.GLSH.Generator.Types
                 Setter = noSetter ? null : combination.Select((c, i) => $"{ArgOf(c)} = value.{ArgOf(i)};"),
                 Comment = "Gets or sets the specified subset of components.",
                 GlslName = isGlsl ? "Swizzle" : string.Empty,
-                DisableGlmGen = true
+                DisableGlmGen = true,
+                Attributes = new string[] { "DebuggerBrowsable(DebuggerBrowsableState.Never)" }
             };
         }
 

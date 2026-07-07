@@ -44,7 +44,6 @@ namespace DVG.GLSH.Generator.Members
         {
             Name = name;
             Type = type;
-            //Attributes = new[] { "DataMember" };
         }
     }
 }

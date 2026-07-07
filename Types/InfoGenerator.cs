@@ -16,12 +16,11 @@ namespace DVG.GLSH.Generator.Types
             yield return "using System.Globalization;";
             yield return "using System.Runtime.InteropServices;";
             yield return "using System.Runtime.CompilerServices;";
+            yield return "using using System.Runtime.Serialization;";
             yield return "using System.Diagnostics.CodeAnalysis;";
             yield return "using System.Runtime.Serialization;";
             yield return "using System.Numerics;";
             yield return "using System.Linq;";
-            yield return "";
-            yield return "// ReSharper disable InconsistentNaming";
             yield return "";
             yield return "namespace " + AbstractType.Namespace;
             yield return "{";

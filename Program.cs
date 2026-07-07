@@ -26,18 +26,18 @@ namespace DVG.GLSH.Generator
                 if (type.CSharpFile.WriteToFileIfChanged(path))
                     Console.WriteLine("    CHANGED " + path);
 
-                path = Path.Combine(folder, type.Name + ".glsh.cs");
-                new FileInfo(path).Directory?.Create();
-                if (type.GlmSharpFile.WriteToFileIfChanged(path))
-                    Console.WriteLine("    CHANGED " + path);
+                //path = Path.Combine(folder, type.Name + ".glsh.cs");
+                //new FileInfo(path).Directory?.Create();
+                //if (type.GlmSharpFile.WriteToFileIfChanged(path))
+                //    Console.WriteLine("    CHANGED " + path);
 
-                if (AbstractType.SeparateUnmanagedAsExtensions)
-                {
-                    path = Path.Combine(folder, type.Name + ".ext.cs");
-                    new FileInfo(path).Directory?.Create();
-                    if (type.ExtCSharpFile.WriteToFileIfChanged(path))
-                        Console.WriteLine("    CHANGED " + path);
-                }
+                //if (AbstractType.SeparateUnmanagedAsExtensions)
+                //{
+                //    path = Path.Combine(folder, type.Name + ".ext.cs");
+                //    new FileInfo(path).Directory?.Create();
+                //    if (type.ExtCSharpFile.WriteToFileIfChanged(path))
+                //        Console.WriteLine("    CHANGED " + path);
+                //}
             }
             /*
             var file = AbstractType.InfoPathOf(infoPath, "GLSHInfo");

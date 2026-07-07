@@ -20,13 +20,54 @@ namespace DVG.GLSH.Generator.Types
                 Comment = "Returns HashCode"
             };
 
+            yield return new Function(BuiltinType.TypeInt, "CompareTo")
+            {
+                Override = false,
+                Readonly = true,
+                ParameterString = $"{Name} other",
+                CodeString = $"Comparison.Combine({string.Join(", ", Fields)}, {string.Join(", ", Fields.Select(f => $"other.{f}"))})",
+                Comment = "Compares two values"
+            };
+
             yield return new Function(new AnyType("string"), "ToString")
             {
                 Override = true,
                 Readonly = true,
-                CodeString = $"{string.Join(" + \", \" + ", Fields)}",
+                CodeString = $"$\"{string.Join(", ", Fields.Select(f => $"{{{f}}}"))}\"",
                 Comment = "Returns a string representation of this vector."
             };
+
+
+            yield return new Function(this, "Parse")
+            {
+                Override = false,
+                Static = true,
+                Readonly = false,
+                Parameters = new string[] { "string value" },
+                Code = new string[]
+                {
+                    "var values = value.Split(\", \");",
+                    $"return new {Name}({string.Join(", ", Fields.Select((f, i)=>$"{BaseTypeName}.Parse(values[{i}])"))});",
+                },
+                Comment = "Parses vector value from string representation."
+            };
+
+            if (BaseType != BuiltinType.TypeBool)
+                yield return new Function(this, "Parse")
+                {
+                    Override = false,
+                    Static = true,
+                    Readonly = false,
+                    Parameters = new string[] { "string value, IFormatProvider format" },
+                    Code = new string[]
+                    {
+                    "var values = value.Split(\", \");",
+                    $"return new {Name}({string.Join(", ", Fields.Select((f, i)=>$"{BaseTypeName}.Parse(values[{i}], format)"))});",
+                    },
+                    Comment = "Parses vector value from string representation."
+                };
+
+
 
             yield return new Function(BuiltinType.TypeBool, "Equals")
             {
@@ -43,10 +84,9 @@ namespace DVG.GLSH.Generator.Types
                 CodeString = $"obj is {Name} other && Equals(other)",
             };
 
-            yield return new Field("Count", BuiltinType.TypeInt)
+            yield return new Property("Count", BuiltinType.TypeInt)
             {
-                Constant = true,
-                DefaultValue = Length.ToString(),
+                GetterLine = Length.ToString(),
                 Comment = $"Returns the number of components ({Length})."
             };
 
@@ -58,7 +98,9 @@ namespace DVG.GLSH.Generator.Types
                 Comment = $"Returns new vector with every component set to default."
             };
 
-            if (BaseType == BuiltinType.TypeFloat || BaseType == BuiltinType.TypeDouble)
+            if (BaseType == BuiltinType.TypeFloat ||
+                BaseType == BuiltinType.TypeDouble ||
+                BaseType == BuiltinType.TypeFix)
             {
                 yield return new Function(BaseType, "SqrLength")
                 {
@@ -110,7 +152,13 @@ namespace DVG.GLSH.Generator.Types
                 {
                     Static = true,
                     Parameters = new string[] { $"{Name} current, {Name} target, {BaseType.Name} maxDelta" },
-                    CodeString = $"{Construct(this, Fields.Select(f => $"Maths.MoveTowards(current.{f}, target.{f}, maxDelta)"))}",
+                    Code = new string[]
+                    {
+                        $"var delta = target - current;",
+                        $"var sqrDist = SqrLength(delta);",
+                        $"return sqrDist <= maxDelta * maxDelta ? target :",
+                        $"current + delta * maxDelta * Maths.InverseSqrt(sqrDist);",
+                    },
                     Comment = "Moves vector towards target."
                 };
             }

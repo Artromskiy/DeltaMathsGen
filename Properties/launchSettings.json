@@ -2,7 +2,7 @@
   "profiles": {
     "GLSH.Generator": {
       "commandName": "Project",
-      "commandLineArgs": "C:\\Users\\FLOW\\Documents\\GitHub\\DVG\\GLSH\\Core"
+      "commandLineArgs": "C:\\Users\\FLOW\\Documents\\GitHub\\DVG\\GLSH\\Core\\Vectors"
     }
   }
 }

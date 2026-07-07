@@ -14,6 +14,7 @@ namespace DVG.GLSH.Generator.Types
                 yield return TypeFloat;
                 yield return TypeBool;
                 yield return TypeDouble;
+                yield return TypeFix;
 
                 if (GenerateHalfs)
                     yield return TypeHalf;
@@ -123,6 +124,14 @@ namespace DVG.GLSH.Generator.Types
             OneValueConstant = "true",
             ZeroValueConstant = "false",
             IsBool = true,
+        };
+        public static readonly BuiltinType TypeFix = new BuiltinType
+        {
+            TypeName = "fix",
+            OneValueConstant = "fix.One",
+            ZeroValueConstant = "fix.Zero",
+            TypeConstants = new[] { "MaxValue", "MinValue" },
+            HasArithmetics = true,
         };
 
         public string TypeName { get; set; }
