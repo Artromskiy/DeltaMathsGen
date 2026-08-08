@@ -1,9 +1,9 @@
-﻿using DVG.GLSH.Generator.Types;
+﻿using Kibix.MathsGen.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DVG.GLSH.Generator.Members
+namespace Kibix.MathsGen.Members
 {
     internal class Indexer : Member
     {

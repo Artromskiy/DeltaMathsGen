@@ -1,7 +1,7 @@
-﻿using DVG.GLSH.Generator.Types;
+﻿using Kibix.MathsGen.Types;
 using System.Collections.Generic;
 
-namespace DVG.GLSH.Generator.Members
+namespace Kibix.MathsGen.Members
 {
     internal class Constructor : Member
     {

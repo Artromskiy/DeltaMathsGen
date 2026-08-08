@@ -1,6 +1,6 @@
-﻿using DVG.GLSH.Generator.Types;
+﻿using Kibix.MathsGen.Types;
 
-namespace DVG.GLSH.Generator.Members
+namespace Kibix.MathsGen.Members
 {
     internal class Operator : Function
     {

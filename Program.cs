@@ -1,10 +1,10 @@
-﻿using DVG.GLSH.Generator.Types;
+﻿using Kibix.MathsGen.Types;
 using System;
 using System.Globalization;
 using System.IO;
 using System.Threading;
 
-namespace DVG.GLSH.Generator
+namespace Kibix.MathsGen
 {
     internal class Program
     {
@@ -15,7 +15,7 @@ namespace DVG.GLSH.Generator
             string folder = args[0];
             var genFolder = folder;
 
-            Console.WriteLine("GLSH Generator");
+            Console.WriteLine("Kibix MathsGen");
 
             AbstractType.InitTypes();
 

@@ -1,8 +1,8 @@
-﻿using DVG.GLSH.Generator.Members;
+﻿using Kibix.MathsGen.Members;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DVG.GLSH.Generator.Types
+namespace Kibix.MathsGen.Types
 {
     internal abstract class AbstractType
     {
@@ -53,7 +53,7 @@ namespace DVG.GLSH.Generator.Types
         /// <summary>
         /// Namespace of this type
         /// </summary>
-        public static string Namespace { get; } = "DVG";
+        public static string Namespace { get; } = "Kibix";
 
         /// <summary>
         /// Comment of this type

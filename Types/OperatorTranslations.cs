@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DVG.GLSH.Generator.Types
+namespace Kibix.MathsGen.Types
 {
     internal static class OperatorTranslations
     {

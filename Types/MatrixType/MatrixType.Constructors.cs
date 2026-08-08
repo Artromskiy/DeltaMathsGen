@@ -1,8 +1,8 @@
-﻿using DVG.GLSH.Generator.Members;
+﻿using Kibix.MathsGen.Members;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DVG.GLSH.Generator.Types
+namespace Kibix.MathsGen.Types
 {
     internal partial class MatrixType
     {

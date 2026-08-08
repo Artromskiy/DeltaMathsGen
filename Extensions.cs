@@ -1,10 +1,10 @@
-﻿using DVG.GLSH.Generator.Types;
+﻿using Kibix.MathsGen.Types;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace DVG.GLSH.Generator
+namespace Kibix.MathsGen
 {
     internal static class Extensions
     {
