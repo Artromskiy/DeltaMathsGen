@@ -2,7 +2,8 @@
 using System.Globalization;
 using System.IO;
 using System.Threading;
-using System.Linq;
+using System.Collections.Generic;
+using KibiHex.MathsGen.Generation;
 
 namespace KibiHex.MathsGen
 {
@@ -13,20 +14,10 @@ namespace KibiHex.MathsGen
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
 
-            if (args.Length > 1 && args[0] == "--dump-api")
+            if (args.Length != 1)
             {
-                var surface = Validation.ApiSurfaceReader.Read(args[1]);
-                foreach (var type in surface.Types.Values.OrderBy(type => type.Name))
-                foreach (var member in type.Members.OrderBy(member => member))
-                    Console.WriteLine(type.Name + "|" + member);
-                return;
-            }
-
-            if (args.Length > 1 && args[1] == "--model-preview")
-            {
-                var declaration = KibiHex.MathsGen.Model.VectorDeclarations.Float2();
-                var renderer = new KibiHex.MathsGen.Model.Rendering.CSharpRenderer();
-                Console.WriteLine(renderer.Render(declaration));
+                Console.Error.WriteLine("Usage: KibiHex.MathsGen <vectors-output-directory>");
+                Environment.ExitCode = 2;
                 return;
             }
 
@@ -35,35 +26,32 @@ namespace KibiHex.MathsGen
 
         private static void GenerateDeclarativeVectors(string folder)
         {
-            var types = new[] { "bool", "int", "uint", "float", "double", "fix" }
-                .SelectMany(scalar => new[] { 2, 3, 4 }.Select(dimension =>
-                    new Model.VectorFamily { ScalarName = scalar, Dimension = dimension }.Create()))
-                .ToArray();
+            var typeList = new List<Model.TypeSpec>(Model.ScalarTypes.All.Length * 3);
+            foreach (var scalar in Model.ScalarTypes.All)
+            foreach (var dimension in new[] { 2, 3, 4 })
+                typeList.Add(new Model.VectorFamily { Scalar = scalar, Dimension = dimension }.Create());
+            var types = typeList.ToArray();
+            Validation.ModelValidator.Validate(Model.ScalarTypes.All, types);
             var layout = new Model.Rendering.TypeFileLayout();
+            var sources = new List<GeneratedSource>();
 
             foreach (var type in types)
             foreach (var file in layout.Render(type))
-            {
-                var path = Path.Combine(folder, file.Name);
-                new FileInfo(path).Directory?.Create();
-                File.WriteAllText(path, file.Source);
-                Console.WriteLine("    WROTE " + path);
-            }
+                sources.Add(new GeneratedSource(file.Name, file.Source));
 
             var maths = new Model.Rendering.ShaderMathsRenderer();
             if (maths.CanRender(types))
-            {
-                var path = Path.Combine(folder, "maths.vectors.cs");
-                File.WriteAllText(path, maths.Render(types));
-                Console.WriteLine("    WROTE " + path);
-            }
+                sources.Add(new GeneratedSource("maths.vectors.cs", maths.Render(types)));
 
-            var mathsSources = Directory.GetFiles(Directory.GetParent(folder)!.FullName, "Maths*.cs", SearchOption.TopDirectoryOnly);
+            var output = Path.GetFullPath(folder);
+            var mathsFolder = Directory.GetParent(output)?.FullName
+                ?? throw new InvalidOperationException("The vectors output directory must have a parent directory.");
+            var mathsSources = Directory.GetFiles(mathsFolder, "Maths*.cs", SearchOption.TopDirectoryOnly);
             var scalarMethods = new Model.ScalarMathsScanner().Scan(mathsSources);
             var scalarMaths = new Model.Rendering.ScalarMathsRenderer().Render(scalarMethods);
-            var scalarMathsPath = Path.Combine(folder, "maths.cs");
-            File.WriteAllText(scalarMathsPath, scalarMaths);
-            Console.WriteLine("    WROTE " + scalarMathsPath);
+            sources.Add(new GeneratedSource("maths.cs", scalarMaths));
+
+            GeneratedFileWriter.Write(output, sources.ToArray());
         }
     }
 }

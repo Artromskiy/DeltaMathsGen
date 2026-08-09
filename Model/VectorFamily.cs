@@ -7,13 +7,18 @@ namespace KibiHex.MathsGen.Model
 {
     internal sealed class VectorFamily
     {
-        public string ScalarName { get; init; }
-        public int Dimension { get; init; }
+        public required ScalarDefinition Scalar { get; init; }
+        public required int Dimension { get; init; }
 
         public TypeSpec Create()
         {
-            var name = ScalarName + Dimension;
+            if (Dimension is < 2 or > 4)
+                throw new ArgumentOutOfRangeException(nameof(Dimension), "Vector dimensions must be between 2 and 4.");
+
+            var scalarName = Scalar.Name;
+            var name = scalarName + Dimension;
             var fields = "xyzw"[..Dimension];
+            var context = new VectorContext { Scalar = Scalar, Dimension = Dimension };
             var members = new List<MemberSpec>();
             members.AddRange(CreateFields(fields));
             members.Add(new FieldSpec
@@ -38,9 +43,15 @@ namespace KibiHex.MathsGen.Model
             members.AddRange(CreateObjectContract(name, fields));
             members.AddRange(CreateParseFunctions(name, fields));
 
-            if (ScalarName != "bool")
+            if (Scalar.Supports(ScalarCapabilities.Arithmetic))
             {
-                if (ScalarName != "uint") members.Add(CreateUnaryOperator(name, fields, "-"));
+                if (Scalar.Supports(ScalarCapabilities.UnaryPlus)) members.Add(CreateUnaryOperator(name, fields, "+"));
+                if (Scalar.Supports(ScalarCapabilities.Signed)) members.Add(CreateUnaryOperator(name, fields, "-"));
+                if (Scalar.Supports(ScalarCapabilities.Increment))
+                {
+                    members.Add(CreateUnaryOperator(name, fields, "++"));
+                    members.Add(CreateUnaryOperator(name, fields, "--"));
+                }
                 members.Add(CreateBinaryOperator(name, fields, "+"));
                 members.Add(CreateBinaryOperator(name, fields, "-"));
                 members.Add(CreateBinaryOperator(name, fields, "*"));
@@ -48,8 +59,8 @@ namespace KibiHex.MathsGen.Model
                 members.AddRange(CreateScalarOperators(name, fields));
             }
 
-            members.AddRange(VectorOperatorCatalog.Create(ScalarName, Dimension));
-            members.AddRange(VectorFunctionCatalog.Create(ScalarName, Dimension));
+            members.AddRange(VectorOperatorCatalog.Create(context));
+            members.AddRange(VectorFunctionCatalog.Create(context));
 
             members.AddRange(CreateSwizzles(fields));
 
@@ -60,7 +71,7 @@ namespace KibiHex.MathsGen.Model
                 Kind = "struct",
                 Modifiers = Modifiers.Public | Modifiers.Partial,
                 Interfaces = [$"IEquatable<{name}>", $"IComparable<{name}>"],
-                Comment = $"A vector of type {ScalarName} with {Dimension} components.",
+                Comment = $"A vector of type {scalarName} with {Dimension} components.",
                 Attributes = ["Serializable", "StructLayout(LayoutKind.Sequential)", "System.Runtime.Serialization.DataContract"],
                 Members = members.ToArray(),
             };
@@ -70,14 +81,24 @@ namespace KibiHex.MathsGen.Model
             fields.Select((component, index) => new FieldSpec
             {
                 Name = component.ToString(),
-                Type = Type(ScalarName),
+                Type = Type(Scalar.Name),
                 Attributes = [$"System.Runtime.Serialization.DataMember(Order = {index})"],
             }).ToArray();
 
         private MemberSpec[] CreateParseFunctions(string name, string fields)
         {
-            var split = "var values = value.Split(',');\n";
-            var parsed = string.Join(", ", Enumerable.Range(0, Dimension).Select(index => $"{ScalarName}.Parse(values[{index}])"));
+            var split = $$"""
+                value = value.Trim();
+                if (value.Length >= 2 && value[0] == '[' && value[value.Length - 1] == ']')
+                    value = value.Substring(1, value.Length - 2);
+                var values = value.Split(',');
+                if (values.Length != {{Dimension}})
+                    throw new FormatException("Expected {{Dimension}} vector components.");
+
+                """;
+            var parsed = string.Join(", ", Enumerable.Range(0, Dimension).Select(index => Scalar.ParseAcceptsFormatProvider
+                ? $"{Scalar.Name}.Parse(values[{index}].Trim(), System.Globalization.CultureInfo.InvariantCulture)"
+                : $"{Scalar.Name}.Parse(values[{index}].Trim())"));
             var result = new List<MemberSpec>
             {
                 new FunctionSpec
@@ -89,9 +110,9 @@ namespace KibiHex.MathsGen.Model
                     Body = split + $"return new({parsed});",
                 },
             };
-            if (ScalarName != "bool")
+            if (Scalar.ParseAcceptsFormatProvider)
             {
-                var formatted = string.Join(", ", Enumerable.Range(0, Dimension).Select(index => $"{ScalarName}.Parse(values[{index}], format)"));
+                var formatted = string.Join(", ", Enumerable.Range(0, Dimension).Select(index => $"{Scalar.Name}.Parse(values[{index}].Trim(), format)"));
                 result.Add(new FunctionSpec
                 {
                     Name = "Parse",
@@ -106,13 +127,13 @@ namespace KibiHex.MathsGen.Model
 
         private ConstructorSpec CreateConstructor(string name, string fields) => new()
         {
-            Parameters = fields.Select(component => Param(component.ToString(), Type(ScalarName))).ToArray(),
+            Parameters = fields.Select(component => Param(component.ToString(), Type(Scalar.Name))).ToArray(),
             Body = string.Join("\n", fields.Select(component => $"this.{component} = {component};")),
         };
 
         private ConstructorSpec CreateScalarConstructor(string name, string fields) => new()
         {
-            Parameters = [Param("value", Type(ScalarName))],
+            Parameters = [Param("value", Type(Scalar.Name))],
             Body = string.Join("\n", fields.Select(component => $"{component} = value;")),
         };
 
@@ -121,7 +142,7 @@ namespace KibiHex.MathsGen.Model
             var constructors = new List<ConstructorSpec>();
             foreach (var sourceDimension in new[] { 2, 3, 4 })
             {
-                var sourceName = ScalarName + sourceDimension;
+                var sourceName = Scalar.Name + sourceDimension;
                 var assignments = fields.Select((component, index) =>
                     $"{component} = {(index < sourceDimension ? $"value.{"xyzw"[index]}" : DefaultValue())};");
                 constructors.Add(new ConstructorSpec
@@ -130,7 +151,59 @@ namespace KibiHex.MathsGen.Model
                     Body = string.Join("\n", assignments),
                 });
             }
+            AddMixedConstructors(constructors, fields);
             return constructors.ToArray();
+        }
+
+        private void AddMixedConstructors(List<ConstructorSpec> constructors, string fields)
+        {
+            var scalar = Type(Scalar.Name);
+            foreach (var partition in ComponentPartitions(Dimension))
+            {
+                if (partition.Length == 1 || partition.All(length => length == 1))
+                    continue;
+
+                var parameters = new List<ParameterSpec>();
+                var assignments = new List<string>();
+                var offset = 0;
+                foreach (var length in partition)
+                {
+                    var parameterName = fields.Substring(offset, length);
+                    parameters.Add(Param(parameterName, length == 1 ? scalar : Type(Scalar.Name + length)));
+                    for (var component = 0; component < length; component++)
+                    {
+                        var target = fields[offset + component];
+                        var source = length == 1 ? parameterName : parameterName + "." + "xyzw"[component];
+                        assignments.Add($"this.{target} = {source};");
+                    }
+                    offset += length;
+                }
+
+                constructors.Add(new ConstructorSpec
+                {
+                    Parameters = parameters.ToArray(),
+                    Body = string.Join("\n", assignments),
+                });
+            }
+        }
+
+        private static int[][] ComponentPartitions(int total)
+        {
+            var result = new List<int[]>();
+            BuildPartition(total, [], result);
+            return result.ToArray();
+        }
+
+        private static void BuildPartition(int remaining, int[] prefix, List<int[]> result)
+        {
+            if (remaining == 0)
+            {
+                result.Add(prefix);
+                return;
+            }
+
+            for (var length = 1; length <= Math.Min(3, remaining); length++)
+                BuildPartition(remaining - length, [.. prefix, length], result);
         }
 
         private MemberSpec[] CreateObjectContract(string name, string fields)
@@ -175,7 +248,7 @@ namespace KibiHex.MathsGen.Model
                     Name = "ToString",
                     ReturnType = Type("string"),
                     Modifiers = Modifiers.Public | Modifiers.Override,
-                    Body = $"return $\"[{string.Join(", ", fields.Select(component => "{" + component + "}"))}]\";",
+                    Body = $"return FormattableString.Invariant($\"{string.Join(", ", fields.Select(component => "{" + component + "}"))}\");",
                 },
             ];
         }
@@ -194,7 +267,7 @@ namespace KibiHex.MathsGen.Model
 
         private IndexerSpec CreateIndexer(string fields) => new()
         {
-            Type = Type(ScalarName),
+            Type = Type(Scalar.Name),
             Parameter = Param("index", Type("int")),
             Getter =
             """
@@ -241,7 +314,7 @@ namespace KibiHex.MathsGen.Model
                     Modifiers = Modifiers.Public | Modifiers.Static,
                     Operator = symbol,
                     ReturnType = Type(name),
-                    Parameters = [Param("left", Type(name)), Param("right", Type(ScalarName))],
+                    Parameters = [Param("left", Type(name)), Param("right", Type(Scalar.Name))],
                     Body = $"return new({string.Join(", ", fields.Select(component => $"left.{component} {symbol} right"))});",
                 });
                 result.Add(new OperatorSpec
@@ -250,7 +323,7 @@ namespace KibiHex.MathsGen.Model
                     Modifiers = Modifiers.Public | Modifiers.Static,
                     Operator = symbol,
                     ReturnType = Type(name),
-                    Parameters = [Param("left", Type(ScalarName)), Param("right", Type(name))],
+                    Parameters = [Param("left", Type(Scalar.Name)), Param("right", Type(name))],
                     Body = $"return new({string.Join(", ", fields.Select(component => $"left {symbol} right.{component}"))});",
                 });
             }
@@ -267,50 +340,6 @@ namespace KibiHex.MathsGen.Model
             Body = $"return {string.Join(symbol == "==" ? " && " : " || ", fields.Select(component => $"left.{component} {symbol} right.{component}"))};",
         };
 
-        private FunctionSpec CreateDot(string name, string fields) => new()
-        {
-            Name = "Dot",
-            ReturnType = Type(ScalarName),
-            Modifiers = Modifiers.Public | Modifiers.Static,
-            Api = ApiSurface.Vector,
-            Parameters = [Param("left", Type(name)), Param("right", Type(name))],
-            Body = $"return {string.Join(" + ", fields.Select(component => $"left.{component} * right.{component}"))};",
-            Part = TypePart.Geometry,
-        };
-
-        private FunctionSpec CreateLength(string name) => new()
-        {
-            Name = "Length",
-            ReturnType = Type(ScalarName),
-            Modifiers = Modifiers.Public | Modifiers.Static,
-            Api = ApiSurface.Vector,
-            Parameters = [Param("value", Type(name))],
-            Body = "return Maths.Sqrt(Dot(value, value));",
-            Part = TypePart.Geometry,
-        };
-
-        private FunctionSpec CreateNormalize(string name) => new()
-        {
-            Name = "Normalize",
-            ReturnType = Type(name),
-            Modifiers = Modifiers.Public | Modifiers.Static,
-            Api = ApiSurface.Vector,
-            Parameters = [Param("value", Type(name))],
-            Body = "return value / Length(value);",
-            Part = TypePart.Geometry,
-        };
-
-        private FunctionSpec CreateLerp(string name, string fields) => new()
-        {
-            Name = "Lerp",
-            ReturnType = Type(name),
-            Modifiers = Modifiers.Public | Modifiers.Static,
-            Api = ApiSurface.Vector,
-            Parameters = [Param("a", Type(name)), Param("b", Type(name)), Param("t", Type(ScalarName))],
-            Body = $"return new({string.Join(", ", fields.Select(component => $"Maths.Lerp(a.{component}, b.{component}, t)"))});",
-            Part = TypePart.Geometry,
-        };
-
         private PropertySpec[] CreateSwizzles(string fields)
         {
             var result = new List<PropertySpec>();
@@ -325,7 +354,7 @@ namespace KibiHex.MathsGen.Model
                     continue;
 
                 var propertyName = string.Concat(indices.Select(index => index < 0 ? '_' : alphabet[index]));
-                var vectorType = Type(ScalarName + length);
+                var vectorType = Type(Scalar.Name + length);
                 var values = indices.Select(index => index < 0 ? DefaultValue() : fields[index].ToString()).ToArray();
                 var canWrite = indices.All(index => index >= 0) && indices.Distinct().Count() == indices.Length;
 
@@ -352,7 +381,7 @@ namespace KibiHex.MathsGen.Model
                 result.Add(new PropertySpec
                 {
                     Name = alphabet[index].ToString(),
-                    Type = Type(ScalarName),
+                    Type = Type(Scalar.Name),
                     Part = TypePart.Swizzles,
                     Getter = fields[index].ToString(),
                     Setter = $"{fields[index]} = value",
@@ -360,10 +389,11 @@ namespace KibiHex.MathsGen.Model
             }
         }
 
-        private IEnumerable<int[]> Combinations(int length)
+        private int[][] Combinations(int length)
         {
             var values = Enumerable.Range(-1, Dimension + 1).ToArray();
             var count = (int)System.Math.Pow(values.Length, length);
+            var combinations = new int[count][];
             for (var number = 0; number < count; number++)
             {
                 var current = number;
@@ -373,17 +403,11 @@ namespace KibiHex.MathsGen.Model
                     result[index] = values[current % values.Length];
                     current /= values.Length;
                 }
-                yield return result;
+                combinations[number] = result;
             }
+            return combinations;
         }
 
-        private string DefaultValue() => ScalarName switch
-        {
-            "float" => "0f",
-            "double" => "0.0",
-            "uint" => "0u",
-            "bool" => "false",
-            _ => "0",
-        };
+        private string DefaultValue() => Scalar.ZeroLiteral;
     }
 }

@@ -18,7 +18,8 @@ namespace KibiHex.MathsGen.Model.Rendering
             writer.Block($"{SyntaxFormatter.Modifiers(type.Modifiers)} {type.Kind} {type.Name}{interfaces}".Trim(), () =>
             {
                 foreach (var member in type.Members)
-                    if (member.Part == part)
+                    if (member.Part == part &&
+                        (member is not FunctionSpec function || function.Targets.HasFlag(FunctionTargets.Type)))
                         members.Render(writer, member, type.Name);
             });
         }

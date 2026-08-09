@@ -8,13 +8,7 @@ namespace KibiHex.MathsGen.Model.Rendering
 
     internal sealed class TypeFileLayout
     {
-        private static readonly TypePart[] Parts =
-        {
-            TypePart.Core,
-            TypePart.Operators,
-            TypePart.Geometry,
-            TypePart.Swizzles,
-        };
+        private static readonly TypePart[] Parts = Enum.GetValues<TypePart>();
 
         private readonly CSharpRenderer renderer;
 
@@ -36,7 +30,7 @@ namespace KibiHex.MathsGen.Model.Rendering
             {
                 var part = parts[index];
                 files[index] = new TypeFile(
-                    type.Name + part.FileSuffix + ".cs",
+                    type.Name + Suffix(part) + ".cs",
                     part,
                     renderer.Render(type, part));
             }
@@ -44,6 +38,17 @@ namespace KibiHex.MathsGen.Model.Rendering
             return files;
         }
 
-        public IReadOnlyList<TypeFile> GetFiles(TypeSpec type) => Render(type);
+        private static string Suffix(TypePart part) => part switch
+        {
+            TypePart.Core => "",
+            TypePart.Operators => ".operators",
+            TypePart.Common => ".common",
+            TypePart.Geometry => ".geometry",
+            TypePart.Trigonometry => ".trigonometry",
+            TypePart.Exponential => ".exponential",
+            TypePart.Relational => ".relational",
+            TypePart.Swizzles => ".swizzles",
+            _ => throw new ArgumentOutOfRangeException(nameof(part), part, null),
+        };
     }
 }
