@@ -1,45 +1,19 @@
-﻿using Kibix.MathsGen.Types;
+using KibiHex.MathsGen.CodeModel;
+using KibiHex.MathsGen.Types;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
-namespace Kibix.MathsGen.Members
+namespace KibiHex.MathsGen.Members
 {
     internal class Property : Member
     {
-        /// <summary>
-        /// Property type
-        /// </summary>
         public AbstractType Type { get; set; }
-
-        /// <summary>
-        /// True if override property
-        /// </summary>
         public bool Override { get; set; }
-
-        /// <summary>
-        /// Getter code
-        /// </summary>
-        public IEnumerable<string> Getter { get; set; }
-        /// <summary>
-        /// Setter code
-        /// </summary>
-        public IEnumerable<string>? Setter { get; set; }
-
-        /// <summary>
-        /// Single-Line getter
-        /// </summary>
+        public IReadOnlyList<string> Getter { get; set; }
+        public IReadOnlyList<string> Setter { get; set; }
         public string GetterLine { set => Getter = new[] { value }; }
-        /// <summary>
-        /// Single-Line setter
-        /// </summary>
         public string SetterLine { set => Setter = new[] { value }; }
-
-        /// <summary>
-        /// Initial value
-        /// </summary>
         public string Value { get; set; }
-
         public override string MemberPrefix => base.MemberPrefix + (Override ? " override" : "");
 
         public Property(string name, AbstractType type)
@@ -48,73 +22,40 @@ namespace Kibix.MathsGen.Members
             Type = type;
         }
 
-        public override IEnumerable<Member> GlshMembers()
+        public override void Render(CodeWriter writer)
         {
-            if (DisableGlmGen)
-                yield break;
-            if (Static)
-                yield break; // nothing for static props
-            if (Setter != null)
-                yield break; // nothing for stuff with setters
-
-            var varname = OriginalType is VectorType ? "v" : "m";
-            yield return new Function(Type, Name)
+            base.Render(writer);
+            if (!string.IsNullOrEmpty(Value))
             {
-                Static = true,
-                Comment = Comment,
-                ParameterString = $"{OriginalType.Name} {varname}",
-                CodeString = $"{varname}.{Name}"
-            };
-        }
+                writer.Line($"{MemberPrefix} readonly {Type.Name} {Name} {{ get; }} = {Value};");
+                return;
+            }
 
-        public override IEnumerable<string> Lines
-        {
-            get
+            var getter = Getter ?? throw new NotSupportedException();
+            writer.Line($"{MemberPrefix} {Type.Name} {Name}");
+            writer.Line("{");
+            writer.Indent(() =>
             {
-                foreach (var line in base.Lines)
-                    yield return line;
-
-                if (!string.IsNullOrEmpty(Value))
-                {
-                    yield return $"{MemberPrefix} readonly {Type.Name} {Name} {{ get; }} = {Value};";
-                    yield break;
-                }
-
-                var getter = Getter?.ToArray();
-                var setter = Setter?.ToArray();
-
-                if (getter == null)
-                    throw new NotSupportedException();
-
-                if (getter.Length == 1 && setter == null)
-                {
-                    yield return $"{MemberPrefix} readonly {Type.Name} {Name} => {getter[0]};";
-                    yield break;
-                }
-                yield return $"{MemberPrefix} {Type.Name} {Name}";
-                yield return "{";
-                if (getter.Length == 1)
-                {
-                    yield return $"readonly get => {getter[0]};".Indent();
-                }
+                if (getter.Count == 1)
+                    writer.Line($"get => {getter[0]};");
                 else
                 {
-                    yield return "readonly get".Indent();
-                    yield return "{".Indent();
-                    foreach (var line in getter)
-                        yield return line.Indent(2);
-                    yield return "}".Indent();
+                    writer.Line("get");
+                    writer.Line("{");
+                    writer.Indent(() => { foreach (var line in getter) writer.Line(line); });
+                    writer.Line("}");
                 }
-                if (setter != null)
+
+                if (Setter != null)
                 {
-                    yield return "set".Indent();
-                    yield return "{".Indent();
-                    foreach (var line in setter)
-                        yield return line.Indent(2);
-                    yield return "}".Indent();
-                    yield return "}";
+                    writer.Line("set");
+                    writer.Line("{");
+                    writer.Indent(() => { foreach (var line in Setter) writer.Line(line); });
+                    writer.Line("}");
                 }
-            }
+            });
+            writer.Line("}");
         }
     }
 }
+

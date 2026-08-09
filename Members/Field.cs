@@ -1,7 +1,7 @@
-﻿using Kibix.MathsGen.Types;
-using System.Collections.Generic;
+﻿using KibiHex.MathsGen.Types;
+using KibiHex.MathsGen.CodeModel;
 
-namespace Kibix.MathsGen.Members
+namespace KibiHex.MathsGen.Members
 {
     internal class Field : Member
     {
@@ -29,15 +29,10 @@ namespace Kibix.MathsGen.Members
 
         private string GetDefaultValue => string.IsNullOrEmpty(DefaultValue) ? string.Empty : " = " + DefaultValue;
 
-        public override IEnumerable<string> Lines
+        public override void Render(CodeWriter writer)
         {
-            get
-            {
-                foreach (var line in base.Lines)
-                    yield return line;
-
-                yield return $"{MemberPrefix} {Type.Name} {Name}{GetDefaultValue};";
-            }
+            base.Render(writer);
+            writer.Line($"{MemberPrefix} {Type.Name} {Name}{GetDefaultValue};");
         }
 
         public Field(string name, AbstractType type)
@@ -47,3 +42,4 @@ namespace Kibix.MathsGen.Members
         }
     }
 }
+

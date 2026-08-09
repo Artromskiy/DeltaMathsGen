@@ -1,8 +1,8 @@
-﻿using Kibix.MathsGen.Members;
+﻿using KibiHex.MathsGen.Members;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Kibix.MathsGen.Types
+namespace KibiHex.MathsGen.Types
 {
     internal partial class VectorType
     {
@@ -12,7 +12,7 @@ namespace Kibix.MathsGen.Types
             yield return new Constructor(this, Fields)
             {
                 Parameters = Fields.TypedArgs(BaseType),
-                Initializers = Fields,
+                Initializers = Fields.ToArray(),
                 Comment = "Component-wise constructor"
             };
 
@@ -47,7 +47,7 @@ namespace Kibix.MathsGen.Types
                     yield return new Constructor(this, Fields)
                     {
                         ParameterString = new VectorType(BaseType, comps).Name + " v, " + SubCompParameterString(comps, ucomps),
-                        Initializers = "v".DotComp(comps).Concat(SubCompArgs(comps, ucomps)),
+                        Initializers = "v".DotComp(comps).Concat(SubCompArgs(comps, ucomps)).ToArray(),
                         Comment = "from-vector-and-value constructor" + commentAddition
                     };
                 }
@@ -55,3 +55,4 @@ namespace Kibix.MathsGen.Types
         }
     }
 }
+

@@ -1,24 +1,18 @@
-﻿using Kibix.MathsGen.Types;
+﻿using KibiHex.MathsGen.Types;
+using KibiHex.MathsGen.CodeModel;
+using KibiHex.MathsGen.Model;
+using System;
 using System.Collections.Generic;
 
-namespace Kibix.MathsGen.Members
+namespace KibiHex.MathsGen.Members
 {
     internal abstract class Member
     {
+        public TypePart Part { get; set; } = TypePart.Core;
         /// <summary>
         /// Original type ref
         /// </summary>
         public AbstractType OriginalType { get; set; }
-
-        /// <summary>
-        /// Is this member has corresponding member in GLSL
-        /// </summary>
-        public bool GlslBuiltIn => !string.IsNullOrEmpty(GlslName);
-
-        /// <summary>
-        /// Name of corresponding member in GLSL
-        /// </summary>
-        public string GlslName { get; set; }
 
         /// <summary>
         /// Name of the member
@@ -51,16 +45,27 @@ namespace Kibix.MathsGen.Members
         public string[] Attributes = new string[] { };
 
         /// <summary>
-        /// All lines of this member
+        /// Renders this member into the current source writer.
         /// </summary>
-        public virtual IEnumerable<string> Lines
+        public virtual void Render(CodeWriter writer)
+        {
+            foreach (var line in Comment.AsComment())
+                writer.Line(line);
+            foreach (var attribute in Attributes)
+                writer.Line($"[{attribute}]");
+        }
+
+        // Compatibility adapter for the current type renderer. New code should call Render directly.
+        public IReadOnlyList<string> Lines
         {
             get
             {
-                foreach (var line in Comment.AsComment())
-                    yield return line;
-                foreach (var attribute in Attributes)
-                    yield return $"[{attribute}]";
+                var writer = new CodeWriter();
+                Render(writer);
+                var text = writer.ToString().TrimEnd('\r', '\n');
+                return text.Length == 0
+                    ? Array.Empty<string>()
+                    : text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
             }
         }
 
@@ -69,14 +74,6 @@ namespace Kibix.MathsGen.Members
         /// </summary>
         public virtual string MemberPrefix => Visibility + (Static ? " static" : "");
 
-        /// <summary>
-        /// Returns an enumeration of members used for the "glsh" class
-        /// </summary>
-        public virtual IEnumerable<Member> GlshMembers() { yield break; }
-
-        /// <summary>
-        /// If true, does not generate glm versions
-        /// </summary>
-        public bool DisableGlmGen { get; set; }
     }
 }
+

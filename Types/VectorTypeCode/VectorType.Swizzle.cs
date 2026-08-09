@@ -1,19 +1,13 @@
-﻿using Kibix.MathsGen.Members;
+﻿using KibiHex.MathsGen.Members;
+using KibiHex.MathsGen.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Kibix.MathsGen.Types
+namespace KibiHex.MathsGen.Types
 {
     internal partial class VectorType
     {
-        /// <summary>
-        /// Refers to GLSL 450 specs.
-        /// 5 Operators and Expressions.
-        /// 5.5 Vector and Scalar Components and Length.
-        /// https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.4.50.pdf
-        /// </summary>
-        /// <returns></returns>
         private IEnumerable<Member> SwizzleProperties()
         {
             for (int i = 0; i < Length; i++)
@@ -40,16 +34,14 @@ namespace Kibix.MathsGen.Types
             var swizzleRename = string.Concat(combination.Select(c => c == -1 ? '_' : rename.Invoke(c)));
             var returnType = new VectorType(BaseType, combination.Count);
             bool noSetter = combination.Contains(-1) || combination.Count > Length || combination.Distinct().Count() != combination.Count;
-            bool isGlsl = !combination.Contains(-1);
             if (combination.All(c => c == -1))
                 return null;
             return new Property(swizzleRename, returnType)
             {
                 GetterLine = $"{Construct(returnType, combination.Select(c => c == -1 ? BaseType.ZeroValue : ArgOf(c).ToString()))}",
-                Setter = noSetter ? null : combination.Select((c, i) => $"{ArgOf(c)} = value.{ArgOf(i)};"),
+                Setter = noSetter ? null : combination.Select((c, i) => $"{ArgOf(c)} = value.{ArgOf(i)};").ToArray(),
                 Comment = "Gets or sets the specified subset of components.",
-                GlslName = isGlsl ? "Swizzle" : string.Empty,
-                DisableGlmGen = true,
+                Part = TypePart.Swizzles,
                 Attributes = new string[] { "DebuggerBrowsable(DebuggerBrowsableState.Never)" }
             };
         }
@@ -64,8 +56,7 @@ namespace Kibix.MathsGen.Types
                 GetterLine = $"{prop}",
                 SetterLine = $"{prop} = value;",
                 Comment = "Gets or sets the specified subset of components.",
-                GlslName = "Swizzle",
-                DisableGlmGen = true
+                Part = TypePart.Swizzles
             };
         }
 
@@ -94,3 +85,4 @@ namespace Kibix.MathsGen.Types
         }
     }
 }
+

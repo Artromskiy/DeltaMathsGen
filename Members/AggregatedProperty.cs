@@ -1,7 +1,7 @@
-﻿using Kibix.MathsGen.Types;
+﻿using KibiHex.MathsGen.Types;
 using System.Collections.Generic;
 
-namespace Kibix.MathsGen.Members
+namespace KibiHex.MathsGen.Members
 {
     internal class AggregatedProperty : Property
     {
@@ -12,3 +12,4 @@ namespace Kibix.MathsGen.Members
         }
     }
 }
+

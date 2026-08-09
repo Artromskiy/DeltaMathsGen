@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Kibix.MathsGen.Types
+namespace KibiHex.MathsGen.Types
 {
     internal static class OperatorTranslations
     {
@@ -31,3 +31,4 @@ namespace Kibix.MathsGen.Types
         };
     }
 }
+

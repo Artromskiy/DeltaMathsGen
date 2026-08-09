@@ -1,7 +1,7 @@
-﻿using Kibix.MathsGen.Members;
+﻿using KibiHex.MathsGen.Members;
 using System.Collections.Generic;
 
-namespace Kibix.MathsGen.Types
+namespace KibiHex.MathsGen.Types
 {
     internal partial class VectorType
     {
@@ -22,3 +22,4 @@ namespace Kibix.MathsGen.Types
 
     }
 }
+

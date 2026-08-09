@@ -1,6 +1,6 @@
-﻿using Kibix.MathsGen.Types;
+﻿using KibiHex.MathsGen.Types;
 
-namespace Kibix.MathsGen.Members
+namespace KibiHex.MathsGen.Members
 {
     internal class Operator : Function
     {
@@ -10,3 +10,4 @@ namespace Kibix.MathsGen.Members
         }
     }
 }
+

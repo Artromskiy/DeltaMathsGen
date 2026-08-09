@@ -1,9 +1,10 @@
-﻿using Kibix.MathsGen.Types;
+﻿using KibiHex.MathsGen.Types;
+using KibiHex.MathsGen.CodeModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Kibix.MathsGen.Members
+namespace KibiHex.MathsGen.Members
 {
     internal class Indexer : Member
     {
@@ -20,11 +21,11 @@ namespace Kibix.MathsGen.Members
         /// <summary>
         /// Getter code
         /// </summary>
-        public IEnumerable<string> Getter { get; set; }
+        public IReadOnlyList<string> Getter { get; set; }
         /// <summary>
         /// Setter code
         /// </summary>
-        public IEnumerable<string> Setter { get; set; }
+        public IReadOnlyList<string> Setter { get; set; }
 
         /// <summary>
         /// Single-Line getter
@@ -43,7 +44,7 @@ namespace Kibix.MathsGen.Members
         /// <summary>
         /// Indexer parameters
         /// </summary>
-        public IEnumerable<string> Parameters { get; set; }
+        public IReadOnlyList<string> Parameters { get; set; } = Array.Empty<string>();
         public string ParameterString { set { Parameters = new[] { value }; } }
 
         public override string MemberPrefix => base.MemberPrefix + (Override ? " override" : "");
@@ -53,52 +54,44 @@ namespace Kibix.MathsGen.Members
             Type = type;
         }
 
-        public override IEnumerable<string> Lines
+        public override void Render(CodeWriter writer)
         {
-            get
+            base.Render(writer);
+            var getter = Getter ?? throw new NotSupportedException();
+
+            if (Setter == null && getter.Count == 1)
             {
-                foreach (var line in base.Lines)
-                    yield return line;
-
-                var getter = Getter?.ToArray();
-                var setter = Setter?.ToArray();
-
-                if (getter == null)
-                    throw new NotSupportedException();
-
-                if (setter == null) // getter-only
-                {
-                    if (getter.Length == 1)
-                        yield return $"{MemberPrefix} {Type.Name} this[{Parameters.CommaSeparated()}] => {getter[0]};";
-                    else
-                    {
-                        yield return $"{MemberPrefix} {Type.Name} this[{Parameters.CommaSeparated()}]";
-                        yield return "{";
-                        yield return "    get";
-                        yield return "    {";
-                        foreach (var line in getter)
-                            yield return line.Indent(2);
-                        yield return "    }";
-                        yield return "}";
-                    }
-                }
-                else
-                {
-                    yield return $"{MemberPrefix} {Type.Name} this[{Parameters.CommaSeparated()}]";
-                    yield return "{";
-                    yield return "    get";
-                    yield return "    {";
-                    foreach (var line in getter)
-                        yield return line.Indent(2);
-                    yield return "    }";
-                    yield return "    set";
-                    yield return "    {";
-                    foreach (var line in setter)
-                        yield return line.Indent(2);
-                    yield return "    }";
-                    yield return "}";
-                }
+                writer.Line($"{MemberPrefix} {Type.Name} this[{Parameters.CommaSeparated()}] => {getter[0]};");
+                return;
             }
+
+            writer.Line($"{MemberPrefix} {Type.Name} this[{Parameters.CommaSeparated()}]");
+            writer.Line("{");
+            writer.Indent(() =>
+            {
+                writer.Line("get");
+                writer.Line("{");
+                writer.Indent(() =>
+                {
+                    foreach (var line in getter)
+                        writer.Line(line);
+                });
+                writer.Line("}");
+
+                if (Setter != null)
+                {
+                    writer.Line("set");
+                    writer.Line("{");
+                    writer.Indent(() =>
+                    {
+                        foreach (var line in Setter)
+                            writer.Line(line);
+                    });
+                    writer.Line("}");
+                }
+            });
+            writer.Line("}");
         }
     }
 }
+

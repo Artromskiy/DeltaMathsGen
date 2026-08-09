@@ -1,9 +1,10 @@
-﻿using Kibix.MathsGen.Types;
+﻿using KibiHex.MathsGen.Types;
+using KibiHex.MathsGen.CodeModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Kibix.MathsGen.Members
+namespace KibiHex.MathsGen.Members
 {
     internal class Function : Member
     {
@@ -15,7 +16,7 @@ namespace Kibix.MathsGen.Members
         /// <summary>
         /// Parameters
         /// </summary>
-        public IEnumerable<string> Parameters { get; set; } = new string[] { };
+        public IReadOnlyList<string> Parameters { get; set; } = Array.Empty<string>();
 
         /// <summary>
         /// Parameters as a string
@@ -25,7 +26,7 @@ namespace Kibix.MathsGen.Members
         /// <summary>
         /// Lines of code
         /// </summary>
-        public IEnumerable<string> Code { get; set; }
+        public IReadOnlyList<string> Code { get; set; }
 
         /// <summary>
         /// Code as a string
@@ -47,18 +48,17 @@ namespace Kibix.MathsGen.Members
             Name = name;
         }
 
-        public override IEnumerable<Member> GlshMembers()
+        public List<Member> LegacyMembers()
         {
-            if (DisableGlmGen)
-                yield break;
+            var result = new List<Member>();
             if (Visibility != "public")
-                yield break;
+                return result;
             if (this is ExplicitOperator)
-                yield break;
+                return result;
             if (this is ImplicitOperator)
-                yield break;
+                return result;
             if (this is Operator)
-                yield break;
+                return result;
 
             if (Static)
             {
@@ -69,52 +69,51 @@ namespace Kibix.MathsGen.Members
                 var ptype = paras[0].Split(' ')[0];
                 if (ptype == OriginalType.Name)
                 {
-                    yield return new Function(ReturnType, Name)
+                    result.Add(new Function(ReturnType, Name)
                     {
                         Static = true,
                         Parameters = Parameters,
                         Comment = Comment,
                         CodeString = $"{OriginalType.Name}.{Name}({Parameters.ArgNames().CommaSeparated()})"
-                    };
+                    });
                 }
 
-                yield break; // nothing for static props
+                return result; // nothing for static props
             }
 
             var varname = OriginalType is VectorType ? "v" : "m";
 
-            yield return new Function(ReturnType, Name)
+            result.Add(new Function(ReturnType, Name)
             {
                 Static = true,
                 Comment = Comment,
-                Parameters = OriginalType.TypedArgs(varname).Concat(Parameters),
+                Parameters = OriginalType.TypedArgs(varname).Concat(Parameters).ToArray(),
                 CodeString = $"{varname}.{Name}({Parameters.ArgNames().CommaSeparated()})"
-            };
+            });
+            return result;
         }
 
-        public override IEnumerable<string> Lines
+        public override void Render(CodeWriter writer)
         {
-            get
+            base.Render(writer);
+            var code = Code ?? Array.Empty<string>();
+
+            if (code.Count == 1)
             {
-                foreach (var line in base.Lines)
-                    yield return line;
-
-                var code = Code.ToArray();
-
-                if (code.Length == 1)
-                {
-                    yield return $"{MemberPrefix} {ReturnName} {FunctionName}({Parameters.CommaSeparated()}) => {code[0]};".Trim();
-                }
-                else
-                {
-                    yield return $"{MemberPrefix} {ReturnName} {FunctionName}({Parameters.CommaSeparated()})".Trim();
-                    yield return "{";
-                    foreach (var line in code)
-                        yield return line.Indent();
-                    yield return "}";
-                }
+                writer.Line($"{MemberPrefix} {ReturnName} {FunctionName}({Parameters.CommaSeparated()}) => {code[0]};".Trim());
+                return;
             }
+
+            writer.Line($"{MemberPrefix} {ReturnName} {FunctionName}({Parameters.CommaSeparated()})".Trim());
+            writer.Line("{");
+            writer.Indent(() =>
+            {
+                foreach (var line in code)
+                    writer.Line(line);
+            });
+            writer.Line("}");
         }
     }
 
 }
+

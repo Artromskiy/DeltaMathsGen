@@ -1,13 +1,12 @@
-﻿using Kibix.MathsGen.Members;
+﻿using KibiHex.MathsGen.Members;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Kibix.MathsGen.Types
+namespace KibiHex.MathsGen.Types
 {
     internal partial class MatrixType
     {
         /// <summary>
-        /// Refers to GLSL 450 specs.
         /// 5 Operators and Expressions.
         /// 5.4.2 Vector and Matrix Constructors.
         /// </summary>
@@ -19,25 +18,24 @@ namespace Kibix.MathsGen.Types
             yield return new Constructor(this, Fields)
             {
                 Parameters = new string[] { $"{BaseTypeName} s" },
-                Code = Fields.Select(f => $"this{f} = " + (IsDiagonal(f) ? "s;" : "0;")),
+                Code = Fields.Select(f => $"this{f} = " + (IsDiagonal(f) ? "s;" : "0;")).ToArray(),
                 Comment = string.Format("Constructs diagonal matrix with scalar, non diagonal values are set to zero.")
             };
             var args = FieldsNames.ToArray();
             yield return new Constructor(this, Fields)
             {
                 Parameters = args.TypedArgs(BaseType),
-                Code = Enumerable.Range(0, FieldCount).Select(i => $"this{FieldFor(i)} = {args[i]};"),
-                Initializers = Fields,
+                Code = Enumerable.Range(0, FieldCount).Select(i => $"this{FieldFor(i)} = {args[i]};").ToArray(),
+                Initializers = Fields.ToArray(),
                 Comment = "Component-wise constructor"
             };
 
-            // Note: we can not provide all constructors as glsl does using familiar C# syntax and mechanisms,
             // for mat4 count of unique vector/scalar constructors is 20569!!!
             var vecType = new VectorType(BaseType, Rows);
             yield return new Constructor(this, Fields)
             {
-                Parameters = Enumerable.Range(0, Columns).Select(v => $"{vecType.Name} v{v}"),
-                Code = Enumerable.Range(0, Columns).Select(r => $"this[{r}] = v{r};"),
+                Parameters = Enumerable.Range(0, Columns).Select(v => $"{vecType.Name} v{v}").ToArray(),
+                Code = Enumerable.Range(0, Columns).Select(r => $"this[{r}] = v{r};").ToArray(),
                 Comment = string.Format("Constructs matrix from a series of column vectors.")
             };
 
@@ -51,10 +49,12 @@ namespace Kibix.MathsGen.Types
                     yield return new Constructor(this, Fields)
                     {
                         Parameters = paramMatrix.TypedArgs("m"),
-                        Code = Fields.Select(f => $"this{f} = {(paramMatrix.HasField(f) ? $"m{f}" : IsDiagonal(f) ? OneValue : ZeroValue)};"),
+                        Code = Fields.Select(f => $"this{f} = {(paramMatrix.HasField(f) ? $"m{f}" : IsDiagonal(f) ? OneValue : ZeroValue)};").ToArray(),
                         Comment = $"Constructs matrix from a {paramMatrix.Name} which will occupie left upper corner. Non-overwritten fields are from an Identity matrix."
                     };
                 }
         }
     }
 }
+
+

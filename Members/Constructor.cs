@@ -1,7 +1,9 @@
-﻿using Kibix.MathsGen.Types;
+﻿using KibiHex.MathsGen.Types;
+using KibiHex.MathsGen.CodeModel;
 using System.Collections.Generic;
+using System.Linq;
 
-namespace Kibix.MathsGen.Members
+namespace KibiHex.MathsGen.Members
 {
     internal class Constructor : Member
     {
@@ -13,7 +15,7 @@ namespace Kibix.MathsGen.Members
         /// <summary>
         /// ctor parameters
         /// </summary>
-        public IEnumerable<string> Parameters { get; set; }
+        public IReadOnlyList<string> Parameters { get; set; } = System.Array.Empty<string>();
 
         /// <summary>
         /// Single parameter
@@ -28,43 +30,42 @@ namespace Kibix.MathsGen.Members
         /// <summary>
         /// Fields to initialize
         /// </summary>
-        public IEnumerable<string> Fields { get; set; }
+        public IReadOnlyList<string> Fields { get; set; } = System.Array.Empty<string>();
 
         /// <summary>
-        /// Initializer ienumerable
+        /// Initializer expressions
         /// </summary>
-        public IEnumerable<string> Initializers { get; set; }
+        public IReadOnlyList<string> Initializers { get; set; } = System.Array.Empty<string>();
 
-        public IEnumerable<string> Code { get; set; }
+        public IReadOnlyList<string> Code { get; set; }
 
-        public override IEnumerable<string> Lines
+        public override void Render(CodeWriter writer)
         {
-            get
+            base.Render(writer);
+            writer.Line($"{MemberPrefix} {Type.Name}({Parameters.CommaSeparated()})");
+            if (!string.IsNullOrEmpty(ConstructorChain))
+                writer.Line((": " + ConstructorChain).Indent());
+            writer.Line("{");
+            writer.Indent(() =>
             {
-                foreach (var line in base.Lines)
-                    yield return line;
-
-                yield return $"{MemberPrefix} {Type.Name}({Parameters.CommaSeparated()})";
-                if (!string.IsNullOrEmpty(ConstructorChain))
-                    yield return (": " + ConstructorChain).Indent();
-                yield return "{";
                 if (Code != null)
                     foreach (var code in Code)
-                        yield return code.Indent();
+                        writer.Line(code);
                 if (string.IsNullOrEmpty(ConstructorChain) && Code == null)
                 {
                     var it = Initializers.GetEnumerator();
                     foreach (var c in Fields)
-                        yield return $"this.{c} = {(it.MoveNext() ? it.Current : Type.ZeroValue)};".Indent();
+                        writer.Line($"this.{c} = {(it.MoveNext() ? it.Current : Type.ZeroValue)};");
                 }
-                yield return "}";
-            }
+            });
+            writer.Line("}");
         }
 
         public Constructor(AbstractType type, IEnumerable<string> fields)
         {
-            Fields = fields;
+            Fields = fields.ToArray();
             Type = type;
         }
     }
 }
+

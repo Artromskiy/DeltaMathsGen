@@ -1,10 +1,10 @@
-﻿using Kibix.MathsGen.Members;
+﻿using KibiHex.MathsGen.Members;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Kibix.MathsGen.Types
+namespace KibiHex.MathsGen.Types
 {
-    internal abstract class AbstractType
+    internal abstract partial class AbstractType
     {
         public const bool GenerateHalfs = false;
         public const bool GenerateDecimals = false;
@@ -30,10 +30,6 @@ namespace Kibix.MathsGen.Types
         };
 
         /// <summary>
-        /// Name of corresponding type in GLSL
-        /// </summary>
-        public virtual string GlslName { get; }
-        /// <summary>
         /// Name of the base type
         /// </summary>
         public string BaseTypeName => BaseType.Name;
@@ -53,7 +49,7 @@ namespace Kibix.MathsGen.Types
         /// <summary>
         /// Namespace of this type
         /// </summary>
-        public static string Namespace { get; } = "Kibix";
+        public static string Namespace { get; } = "KibiHex";
 
         /// <summary>
         /// Comment of this type
@@ -81,7 +77,6 @@ namespace Kibix.MathsGen.Types
         private Indexer[] indexer;
         private ComponentWiseStaticFunction[] componentWiseStaticFunctions;
         private ComponentWiseOperator[] componentWiseOp;
-        private Member[] glmMembers;
         private Function[] extensionFunctions;
 
         /// <summary>
@@ -117,7 +112,6 @@ namespace Kibix.MathsGen.Types
             componentWiseStaticFunctions = members.OfType<ComponentWiseStaticFunction>().ForEach(e => e.Attributes = attributes).ToArray();
             componentWiseOp = members.OfType<ComponentWiseOperator>().ForEach(e => e.Attributes = attributes).ToArray();
             extensionFunctions = members.Where(m => m.Static && m.Extension && m.GetType() == typeof(Function)).OfType<Function>().ToArray();
-            glmMembers = members.SelectMany(m => m.GlshMembers()).ForEach(e => e.Attributes = attributes).ToArray();
         }
 
         /// <summary>
@@ -129,35 +123,6 @@ namespace Kibix.MathsGen.Types
         /// </summary>
         public string Construct(AbstractType type, params string[] args) => $"new {type.Name}({args.CommaSeparated()})";
 
-
-        public IEnumerable<string> GlmSharpFile
-        {
-            get
-            {
-                yield return "#pragma warning disable IDE1006";
-                yield return "#nullable enable";
-                yield return "using System;";
-                yield return "using System.Collections.Generic;";
-                yield return "using System.Runtime.InteropServices;";
-                yield return "using System.Numerics;";
-                yield return "using System.Diagnostics;";
-                yield return "";
-                yield return "";
-                yield return "namespace " + Namespace;
-                yield return "{";
-                yield return "    /// <summary>";
-                yield return "    /// Static class that contains static glsh functions";
-                yield return "    /// </summary>";
-                yield return "    public static partial class glsh";
-                yield return "    {";
-                foreach (var member in glmMembers)
-                    foreach (var line in member.Lines)
-                        yield return line.Indent(2);
-                yield return "";
-                yield return "    }";
-                yield return "}";
-            }
-        }
 
         public IEnumerable<string> ExtCSharpFile
         {
@@ -421,3 +386,4 @@ namespace Kibix.MathsGen.Types
         }
     }
 }
+

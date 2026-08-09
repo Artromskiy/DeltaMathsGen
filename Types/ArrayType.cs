@@ -1,8 +1,8 @@
-﻿using Kibix.MathsGen.Members;
+﻿using KibiHex.MathsGen.Members;
 using System;
 using System.Collections.Generic;
 
-namespace Kibix.MathsGen.Types
+namespace KibiHex.MathsGen.Types
 {
     internal class ArrayType : AbstractType
     {
@@ -30,3 +30,4 @@ namespace Kibix.MathsGen.Types
         }
     }
 }
+

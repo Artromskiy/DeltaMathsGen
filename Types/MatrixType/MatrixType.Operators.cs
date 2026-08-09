@@ -1,15 +1,14 @@
-﻿using Kibix.MathsGen.Members;
+﻿using KibiHex.MathsGen.Members;
 using System.Collections.Generic;
 using System.Linq;
 using static System.Linq.Enumerable;
 using static System.String;
 
-namespace Kibix.MathsGen.Types
+namespace KibiHex.MathsGen.Types
 {
     internal partial class MatrixType
     {
         /// <summary>
-        /// Refers to GLSL 450 specs.
         /// 5 Operators and Expressions.
         /// 5.9 Expressions.
         /// </summary>
@@ -29,7 +28,6 @@ namespace Kibix.MathsGen.Types
                     Comment = $"Executes a matrix-matrix-multiplication {Name} * {rhs.Name} -> {resultType.Name}.",
                     Parameters = new string[] { $"{Name} lhs", $"{rhs.Name} rhs" },
                     Code = new string[] { $"new {resultType.Name}({ctrParams1})" },
-                    GlslName = "op_Multiply",
                 };
             }
 
@@ -41,7 +39,6 @@ namespace Kibix.MathsGen.Types
                 Comment = "Executes a matrix-vector-multiplication.",
                 Parameters = new string[] { $"{Name} m", $"{inpType.Name} v" },
                 Code = new string[] { $"new {retType.Name}({ctrParams2})" },
-                GlslName = "op_Multiply",
             };
 
             // arithmetic operators
@@ -70,23 +67,22 @@ namespace Kibix.MathsGen.Types
                         Comment = $"Executes a component-wise {opComment}.",
                         Parameters = this.LhsRhs(),
                         Code = new string[] { $"new {Name}({Fields.Select(f => $"lhs{f} {op} rhs{f}").CommaSeparated()})" },
-                        GlslName = operatorToName[op]
                     };
                 yield return new Operator(this, op) // scalar * matrix
                 {
                     Comment = $"Executes a component-wise {opComment} with scalar.",
                     Parameters = new string[] { $"{BaseTypeName} s", $"{Name} m" },
                     Code = new string[] { $"new {Name}({Fields.Select(f => $"s {op} m{f}").CommaSeparated()})" },
-                    GlslName = operatorToName[op]
                 };
                 yield return new Operator(this, op) // matrix * scalar
                 {
                     Comment = $"Executes a component-wise {opComment} with scalar.",
                     Parameters = new string[] { $"{Name} m", $"{BaseTypeName} s" },
                     Code = new string[] { $"new {Name}({Fields.Select(f => $"m{f} {op} s").CommaSeparated()})" },
-                    GlslName = operatorToName[op]
                 };
             }
         }
     }
 }
+
+

@@ -1,7 +1,7 @@
-﻿using Kibix.MathsGen.Members;
+﻿using KibiHex.MathsGen.Members;
 using System.Collections.Generic;
 
-namespace Kibix.MathsGen.Types
+namespace KibiHex.MathsGen.Types
 {
     internal class BuiltinType : AbstractType
     {
@@ -162,3 +162,4 @@ namespace Kibix.MathsGen.Types
         public string[] TypeConstants { get; set; } = new string[] { };
     }
 }
+

@@ -1,10 +1,10 @@
-﻿using Kibix.MathsGen.Types;
+﻿using KibiHex.MathsGen.Types;
 using System;
 using System.Globalization;
 using System.IO;
 using System.Threading;
 
-namespace Kibix.MathsGen
+namespace KibiHex.MathsGen
 {
     internal class Program
     {
@@ -12,10 +12,19 @@ namespace Kibix.MathsGen
         {
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+
+            if (args.Length > 1 && args[1] == "--model-preview")
+            {
+                var declaration = KibiHex.MathsGen.Model.VectorDeclarations.Float2();
+                var renderer = new KibiHex.MathsGen.Model.Rendering.CSharpRenderer();
+                Console.WriteLine(renderer.Render(declaration));
+                return;
+            }
+
             string folder = args[0];
             var genFolder = folder;
 
-            Console.WriteLine("Kibix MathsGen");
+            Console.WriteLine("KibiHex MathsGen");
 
             AbstractType.InitTypes();
 
@@ -23,13 +32,12 @@ namespace Kibix.MathsGen
             {
                 var path = Path.Combine(folder, type.Name + ".cs");
                 new FileInfo(path).Directory?.Create();
-                if (type.CSharpFile.WriteToFileIfChanged(path))
+                if (type.RenderedCSharpFile.WriteToFileIfChanged(path))
                     Console.WriteLine("    CHANGED " + path);
 
-                //path = Path.Combine(folder, type.Name + ".glsh.cs");
-                //new FileInfo(path).Directory?.Create();
-                //if (type.GlmSharpFile.WriteToFileIfChanged(path))
-                //    Console.WriteLine("    CHANGED " + path);
+                var swizzlesPath = Path.Combine(folder, type.Name + ".swizzles.cs");
+                if (type.RenderedSwizzlesFile.WriteToFileIfChanged(swizzlesPath))
+                    Console.WriteLine("    CHANGED " + swizzlesPath);
 
                 //if (AbstractType.SeparateUnmanagedAsExtensions)
                 //{
@@ -39,12 +47,11 @@ namespace Kibix.MathsGen
                 //        Console.WriteLine("    CHANGED " + path);
                 //}
             }
-            /*
-            var file = AbstractType.InfoPathOf(infoPath, "GLSHInfo");
-            new FileInfo(file).Directory?.Create();
-            if (InfoGenerator.InfoFile().WriteToFileIfChanged(file))
-                Console.WriteLine("    CHANGED " + file);
-            */
+
+            var mathsPath = Path.Combine(folder, "maths.cs");
+            if (MathsFacade.Render(AbstractType.Types.Values).WriteToFileIfChanged(mathsPath))
+                Console.WriteLine("    CHANGED " + mathsPath);
         }
     }
 }
+

@@ -1,8 +1,9 @@
-﻿using Kibix.MathsGen.Types;
+﻿using KibiHex.MathsGen.Types;
+using KibiHex.MathsGen.CodeModel;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Kibix.MathsGen.Members
+namespace KibiHex.MathsGen.Members
 {
     internal class ComponentWiseOperator : Member
     {
@@ -49,7 +50,7 @@ namespace Kibix.MathsGen.Members
         /// <summary>
         /// Fields
         /// </summary>
-        public IEnumerable<string> Fields { get; set; }
+        public IReadOnlyList<string> Fields { get; set; }
 
         private void BuildComment()
         {
@@ -61,7 +62,7 @@ namespace Kibix.MathsGen.Members
 
         public ComponentWiseOperator(IEnumerable<string> fields, AbstractType returnType, string name, AbstractType para0, string paraName0, string compString)
         {
-            Fields = fields;
+            Fields = fields.ToArray();
             ReturnType = returnType;
             Name = "operator" + name;
             ParameterTypes = new[] { para0 };
@@ -74,7 +75,7 @@ namespace Kibix.MathsGen.Members
 
         public ComponentWiseOperator(IEnumerable<string> fields, AbstractType returnType, string name, AbstractType para0, string paraName0, AbstractType para1, string paraName1, string compString)
         {
-            Fields = fields;
+            Fields = fields.ToArray();
             ReturnType = returnType;
             Name = "operator" + name;
             ParameterTypes = new[] { para0, para1 };
@@ -87,7 +88,7 @@ namespace Kibix.MathsGen.Members
 
         public ComponentWiseOperator(IEnumerable<string> fields, AbstractType returnType, string name, AbstractType para0, string paraName0, AbstractType para1, string paraName1, AbstractType para2, string paraName2, string compString)
         {
-            Fields = fields;
+            Fields = fields.ToArray();
             ReturnType = returnType;
             Name = "operator" + name;
             ParameterTypes = new[] { para0, para1, para2 };
@@ -106,28 +107,31 @@ namespace Kibix.MathsGen.Members
             public bool Scalar;
         }
 
-        private IEnumerable<string> ParaInfosS(int i)
+        private List<string> ParaInfosS(int i)
         {
+            var result = new List<string>();
             if (i >= ParameterNames.Length)
             {
-                yield return "";
-                yield break;
+                result.Add("");
+                return result;
             }
 
             foreach (var s in ParaInfosS(i + 1))
-                yield return "0" + s;
+                result.Add("0" + s);
 
             if (i == 0 && CanScalar0)
                 foreach (var s in ParaInfosS(i + 1))
-                    yield return "1" + s;
+                    result.Add("1" + s);
 
             if (i == 1 && CanScalar1)
                 foreach (var s in ParaInfosS(i + 1))
-                    yield return "1" + s;
+                    result.Add("1" + s);
 
             if (i == 2 && CanScalar2)
                 foreach (var s in ParaInfosS(i + 1))
-                    yield return "1" + s;
+                    result.Add("1" + s);
+
+            return result;
         }
         private ArgInfo[] ParaInfos(string s)
         {
@@ -145,41 +149,38 @@ namespace Kibix.MathsGen.Members
             return info;
         }
 
-        public override IEnumerable<string> Lines
+        public override void Render(CodeWriter writer)
         {
-            get
+            foreach (var pis in ParaInfosS(0))
             {
-                // TODO: Upcasts
+                var arginfo = ParaInfos(pis);
+                if (arginfo.All(a => a.Scalar))
+                    continue; // not all scalars for ops
 
-                foreach (var pis in ParaInfosS(0))
+                BuildComment();
+                base.Render(writer);
+
+                string invok;
+                if (arginfo.All(a => a.Scalar))
+                    invok = string.Format(CompString, arginfo.Select(a => (object)a.ParaName).ToArray());
+                else
+                    invok = Fields.Select(f => string.Format(CompString, arginfo.Select(a => (object)string.Format(a.ParaInvoke, a.ParaName, f)).ToArray())).CommaSeparated();
+
+                if (!string.IsNullOrEmpty(ReturnOverride))
                 {
-                    var arginfo = ParaInfos(pis);
-                    if (arginfo.All(a => a.Scalar))
-                        continue; // not all scalars for ops
-
-                    BuildComment();
-                    foreach (var line in base.Lines)
-                        yield return line;
-
-                    string invok;
-                    if (arginfo.All(a => a.Scalar))
-                        invok = string.Format(CompString, arginfo.Select(a => (object)a.ParaName).ToArray());
-                    else invok = Fields.Select(f => string.Format(CompString, arginfo.Select(a => (object)string.Format(a.ParaInvoke, a.ParaName, f)).ToArray())).CommaSeparated();
-
-                    if (!string.IsNullOrEmpty(ReturnOverride))
-                    {
-                        yield return $"{MemberPrefix} {ReturnType.Name} {Name}({arginfo.Select(a => a.Type.Name + " " + a.ParaName).CommaSeparated()}) => {ReturnOverride};".Trim();
-                    }
-                    else
-                    {
-                        yield return string.Format("{0} {1} {2}({3}) => new {1}({4});",
-                            MemberPrefix, ReturnType.Name, Name,
-                            arginfo.Select(a => a.Type.Name + " " + a.ParaName).CommaSeparated(),
-                            invok
-                            ).Trim();
-                    }
+                    writer.Line($"{MemberPrefix} {ReturnType.Name} {Name}({arginfo.Select(a => a.Type.Name + " " + a.ParaName).CommaSeparated()}) => {ReturnOverride};".Trim());
+                }
+                else
+                {
+                    var functionName = Name.StartsWith("operator") ? "operator " + Name.Substring("operator".Length) : Name;
+                    writer.Line(string.Format("{0} {1} {2}({3}) => new {1}({4});",
+                        MemberPrefix, ReturnType.Name, functionName,
+                        arginfo.Select(a => a.Type.Name + " " + a.ParaName).CommaSeparated(),
+                        invok
+                        ).Trim());
                 }
             }
         }
     }
 }
+

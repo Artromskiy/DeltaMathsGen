@@ -1,8 +1,9 @@
 {
   "profiles": {
-    "Kibix.MathsGen": {
+    "KibiHex.MathsGen": {
       "commandName": "Project",
       "commandLineArgs": "/Users/rum/GitProjects/TheFurnace/Maths/Vectors"
     }
   }
 }
+

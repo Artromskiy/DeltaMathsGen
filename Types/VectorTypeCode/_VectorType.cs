@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Kibix.MathsGen.Types
+namespace KibiHex.MathsGen.Types
 {
     internal partial class VectorType : AbstractType
     {
-        public override string GlslName => BaseType.Prefix + "vec" + Length;
 
         public VectorType(BuiltinType type, int comps)
         {
@@ -36,3 +35,5 @@ namespace Kibix.MathsGen.Types
 
     }
 }
+
+

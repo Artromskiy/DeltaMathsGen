@@ -1,0 +1,22 @@
+using KibiHex.MathsGen.CodeModel;
+
+namespace KibiHex.MathsGen.Model.Rendering
+{
+    internal sealed class CSharpRenderer
+    {
+        private readonly TypeRenderer types = new();
+
+        public string Render(TypeSpec type, TypePart part = null)
+        {
+            part ??= TypePart.Core;
+            var writer = new CodeWriter();
+            writer.Line("#nullable enable");
+            writer.Line("using System;");
+            writer.Line("using System.Runtime.InteropServices;");
+            writer.Line();
+            writer.Block($"namespace {type.Namespace}", () => types.Render(writer, type, part));
+            return writer.ToString();
+        }
+    }
+}
+

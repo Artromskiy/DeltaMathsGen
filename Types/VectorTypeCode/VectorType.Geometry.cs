@@ -1,17 +1,15 @@
-﻿using Kibix.MathsGen.Members;
+﻿using KibiHex.MathsGen.Members;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Kibix.MathsGen.Types
+namespace KibiHex.MathsGen.Types
 {
     internal partial class VectorType
     {
 
         /// <summary>
-        /// Refers to GLSL 450 specs.
         /// 8 Built-in Functions
         /// 8.5 Geometric Functions
-        /// https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.4.50.pdf
         /// </summary>
         /// <returns></returns>
         private IEnumerable<Member> GeometryFunctions()
@@ -23,7 +21,6 @@ namespace Kibix.MathsGen.Types
 
             yield return new Function(BaseType, "Length")
             {
-                GlslName = "length",
                 Static = true,
                 Parameters = this.TypedArgs("v"),
                 CodeString = $"Maths.Sqrt({string.Join(" + ", Fields.Select(f => $"v.{f} * v.{f}"))})",
@@ -31,7 +28,6 @@ namespace Kibix.MathsGen.Types
             };
             yield return new Function(BaseType, "Distance")
             {
-                GlslName = "distance",
                 Static = true,
                 Parameters = this.LhsRhs(),
                 CodeString = $"{Name}.Length(lhs - rhs)",
@@ -39,7 +35,6 @@ namespace Kibix.MathsGen.Types
             };
             yield return new Function(BaseType, "Dot")
             {
-                GlslName = "dot",
                 Static = true,
                 Parameters = this.LhsRhs(),
                 CodeString = string.Join(" + ", Fields.Select(f => $"lhs.{f} * rhs.{f}")),
@@ -48,7 +43,6 @@ namespace Kibix.MathsGen.Types
             if (Length == 3)
                 yield return new Function(this, "Cross")
                 {
-                    GlslName = "cross",
                     Static = true,
                     Parameters = this.LhsRhs(),
                     CodeString = Construct(this, "lhs.y * rhs.z - lhs.z * rhs.y, lhs.z * rhs.x - lhs.x * rhs.z, lhs.x * rhs.y - lhs.y * rhs.x"),
@@ -56,7 +50,6 @@ namespace Kibix.MathsGen.Types
                 };
             yield return new Function(this, "Normalize")
             {
-                GlslName = "normalize",
                 Static = true,
                 Parameters = this.TypedArgs("v"),
                 CodeString = $"v / {Name}.Length(v)",
@@ -64,7 +57,6 @@ namespace Kibix.MathsGen.Types
             };
             yield return new Function(this, "FaceForward")
             {
-                GlslName = "faceforward",
                 Static = true,
                 Parameters = this.TypedArgs("N", "I", "Nref"),
                 CodeString = $"{Name}.Dot(Nref, I) < 0 ? N : -N",
@@ -72,7 +64,6 @@ namespace Kibix.MathsGen.Types
             };
             yield return new Function(this, "Reflect")
             {
-                GlslName = "reflect",
                 Static = true,
                 Parameters = this.TypedArgs("I", "N"),
                 CodeString = $"I - 2 * {Name}.Dot(N, I) * N",
@@ -80,7 +71,6 @@ namespace Kibix.MathsGen.Types
             };
             yield return new Function(this, "Refract")
             {
-                GlslName = "refract",
                 Static = true,
                 Parameters = this.TypedArgs("I", "N").SConcat(BaseTypeName + " eta"),
                 Code = new[]
@@ -95,3 +85,5 @@ namespace Kibix.MathsGen.Types
         }
     }
 }
+
+

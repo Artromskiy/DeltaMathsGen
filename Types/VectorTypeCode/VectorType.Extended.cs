@@ -1,13 +1,12 @@
-﻿using Kibix.MathsGen.Members;
+﻿using KibiHex.MathsGen.Members;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Kibix.MathsGen.Types
+namespace KibiHex.MathsGen.Types
 {
     internal partial class VectorType
     {
         /// <summary>
-        /// Does not refers to GLSL
         /// </summary>
         /// <returns></returns>
         private IEnumerable<Member> ExtendedFunctions()
@@ -129,7 +128,6 @@ namespace Kibix.MathsGen.Types
                     Static = true,
                     Parameters = new string[] { $"{Name} source", $"{Name} target", $"ref {Name} velocity", $"{BaseType.Name} smoothTime", $"{BaseType.Name} deltaTime" },
                     CodeString = $"{Construct(this, Fields.Select(f => $"Maths.SmoothDamp(source.{f}, target.{f}, ref velocity.{f}, smoothTime, deltaTime)"))}",
-                    DisableGlmGen = true
                 };
                 yield return new Function(this, "ClampLength")
                 {
@@ -169,3 +167,5 @@ namespace Kibix.MathsGen.Types
         }
     }
 }
+
+

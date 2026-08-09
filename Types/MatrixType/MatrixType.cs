@@ -1,13 +1,12 @@
-﻿using Kibix.MathsGen.Members;
+﻿using KibiHex.MathsGen.Members;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Kibix.MathsGen.Types
+namespace KibiHex.MathsGen.Types
 {
     internal partial class MatrixType : AbstractType
     {
-        public override string GlslName => $"{BaseType.Prefix}mat{Postfix}";
         private string Postfix => (Rows == Columns ? Columns.ToString() : $"{Columns}x{Rows}");
 
         public MatrixType(BuiltinType type, int cols, int rows)
@@ -242,7 +241,7 @@ namespace Kibix.MathsGen.Types
                 Static = true,
                 Extension = true,
                 Parameters = new string[] { "this " + Name + " value" },
-                Code = Fields.Select(f => $"yield return value{f};"),
+                Code = Fields.Select(f => $"yield return value{f};").ToArray(),
                 Comment = "Returns an enumerator that iterates through all fields."
             };
 
@@ -267,3 +266,5 @@ namespace Kibix.MathsGen.Types
 
     }
 }
+
+

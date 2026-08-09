@@ -1,8 +1,8 @@
-﻿using Kibix.MathsGen.Members;
+﻿using KibiHex.MathsGen.Members;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Kibix.MathsGen.Types
+namespace KibiHex.MathsGen.Types
 {
     internal partial class VectorType
     {
@@ -54,3 +54,4 @@ namespace Kibix.MathsGen.Types
         }
     }
 }
+

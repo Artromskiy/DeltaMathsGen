@@ -1,13 +1,21 @@
-﻿using Kibix.MathsGen.Types;
+﻿using KibiHex.MathsGen.Types;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Kibix.MathsGen
+namespace KibiHex.MathsGen
 {
     internal static class Extensions
     {
+        public static bool WriteToFileIfChanged(this string source, string filename)
+        {
+            var current = File.Exists(filename) ? File.ReadAllText(filename) : null;
+            if (source == current) return false;
+            File.WriteAllText(filename, source);
+            return true;
+        }
+
         public static bool WriteToFileIfChanged(this IEnumerable<string> flines, string filename)
         {
             var lines = flines.ToArray();
@@ -29,8 +37,8 @@ namespace Kibix.MathsGen
             return s.Split('=')[0].Trim().Split(' ').Last().Trim();
         }
 
-        public static IEnumerable<string> ArgNames(this IEnumerable<string> paras) => paras.CommaSeparated().Split(',').Select(p => p.ParameterNameExtract()).ToArray();
-        public static IEnumerable<string> ParasRecovered(this IEnumerable<string> paras) => paras.CommaSeparated().Split(',').ToArray();
+        public static string[] ArgNames(this IEnumerable<string> paras) => paras.CommaSeparated().Split(',').Select(p => p.ParameterNameExtract()).ToArray();
+        public static string[] ParasRecovered(this IEnumerable<string> paras) => paras.CommaSeparated().Split(',').ToArray();
 
         private static string NestedSymmetricFunction(IReadOnlyList<string> fields, string funcFormat, int start, int end)
         {
@@ -54,9 +62,9 @@ namespace Kibix.MathsGen
             return new string(' ', lvl * 4) + s;
         }
 
-        public static IEnumerable<string> TypedArgs(this IEnumerable<string> ss, AbstractType type)
+        public static string[] TypedArgs(this IEnumerable<string> ss, AbstractType type)
         {
-            return ss.Select(s => type.Name + " " + s);
+            return ss.Select(s => type.Name + " " + s).ToArray();
         }
 
         public static string CommaSeparated<T>(this IEnumerable<T> coll)
@@ -70,20 +78,20 @@ namespace Kibix.MathsGen
             return cc.Length == 0 ? "" : NestedSymmetricFunction(cc, "({0}" + seperator + "{1})");
         }
 
-        public static IEnumerable<string> LhsRhs(this AbstractType type)
+        public static string[] LhsRhs(this AbstractType type) => new[]
         {
-            yield return type.Name + " lhs";
-            yield return type.Name + " rhs";
+            type.Name + " lhs",
+            type.Name + " rhs"
+        };
+
+        public static string[] TypedArgs(this AbstractType type, params string[] args)
+        {
+            return args.Select(a => type.Name + " " + a).ToArray();
         }
 
-        public static IEnumerable<string> TypedArgs(this AbstractType type, params string[] args)
+        public static string[] SConcat(this IEnumerable<string> coll, params string[] args)
         {
-            return args.Select(a => type.Name + " " + a);
-        }
-
-        public static IEnumerable<string> SConcat(this IEnumerable<string> coll, params string[] args)
-        {
-            return coll.Concat(args);
+            return coll.Concat(args).ToArray();
         }
 
         public static string Capitalized(this string s)
@@ -104,35 +112,46 @@ namespace Kibix.MathsGen
             yield return "/// </summary>";
         }
 
-        public static IEnumerable<string> RepeatTimes(this string s, int times)
+        public static string[] RepeatTimes(this string s, int times)
         {
+            var result = new string[times];
             for (var i = 0; i < times; ++i)
-                yield return s;
+                result[i] = s;
+            return result;
         }
 
-        public static IEnumerable<string> DotComp(this string s, int maxComp = 4)
+        public static string[] DotComp(this string s, int maxComp = 4)
         {
+            var result = new string[maxComp];
             for (var i = 0; i < maxComp; ++i)
-                yield return s + "." + "xyzw"[i];
+                result[i] = s + "." + "xyzw"[i];
+            return result;
         }
 
-        public static IEnumerable<string> ImpulseString(this int arg, string imp, string nonimp, int maxComp = 4)
+        public static string[] ImpulseString(this int arg, string imp, string nonimp, int maxComp = 4)
         {
+            var result = new string[maxComp];
             for (var i = 0; i < maxComp; ++i)
-                yield return i == arg ? imp : nonimp;
+                result[i] = i == arg ? imp : nonimp;
+            return result;
         }
 
-        public static IEnumerable<T> ExactlyN<T>(this IEnumerable<T> coll, int n, T obj)
+        public static T[] ExactlyN<T>(this IEnumerable<T> coll, int n, T obj)
         {
+            var result = new T[n];
             var it = coll.GetEnumerator();
             for (var i = 0; i < n; ++i)
-                yield return it.MoveNext() ? it.Current : obj;
+                result[i] = it.MoveNext() ? it.Current : obj;
+            return result;
         }
 
-        public static IEnumerable<T> ForIndexUpTo<T>(this int n, Func<int, T> f)
+        public static T[] ForIndexUpTo<T>(this int n, Func<int, T> f)
         {
+            var result = new T[n];
             for (var i = 0; i < n; ++i)
-                yield return f(i);
+                result[i] = f(i);
+            return result;
         }
     }
 }
+

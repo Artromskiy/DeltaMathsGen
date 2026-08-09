@@ -1,12 +1,11 @@
-﻿using Kibix.MathsGen.Members;
+﻿using KibiHex.MathsGen.Members;
 using System.Collections.Generic;
 
-namespace Kibix.MathsGen.Types
+namespace KibiHex.MathsGen.Types
 {
     internal partial class MatrixType
     {
         /// <summary>
-        /// Refers to GLSL 450 specs.
         /// 8 Built-in Functions.
         /// 8.6 Matrix Functions.
         /// </summary>
@@ -18,14 +17,12 @@ namespace Kibix.MathsGen.Types
             var rows = new VectorType(BaseType, Rows);
             yield return new Function(this, "OuterProduct")
             {
-                GlslName = "outerProduct",
                 Static = true,
                 Parameters = new string[] { rows.Name + " col", cols.Name + " row" },
                 CodeString = $"{Construct(this, OutProduct(cols, rows, "row", "col"))}",
             };
             yield return new Function(transposedType, "Transpose")
             {
-                GlslName = "transpose",
                 Static = true,
                 Parameters = this.TypedArgs("v"),
                 CodeString = $"new {transposedType.Name}({ConvertArg(FieldsTransposed, "v").CommaSeparated()})",
@@ -37,7 +34,6 @@ namespace Kibix.MathsGen.Types
             /*
             yield return new Function(this, "Inverse")
             {
-                GlslName = "inverse",
                 Static = true,
                 Comment = "Returns the inverse of this matrix (use with caution).",
                 Parameters = this.TypedArgs("v"),
@@ -47,7 +43,6 @@ namespace Kibix.MathsGen.Types
 
             yield return new Function(BaseType, "Determinant")
             {
-                GlslName = "determinant",
                 Static = true,
                 Parameters = this.TypedArgs("v"),
                 CodeString = HelperDet(ConvertArg(HelperFieldsOf(Rows), "v")),
@@ -99,3 +94,5 @@ namespace Kibix.MathsGen.Types
         }
     }
 }
+
+
