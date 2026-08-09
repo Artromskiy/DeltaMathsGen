@@ -46,6 +46,7 @@ namespace KibiHex.MathsGen.Model
     internal sealed class FieldSpec : MemberSpec
     {
         public TypeRef Type { get; init; }
+        public string Initializer { get; init; }
     }
 
     internal sealed class ConstructorSpec : MemberSpec

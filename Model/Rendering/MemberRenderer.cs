@@ -16,7 +16,8 @@ namespace KibiHex.MathsGen.Model.Rendering
             switch (member)
             {
                 case FieldSpec field:
-                    writer.Line($"{SyntaxFormatter.Modifiers(field.Modifiers)} {field.Type} {field.Name};".Trim());
+                    var initializer = string.IsNullOrWhiteSpace(field.Initializer) ? "" : " = " + field.Initializer;
+                    writer.Line($"{SyntaxFormatter.Modifiers(field.Modifiers)} {field.Type} {field.Name}{initializer};".Trim());
                     break;
                 case ConstructorSpec constructor:
                     BodyRenderer.Block(writer,
@@ -24,15 +25,19 @@ namespace KibiHex.MathsGen.Model.Rendering
                         constructor.Body);
                     break;
                 case OperatorSpec op:
-                    BodyRenderer.Block(writer,
-                        $"{SyntaxFormatter.Modifiers(op.Modifiers)} {op.ReturnType} operator {op.Operator}({SyntaxFormatter.Parameters(op.Parameters)})",
-                        op.Body);
+                    var operatorSignature = op.Operator is "implicit" or "explicit"
+                        ? $"{SyntaxFormatter.Modifiers(op.Modifiers)} {op.Operator} operator {op.ReturnType}({SyntaxFormatter.Parameters(op.Parameters)})"
+                        : $"{SyntaxFormatter.Modifiers(op.Modifiers)} {op.ReturnType} operator {op.Operator}({SyntaxFormatter.Parameters(op.Parameters)})";
+                    BodyRenderer.Block(writer, operatorSignature, op.Body);
                     break;
                 case FunctionSpec function:
                     RenderFunction(writer, function);
                     break;
                 case PropertySpec property:
                     RenderProperty(writer, property);
+                    break;
+                case IndexerSpec indexer:
+                    RenderIndexer(writer, indexer);
                     break;
                 default:
                     throw new NotSupportedException($"Unsupported member: {member.GetType().Name}");
@@ -64,6 +69,17 @@ namespace KibiHex.MathsGen.Model.Rendering
             });
         }
 
+        private static void RenderIndexer(CodeWriter writer, IndexerSpec indexer)
+        {
+            var signature = $"{SyntaxFormatter.Modifiers(indexer.Modifiers)} {indexer.Type} this[{SyntaxFormatter.Parameters(new[] { indexer.Parameter })}]";
+
+            writer.Block(signature, () =>
+            {
+                if (indexer.Getter != null) RenderAccessor(writer, "get", indexer.Getter);
+                if (indexer.Setter != null) RenderAccessor(writer, "set", indexer.Setter);
+            });
+        }
+
         private static void RenderAccessor(CodeWriter writer, string name, string body)
         {
             if (!body.Contains("\n"))
@@ -73,4 +89,3 @@ namespace KibiHex.MathsGen.Model.Rendering
         }
     }
 }
-

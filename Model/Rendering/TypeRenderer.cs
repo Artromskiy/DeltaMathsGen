@@ -8,12 +8,13 @@ namespace KibiHex.MathsGen.Model.Rendering
 
         public void Render(CodeWriter writer, TypeSpec type, TypePart part)
         {
-            if (!string.IsNullOrWhiteSpace(type.Comment))
+            if (part == TypePart.Core && !string.IsNullOrWhiteSpace(type.Comment))
                 writer.Line($"/// <summary>{type.Comment}</summary>");
-            foreach (var attribute in type.Attributes)
-                writer.Line($"[{attribute}]");
+            if (part == TypePart.Core)
+                foreach (var attribute in type.Attributes)
+                    writer.Line($"[{attribute}]");
 
-            var interfaces = type.Interfaces.Length == 0 ? "" : " : " + string.Join(", ", type.Interfaces);
+            var interfaces = part != TypePart.Core || type.Interfaces.Length == 0 ? "" : " : " + string.Join(", ", type.Interfaces);
             writer.Block($"{SyntaxFormatter.Modifiers(type.Modifiers)} {type.Kind} {type.Name}{interfaces}".Trim(), () =>
             {
                 foreach (var member in type.Members)
@@ -23,4 +24,3 @@ namespace KibiHex.MathsGen.Model.Rendering
         }
     }
 }
-

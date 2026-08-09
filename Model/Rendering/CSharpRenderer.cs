@@ -13,10 +13,10 @@ namespace KibiHex.MathsGen.Model.Rendering
             writer.Line("#nullable enable");
             writer.Line("using System;");
             writer.Line("using System.Runtime.InteropServices;");
+            writer.Line("using System.Runtime.CompilerServices;");
             writer.Line();
             writer.Block($"namespace {type.Namespace}", () => types.Render(writer, type, part));
             return writer.ToString();
         }
     }
 }
-
