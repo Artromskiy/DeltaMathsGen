@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using KibiHex.MathsGen.CodeModel;
+using DVG.MathsGen.CodeModel;
 
-namespace KibiHex.MathsGen.Model.Rendering
+namespace DVG.MathsGen.Model.Rendering
 {
     internal sealed class ShaderMathsRenderer
     {
@@ -21,7 +21,7 @@ namespace KibiHex.MathsGen.Model.Rendering
             writer.Line("#nullable enable");
             writer.Line("using System.Runtime.CompilerServices;");
             writer.Line();
-            writer.Block("namespace KibiHex", () =>
+            writer.Block("namespace DVG.Maths", () =>
             {
                 writer.Block("public static partial class maths", () =>
                 {

@@ -3,9 +3,9 @@ using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Collections.Generic;
-using KibiHex.MathsGen.Generation;
+using DVG.MathsGen.Generation;
 
-namespace KibiHex.MathsGen
+namespace DVG.MathsGen
 {
     internal class Program
     {
@@ -16,7 +16,7 @@ namespace KibiHex.MathsGen
 
             if (args.Length != 1)
             {
-                Console.Error.WriteLine("Usage: KibiHex.MathsGen <vectors-output-directory>");
+                Console.Error.WriteLine("Usage: DVG.MathsGen <vectors-output-directory>");
                 Environment.ExitCode = 2;
                 return;
             }

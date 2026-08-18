@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace KibiHex.MathsGen.Generation
+namespace DVG.MathsGen.Generation
 {
     internal sealed record GeneratedSource(string Name, string Source);
 

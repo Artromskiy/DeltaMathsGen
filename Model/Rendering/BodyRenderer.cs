@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
-using KibiHex.MathsGen.CodeModel;
+using DVG.MathsGen.CodeModel;
 
-namespace KibiHex.MathsGen.Model.Rendering
+namespace DVG.MathsGen.Model.Rendering
 {
     internal static class BodyRenderer
     {

@@ -1,8 +1,8 @@
 using System;
-using KibiHex.MathsGen.CodeModel;
-using KibiHex.MathsGen.Model;
+using DVG.MathsGen.CodeModel;
+using DVG.MathsGen.Model;
 
-namespace KibiHex.MathsGen.Model.Rendering
+namespace DVG.MathsGen.Model.Rendering
 {
     public sealed class ScalarMathsRenderer
     {
@@ -13,7 +13,7 @@ namespace KibiHex.MathsGen.Model.Rendering
             writer.Line("#pragma warning disable IDE1006");
             writer.Line("#nullable enable");
             writer.Line();
-            writer.Block("namespace KibiHex", () =>
+            writer.Block("namespace DVG.Maths", () =>
             {
                 writer.Block("public static partial class maths", () =>
                 {

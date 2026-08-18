@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace KibiHex.MathsGen.Model.Rendering
+namespace DVG.MathsGen.Model.Rendering
 {
     internal sealed record TypeFile(string Name, TypePart Part, string Source);
 

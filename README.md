@@ -1,6 +1,6 @@
-# KibiHex.MathsGen
+# DVG.MathsGen
 
-Standalone .NET 8 console generator for [KibiHex.Maths](../Maths/README.md). The generated runtime remains compatible with `netstandard2.1` and C# 9.
+Standalone .NET 8 console generator for [DVG.Maths](../Maths/README.md). The generated runtime remains compatible with `netstandard2.1` and C# 9.
 
 The generator builds a complete model in memory, validates it, and renders readable partial C# files. Declarations use arrays, object initializers, and raw string literals; generated code is not assembled from lazy `IEnumerable` pipelines.
 

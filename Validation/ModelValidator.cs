@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using KibiHex.MathsGen.Model;
+using DVG.MathsGen.Model;
 
-namespace KibiHex.MathsGen.Validation
+namespace DVG.MathsGen.Validation
 {
     internal static class ModelValidator
     {

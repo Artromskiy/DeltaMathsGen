@@ -1,4 +1,4 @@
-namespace KibiHex.MathsGen.Model
+namespace DVG.MathsGen.Model
 {
     internal sealed class TypeRef
     {

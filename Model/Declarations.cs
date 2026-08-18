@@ -1,6 +1,6 @@
 using System;
 
-namespace KibiHex.MathsGen.Model
+namespace DVG.MathsGen.Model
 {
     [Flags]
     internal enum Modifiers
@@ -82,7 +82,7 @@ namespace KibiHex.MathsGen.Model
 
     internal sealed class TypeSpec
     {
-        public string Namespace { get; init; } = "KibiHex";
+        public string Namespace { get; init; } = "DVG.Maths";
         public required string Name { get; init; }
         public string? Comment { get; init; }
         public string Kind { get; init; } = "struct";

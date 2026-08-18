@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace KibiHex.MathsGen.Model
+namespace DVG.MathsGen.Model
 {
     public sealed record ScalarMathMethod(string ReturnType, string Name, string Parameters, string Arguments);
 

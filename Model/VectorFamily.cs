@@ -1,9 +1,9 @@
 using System.Linq;
 using System.Collections.Generic;
 using System;
-using static KibiHex.MathsGen.Model.DeclarationHelpers;
+using static DVG.MathsGen.Model.DeclarationHelpers;
 
-namespace KibiHex.MathsGen.Model
+namespace DVG.MathsGen.Model
 {
     internal sealed class VectorFamily
     {
@@ -66,7 +66,7 @@ namespace KibiHex.MathsGen.Model
 
             return new TypeSpec
             {
-                Namespace = "KibiHex",
+                Namespace = "DVG.Maths",
                 Name = name,
                 Kind = "struct",
                 Modifiers = Modifiers.Public | Modifiers.Partial,

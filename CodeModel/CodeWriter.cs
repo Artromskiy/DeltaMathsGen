@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace KibiHex.MathsGen.CodeModel
+namespace DVG.MathsGen.CodeModel
 {
     internal sealed class CodeWriter
     {

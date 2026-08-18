@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 
-namespace KibiHex.MathsGen.Model
+namespace DVG.MathsGen.Model
 {
     [Flags]
     internal enum ScalarCapabilities

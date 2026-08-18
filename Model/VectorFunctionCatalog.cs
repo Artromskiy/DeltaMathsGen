@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static KibiHex.MathsGen.Model.DeclarationHelpers;
+using static DVG.MathsGen.Model.DeclarationHelpers;
 
-namespace KibiHex.MathsGen.Model
+namespace DVG.MathsGen.Model
 {
     internal sealed class VectorFunctionRule
     {
