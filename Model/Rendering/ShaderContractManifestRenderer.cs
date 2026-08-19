@@ -44,6 +44,8 @@ namespace Delta.MathsGen.Model.Rendering
                         TypeClrName = item.Name,
                         ClrName = ClrName(item.Function),
                         MathsName = item.Function.MathsName,
+                        ParameterClrNames = item.Function.Parameters.Select(parameter => parameter.Type.Name).ToArray(),
+                        ReturnClrName = item.Function.ReturnType.Name,
                         GlslName = item.Function.ShaderContract.GlslName,
                         Mapping = item.Function.ShaderContract.Mapping.ToString(),
                         RequiredCapability = item.Function.ShaderContract.RequiredCapability,
@@ -141,6 +143,12 @@ namespace Delta.MathsGen.Model.Rendering
 
             [JsonPropertyName("mathsName")]
             public required string MathsName { get; init; }
+
+            [JsonPropertyName("parameterClrNames")]
+            public required string[] ParameterClrNames { get; init; }
+
+            [JsonPropertyName("returnClrName")]
+            public required string ReturnClrName { get; init; }
 
             [JsonPropertyName("glslName")]
             public string? GlslName { get; init; }

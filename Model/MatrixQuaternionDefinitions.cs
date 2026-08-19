@@ -243,6 +243,12 @@ namespace Delta.MathsGen.Model
                     ReturnType = Type("float4x4"),
                     Parameters = [Param("left", Type("float4x4")), Param("right", Type("float4x4"))],
                     Part = TypePart.Operators,
+                    ShaderContract = new ShaderContract
+                    {
+                        GlslName = "*",
+                        Mapping = ShaderMappingKind.Builtin,
+                        RequiredCapability = "matrix",
+                    },
                     Targets = FunctionTargets.Type | FunctionTargets.ShaderMaths,
                     Body = "return left * right;",
                 },
@@ -350,6 +356,12 @@ namespace Delta.MathsGen.Model
                     Operator = "*",
                     ReturnType = Type("float4x4"),
                     Parameters = [Param("left", Type("float4x4")), Param("right", Type("float4x4"))],
+                    ShaderContract = new ShaderContract
+                    {
+                        GlslName = "*",
+                        Mapping = ShaderMappingKind.Builtin,
+                        RequiredCapability = "matrix",
+                    },
                     Body = "return new float4x4(left * right.c0, left * right.c1, left * right.c2, left * right.c3);",
                 },
                 new OperatorSpec
@@ -360,6 +372,12 @@ namespace Delta.MathsGen.Model
                     Operator = "*",
                     ReturnType = Type("float4"),
                     Parameters = [Param("left", Type("float4x4")), Param("right", Type("float4"))],
+                    ShaderContract = new ShaderContract
+                    {
+                        GlslName = "*",
+                        Mapping = ShaderMappingKind.Builtin,
+                        RequiredCapability = "matrix",
+                    },
                     Body = "return left.c0 * right.x + left.c1 * right.y + left.c2 * right.z + left.c3 * right.w;",
                 },
                 new OperatorSpec
@@ -498,7 +516,7 @@ namespace Delta.MathsGen.Model
                 new PropertySpec { Name = "W", Type = Type("float"), Getter = "w", Setter = "w = value" },
                 new FunctionSpec { Name = "Dot", ReturnType = Type("float"), Parameters = [Param("left", Type("quaternion")), Param("right", Type("quaternion"))], Part = TypePart.Common, Targets = FunctionTargets.Type | FunctionTargets.ShaderMaths, Body = "return left.x * right.x + left.y * right.y + left.z * right.z + left.w * right.w;" },
                 new FunctionSpec { Name = "LengthSquared", ReturnType = Type("float"), Parameters = [Param("value", Type("quaternion"))], Part = TypePart.Common, Targets = FunctionTargets.Type | FunctionTargets.ShaderMaths, Body = "return Dot(value, value);" },
-                new FunctionSpec { Name = "Normalize", ReturnType = Type("quaternion"), Parameters = [Param("value", Type("quaternion"))], Part = TypePart.Common, Targets = FunctionTargets.Type | FunctionTargets.ShaderMaths, Body = "return value / Maths.Sqrt(LengthSquared(value));" },
+                new FunctionSpec { Name = "Normalize", ReturnType = Type("quaternion"), Parameters = [Param("value", Type("quaternion"))], Part = TypePart.Common, ShaderContract = new ShaderContract { GlslName = "normalize", Mapping = ShaderMappingKind.Builtin, RequiredCapability = "quaternion" }, Targets = FunctionTargets.Type | FunctionTargets.ShaderMaths, Body = "return value / Maths.Sqrt(LengthSquared(value));" },
                 new FunctionSpec { Name = "NormalizeSafe", ReturnType = Type("quaternion"), Parameters = [Param("value", Type("quaternion"))], Part = TypePart.Common, Targets = FunctionTargets.Type | FunctionTargets.ShaderMaths, Body = "var lengthSquared = LengthSquared(value);\nreturn lengthSquared <= 1e-20f ? identity : value / Maths.Sqrt(lengthSquared);" },
                 new FunctionSpec { Name = "Conjugate", ReturnType = Type("quaternion"), Parameters = [Param("value", Type("quaternion"))], Part = TypePart.Common, Targets = FunctionTargets.Type | FunctionTargets.ShaderMaths, Body = "return new quaternion(-value.x, -value.y, -value.z, value.w);" },
                 new FunctionSpec { Name = "TryInverse", ReturnType = Type("bool"), Parameters = [Param("value", Type("quaternion")), Param("result", Type("quaternion"), "out")], Part = TypePart.Common, Targets = FunctionTargets.Type | FunctionTargets.ShaderMaths, Body = "var lengthSquared = LengthSquared(value);\nif (lengthSquared <= 1e-20f) { result = default; return false; }\nresult = Conjugate(value) / lengthSquared;\nreturn true;" },
@@ -511,8 +529,8 @@ namespace Delta.MathsGen.Model
                 new FunctionSpec { Name = "CreateFromRotationMatrix", ReturnType = Type("quaternion"), Parameters = [Param("matrix", Type("float4x4"))], Part = TypePart.Geometry, Targets = FunctionTargets.Type | FunctionTargets.ShaderMaths, Body = "var trace = matrix.M11 + matrix.M22 + matrix.M33;\nif (trace > 0f) { var s = Maths.Sqrt(trace + 1f) * 2f; return new quaternion((matrix.M32 - matrix.M23) / s, (matrix.M13 - matrix.M31) / s, (matrix.M21 - matrix.M12) / s, 0.25f * s); }\nif (matrix.M11 > matrix.M22 && matrix.M11 > matrix.M33) { var s = Maths.Sqrt(1f + matrix.M11 - matrix.M22 - matrix.M33) * 2f; return new quaternion(0.25f * s, (matrix.M12 + matrix.M21) / s, (matrix.M13 + matrix.M31) / s, (matrix.M32 - matrix.M23) / s); }\nif (matrix.M22 > matrix.M33) { var s = Maths.Sqrt(1f + matrix.M22 - matrix.M11 - matrix.M33) * 2f; return new quaternion((matrix.M12 + matrix.M21) / s, 0.25f * s, (matrix.M23 + matrix.M32) / s, (matrix.M13 - matrix.M31) / s); }\n{ var s = Maths.Sqrt(1f + matrix.M33 - matrix.M11 - matrix.M22) * 2f; return new quaternion((matrix.M13 + matrix.M31) / s, (matrix.M23 + matrix.M32) / s, 0.25f * s, (matrix.M21 - matrix.M12) / s); }" },
                 new FunctionSpec { Name = "ToRotationMatrix", ReturnType = Type("float4x4"), Parameters = [Param("rotation", Type("quaternion"))], Part = TypePart.Geometry, Targets = FunctionTargets.Type | FunctionTargets.ShaderMaths, Body = "return float4x4.CreateFromQuaternion(rotation);" },
                 new FunctionSpec { Name = "ToAxisAngle", ReturnType = Type("void"), Parameters = [Param("rotation", Type("quaternion")), Param("axis", Type("float3"), "out"), Param("angle", Type("float"), "out")], Part = TypePart.Geometry, Targets = FunctionTargets.Type | FunctionTargets.ShaderMaths, Body = "var normalized = NormalizeSafe(rotation);\nangle = 2f * Maths.Acos(Maths.Clamp(normalized.w, -1f, 1f));\nvar scale = Maths.Sqrt(Maths.Max(1e-20f, 1f - normalized.w * normalized.w));\naxis = scale <= 1e-10f ? new float3(1f, 0f, 0f) : new float3(-normalized.x / scale, -normalized.y / scale, -normalized.z / scale);" },
-                new OperatorSpec { Name = "Multiply", Part = TypePart.Operators, Modifiers = Modifiers.Public | Modifiers.Static, Operator = "*", ReturnType = Type("quaternion"), Parameters = [Param("left", Type("quaternion")), Param("right", Type("quaternion"))], Body = "return new quaternion(left.w * right.x + left.x * right.w + left.y * right.z - left.z * right.y, left.w * right.y - left.x * right.z + left.y * right.w + left.z * right.x, left.w * right.z + left.x * right.y - left.y * right.x + left.z * right.w, left.w * right.w - left.x * right.x - left.y * right.y - left.z * right.z);" },
-                new OperatorSpec { Name = "Multiply", Part = TypePart.Operators, Modifiers = Modifiers.Public | Modifiers.Static, Operator = "*", ReturnType = Type("float3"), Parameters = [Param("left", Type("quaternion")), Param("right", Type("float3"))], Body = "return Rotate(left, right);" },
+                new OperatorSpec { Name = "Multiply", Part = TypePart.Operators, Modifiers = Modifiers.Public | Modifiers.Static, Operator = "*", ReturnType = Type("quaternion"), Parameters = [Param("left", Type("quaternion")), Param("right", Type("quaternion"))], ShaderContract = new ShaderContract { GlslName = "delta_quaternionMultiply", Mapping = ShaderMappingKind.Helper, RequiredCapability = "quaternion" }, Body = "return new quaternion(left.w * right.x + left.x * right.w + left.y * right.z - left.z * right.y, left.w * right.y - left.x * right.z + left.y * right.w + left.z * right.x, left.w * right.z + left.x * right.y - left.y * right.x + left.z * right.w, left.w * right.w - left.x * right.x - left.y * right.y - left.z * right.z);" },
+                new OperatorSpec { Name = "Multiply", Part = TypePart.Operators, Modifiers = Modifiers.Public | Modifiers.Static, Operator = "*", ReturnType = Type("float3"), Parameters = [Param("left", Type("quaternion")), Param("right", Type("float3"))], ShaderContract = new ShaderContract { GlslName = "delta_quaternionRotate", Mapping = ShaderMappingKind.Helper, RequiredCapability = "quaternion" }, Body = "return Rotate(left, right);" },
                 new OperatorSpec { Name = "Add", Part = TypePart.Operators, Modifiers = Modifiers.Public | Modifiers.Static, Operator = "+", ReturnType = Type("quaternion"), Parameters = [Param("left", Type("quaternion")), Param("right", Type("quaternion"))], Body = "return new quaternion(left.x + right.x, left.y + right.y, left.z + right.z, left.w + right.w);" },
                 new OperatorSpec { Name = "Subtract", Part = TypePart.Operators, Modifiers = Modifiers.Public | Modifiers.Static, Operator = "-", ReturnType = Type("quaternion"), Parameters = [Param("left", Type("quaternion")), Param("right", Type("quaternion"))], Body = "return new quaternion(left.x - right.x, left.y - right.y, left.z - right.z, left.w - right.w);" },
                 new OperatorSpec { Name = "Negate", Part = TypePart.Operators, Modifiers = Modifiers.Public | Modifiers.Static, Operator = "-", ReturnType = Type("quaternion"), Parameters = [Param("value", Type("quaternion"))], Body = "return new quaternion(-value.x, -value.y, -value.z, -value.w);" },
