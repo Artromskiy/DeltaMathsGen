@@ -25,6 +25,8 @@ There are four concepts:
 3. `TypePart` says which partial file receives a member.
 4. `FunctionTargets` says whether a function appears on the vector type, in lowercase `maths`, or both.
 
+Shader mapping is explicit metadata on the same declaration. A declaration without a `ShaderContract` is emitted as `Unsupported`; the generator never guesses a GLSL name from a CLR name. Supported entries carry a GLSL symbol, `Builtin` or `Helper` kind, capability, and stage restrictions. The generated `Maths/Vectors/shader-contract.json` also records stable function identities, resolved GLSL parameter/result types, constructors, and standard swizzle metadata.
+
 A rule applies when:
 
 ```csharp
@@ -80,6 +82,20 @@ Build = context =>
 ```
 
 Templates remove component repetition; scalar selection remains explicit in the rule.
+
+To expose a new function to shaders, add the runtime declaration first and then add an explicit contract only when its GLSL lowering is proven:
+
+```csharp
+ShaderContract = new ShaderContract
+{
+    GlslName = "smoothstep",
+    Mapping = ShaderMappingKind.Builtin,
+    RequiredCapability = "vector",
+    Stages = ShaderStages.Vertex | ShaderStages.Fragment | ShaderStages.Compute,
+},
+```
+
+Use `Helper` for a stable `delta_*` helper that Shad owns. Keep GPU-only intrinsics such as derivatives out of MathsGen; they belong to the Shad intrinsic registry and should not receive a CPU implementation.
 
 ## Adding a scalar type
 
@@ -149,6 +165,8 @@ ScalarDefinition + rules
         -> TypeFileLayout
         -> focused renderers
         -> GeneratedFileWriter
+
+The shader contract renderer consumes the same `TypeSpec[]` and writes `shader-contract.json`. This keeps C# signatures, layout metadata, and shader identities in one model. A second generation run must produce no diff.
 ```
 
 `ModelValidator` rejects unknown conversion targets, duplicate types or members, duplicate `maths` overloads, missing function targets, and invalid dimension rules before anything is written.

@@ -21,6 +21,7 @@ namespace Delta.MathsGen.Validation
                 ValidateType(type);
 
             ValidateShaderMaths(types);
+            ValidateShaderContracts(types);
         }
 
         private static void ValidateRules(VectorFunctionRule[] rules)
@@ -89,6 +90,28 @@ namespace Delta.MathsGen.Validation
                 var signature = function.MathsName + Parameters(function.Parameters);
                 if (!signatures.Add(signature))
                     Fail($"Duplicate maths overload '{signature}', contributed by '{type.Name}.{function.Name}'.");
+            }
+        }
+
+        private static void ValidateShaderContracts(TypeSpec[] types)
+        {
+            foreach (var type in types)
+            {
+                var typeContract = type.ShaderContract;
+                if (typeContract.Mapping != ShaderMappingKind.Unsupported &&
+                    (string.IsNullOrWhiteSpace(typeContract.GlslName) || string.IsNullOrWhiteSpace(typeContract.RequiredCapability)))
+                    Fail($"Shader type contract '{type.Name}' must define GLSL name and capability.");
+
+                foreach (var function in type.Members.OfType<FunctionSpec>())
+                {
+                    var contract = function.ShaderContract;
+                    if (contract.Mapping == ShaderMappingKind.Unsupported)
+                        continue;
+                    if (string.IsNullOrWhiteSpace(function.Name) ||
+                        string.IsNullOrWhiteSpace(contract.GlslName) ||
+                        string.IsNullOrWhiteSpace(contract.RequiredCapability))
+                        Fail($"Shader function '{type.Name}.{function.Name}' has incomplete contract metadata.");
+                }
             }
         }
 

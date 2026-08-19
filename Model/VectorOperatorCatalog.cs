@@ -172,6 +172,13 @@ namespace Delta.MathsGen.Model
             Part = TypePart.Relational,
             Parameters = [Param("value", Type(vector))],
             Body = $"return {string.Join($" {operation} ", fields.Select(c => $"value.{c}"))};",
+            ShaderContract = new ShaderContract
+            {
+                GlslName = name.ToLowerInvariant(),
+                Mapping = ShaderMappingKind.Builtin,
+                RequiredCapability = "vector",
+                Stages = ShaderStages.All,
+            },
         };
 
     }

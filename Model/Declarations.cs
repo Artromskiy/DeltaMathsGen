@@ -29,11 +29,23 @@ namespace Delta.MathsGen.Model
         Helper = 2,
     }
 
+    [Flags]
+    internal enum ShaderStages
+    {
+        None = 0,
+        Vertex = 1,
+        Fragment = 2,
+        Compute = 4,
+        All = Vertex | Fragment | Compute,
+    }
+
     internal sealed class ShaderContract
     {
         public string? GlslName { get; init; }
         public ShaderMappingKind Mapping { get; init; } = ShaderMappingKind.Unsupported;
         public string? RequiredCapability { get; init; }
+        public string? Zone { get; init; }
+        public ShaderStages Stages { get; init; }
         public bool? ColumnMajor { get; init; }
         public int? Alignment { get; init; }
         public int? MatrixStride { get; init; }
@@ -74,7 +86,7 @@ namespace Delta.MathsGen.Model
         public string Body { get; init; } = "";
         public string? Expression { get; init; }
         public FunctionTargets Targets { get; init; } = FunctionTargets.Type;
-        public ShaderContract ShaderContract { get; init; } = new();
+        public ShaderContract ShaderContract { get; set; } = new();
 
         public string MathsName => LowercaseFirst(Name);
 

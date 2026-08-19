@@ -315,6 +315,7 @@ namespace Delta.MathsGen.Model
             ReturnType = Type(name),
             Parameters = [Param("value", Type(name))],
             Body = $"return new({string.Join(", ", fields.Select(component => $"{symbol}value.{component}"))});",
+            ShaderContract = CreateOperatorShaderContract(symbol, unary: true),
         };
 
         private OperatorSpec CreateBinaryOperator(string name, string fields, string symbol) => new()
@@ -326,6 +327,7 @@ namespace Delta.MathsGen.Model
             ReturnType = Type(name),
             Parameters = [Param("left", Type(name)), Param("right", Type(name))],
             Body = $"return new({string.Join(", ", fields.Select(component => $"left.{component} {symbol} right.{component}"))});",
+            ShaderContract = CreateOperatorShaderContract(symbol),
         };
 
         private OperatorSpec[] CreateScalarOperators(string name, string fields)
@@ -342,6 +344,7 @@ namespace Delta.MathsGen.Model
                     ReturnType = Type(name),
                     Parameters = [Param("left", Type(name)), Param("right", Type(Scalar.Name))],
                     Body = $"return new({string.Join(", ", fields.Select(component => $"left.{component} {symbol} right"))});",
+                    ShaderContract = CreateOperatorShaderContract(symbol),
                 });
                 result.Add(new OperatorSpec
                 {
@@ -352,6 +355,7 @@ namespace Delta.MathsGen.Model
                     ReturnType = Type(name),
                     Parameters = [Param("left", Type(Scalar.Name)), Param("right", Type(name))],
                     Body = $"return new({string.Join(", ", fields.Select(component => $"left {symbol} right.{component}"))});",
+                    ShaderContract = CreateOperatorShaderContract(symbol),
                 });
             }
             return result.ToArray();
@@ -387,6 +391,24 @@ namespace Delta.MathsGen.Model
             "--" => "op_Decrement",
             _ => throw new InvalidOperationException($"Unsupported unary operator symbol '{symbol}'."),
         };
+
+        private ShaderContract CreateOperatorShaderContract(string symbol, bool unary = false)
+        {
+            if (Scalar.Name is not ("float" or "int" or "uint"))
+                return new ShaderContract();
+            if (unary && symbol is not ("+" or "-"))
+                return new ShaderContract();
+            if (!unary && symbol is not ("+" or "-" or "*" or "/"))
+                return new ShaderContract();
+
+            return new ShaderContract
+            {
+                GlslName = symbol,
+                Mapping = ShaderMappingKind.Builtin,
+                RequiredCapability = "vector",
+                Stages = ShaderStages.All,
+            };
+        }
 
         private PropertySpec[] CreateSwizzles(string fields)
         {

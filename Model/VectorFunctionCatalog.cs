@@ -234,10 +234,10 @@ namespace Delta.MathsGen.Model
             var scalar = Type(context.Scalar.Name);
             return
             [
-                Function("Length", scalar, [P("value", vector)], "return Maths.Sqrt(SqrLength(value));", TypePart.Geometry),
-                Function("Distance", scalar, [P("a", vector), P("b", vector)], "return Length(a - b);", TypePart.Geometry),
+                Function("Length", scalar, [P("value", vector)], "return Maths.Sqrt(SqrLength(value));", TypePart.Geometry, context),
+                Function("Distance", scalar, [P("a", vector), P("b", vector)], "return Length(a - b);", TypePart.Geometry, context),
                 Function("SqrDistance", scalar, [P("a", vector), P("b", vector)], "return SqrLength(a - b);", TypePart.Geometry),
-                Function("Normalize", vector, [P("value", vector)], "return value / Length(value);", TypePart.Geometry),
+                Function("Normalize", vector, [P("value", vector)], "return value / Length(value);", TypePart.Geometry, context),
                 Function("NormalizeSafe", vector, [P("value", vector)],
                     $$"""
                     var sqrLength = SqrLength(value);
@@ -249,9 +249,9 @@ namespace Delta.MathsGen.Model
                     return sqrLength <= {{context.Scalar.NormalizeSafeThreshold}} ? fallback : value * Maths.InverseSqrt(sqrLength);
                     """, TypePart.Geometry),
                 Function("FaceForward", vector, [P("N", vector), P("I", vector), P("Nref", vector)],
-                    "return Dot(Nref, I) < 0 ? N : -N;", TypePart.Geometry),
+                    "return Dot(Nref, I) < 0 ? N : -N;", TypePart.Geometry, context),
                 Function("Reflect", vector, [P("I", vector), P("N", vector)],
-                    "return I - 2 * Dot(N, I) * N;", TypePart.Geometry),
+                    "return I - 2 * Dot(N, I) * N;", TypePart.Geometry, context),
                 Function("Refract", vector, [P("I", vector), P("N", vector), P("eta", scalar)],
                     """
                     var dNI = Dot(N, I);
@@ -288,7 +288,7 @@ namespace Delta.MathsGen.Model
                 Function("SmoothDamp", vector,
                     [P("source", vector), P("target", vector), P("velocity", vector, "ref"), P("smoothTime", scalar), P("deltaTime", scalar)],
                     $"return new({string.Join(", ", context.Fields.Select(field => $"Maths.SmoothDamp(source.{field}, target.{field}, ref velocity.{field}, smoothTime, deltaTime)"))});",
-                    TypePart.Geometry),
+                    TypePart.Geometry, context),
             ];
         }
 
@@ -301,7 +301,7 @@ namespace Delta.MathsGen.Model
             var sum = string.Join(" + ", context.Fields.Select(field => $"value.{field}"));
             return
             [
-                Function("Dot", scalar, [P("a", vector), P("b", vector)], $"return {dot};", TypePart.Geometry),
+                Function("Dot", scalar, [P("a", vector), P("b", vector)], $"return {dot};", TypePart.Geometry, context),
                 Function("SqrLength", scalar, [P("value", vector)], $"return {square};", TypePart.Geometry),
                 Function("Sum", scalar, [P("value", vector)], $"return {sum};", TypePart.Common),
             ];
@@ -310,7 +310,7 @@ namespace Delta.MathsGen.Model
         private static FunctionSpec Cross(VectorContext context) => Function(
             "Cross", Type(context.Name), [P("a", Type(context.Name)), P("b", Type(context.Name))],
             "return new(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);",
-            TypePart.Geometry);
+            TypePart.Geometry, context);
 
         private static FunctionSpec UnaryMaths(VectorContext context, string name, TypePart part = TypePart.Common) =>
             ComponentWise(context, name, Type(context.Name), Unary(context), field => $"Maths.{name}(value.{field})", part);
@@ -357,14 +357,15 @@ namespace Delta.MathsGen.Model
             Func<string, string> expression,
             TypePart part = TypePart.Common) =>
             Function(name, returnType, parameters,
-                $"return new({string.Join(", ", context.Fields.Select(expression))});", part);
+                $"return new({string.Join(", ", context.Fields.Select(expression))});", part, context);
 
         private static FunctionSpec Function(
             string name,
             TypeRef returnType,
             ParameterSpec[] parameters,
             string body,
-            TypePart part) => new()
+            TypePart part,
+            VectorContext? context = null) => new()
         {
             Name = name,
             ReturnType = returnType,
@@ -373,6 +374,7 @@ namespace Delta.MathsGen.Model
             Modifiers = Modifiers.Public | Modifiers.Static,
             Targets = PublicApi,
             Part = part,
+            ShaderContract = context == null ? new ShaderContract() : CreateShaderContract(context, name, parameters),
         };
 
         private static ParameterSpec[] Unary(VectorContext context) =>
@@ -385,6 +387,52 @@ namespace Delta.MathsGen.Model
             new() { Name = name, Type = type, Modifier = modifier };
 
         private static string[] Names(params string[] names) => names;
+
+        private static ShaderContract CreateShaderContract(VectorContext context, string name, ParameterSpec[] parameters)
+        {
+            var scalar = context.Scalar.Name;
+            var shaderScalar = scalar is "bool" or "int" or "uint" or "float";
+            if (!shaderScalar)
+                return new ShaderContract();
+
+            return name switch
+            {
+                "Select" when parameters.Length == 3 && parameters[0].Type.Name == context.Name &&
+                    parameters[1].Type.Name == context.Name && parameters[2].Type.Name == context.BoolVectorName
+                    && scalar != "bool" => Helper("delta_select", "vector"),
+                "Equal" when parameters.All(parameter => parameter.Type.Name == context.Name) => Builtin("equal", "vector"),
+                "NotEqual" when parameters.All(parameter => parameter.Type.Name == context.Name) => Builtin("notEqual", "vector"),
+                "Min" or "Max" or "Clamp" when scalar != "bool" => Builtin(name.ToLowerInvariant(), "vector"),
+                "Abs" when scalar is "float" or "int" => Builtin("abs", "vector"),
+                "Lerp" when scalar == "float" => Builtin("mix", "vector"),
+                "SmoothStep" when scalar == "float" => Builtin("smoothstep", "vector"),
+                "Step" when scalar == "float" => Builtin("step", "vector"),
+                "Dot" when scalar == "float" => Builtin("dot", "vector"),
+                "Length" or "Distance" when scalar == "float" => Builtin(name.ToLowerInvariant(), "vector"),
+                "Normalize" when scalar == "float" => Builtin("normalize", "vector"),
+                "FaceForward" when scalar == "float" => Builtin("faceforward", "vector"),
+                "Reflect" when scalar == "float" => Builtin("reflect", "vector"),
+                "Refract" when scalar == "float" => Builtin("refract", "vector"),
+                "Cross" when scalar == "float" && context.Dimension == 3 => Builtin("cross", "vector"),
+                _ => new ShaderContract(),
+            };
+        }
+
+        private static ShaderContract Builtin(string name, string capability) => new()
+        {
+            GlslName = name,
+            Mapping = ShaderMappingKind.Builtin,
+            RequiredCapability = capability,
+            Stages = ShaderStages.All,
+        };
+
+        private static ShaderContract Helper(string name, string capability) => new()
+        {
+            GlslName = name,
+            Mapping = ShaderMappingKind.Helper,
+            RequiredCapability = capability,
+            Stages = ShaderStages.All,
+        };
 
     }
 }
