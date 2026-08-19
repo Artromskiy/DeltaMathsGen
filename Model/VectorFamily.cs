@@ -71,10 +71,33 @@ namespace Delta.MathsGen.Model
                 Kind = "struct",
                 Modifiers = Modifiers.Public | Modifiers.Partial,
                 Interfaces = [$"IEquatable<{name}>", $"IComparable<{name}>"],
+                ShaderContract = CreateShaderContract(),
                 Comment = $"A vector of type {scalarName} with {Dimension} components.",
                 Attributes = ["Serializable", "StructLayout(LayoutKind.Sequential)", "System.Runtime.Serialization.DataContract"],
                 Members = members.ToArray(),
             };
+        }
+
+        private ShaderContract CreateShaderContract()
+        {
+            var glslScalarName = Scalar.Name switch
+            {
+                "bool" => "bvec",
+                "int" => "ivec",
+                "uint" => "uvec",
+                "float" => "vec",
+                _ => null,
+            };
+
+            return glslScalarName is null
+                ? new ShaderContract()
+                : new ShaderContract
+                {
+                    GlslName = glslScalarName + Dimension,
+                    Mapping = ShaderMappingKind.Builtin,
+                    Alignment = Dimension == 2 ? 8 : 16,
+                    RequiredCapability = "std430",
+                };
         }
 
         private FieldSpec[] CreateFields(string fields) =>
