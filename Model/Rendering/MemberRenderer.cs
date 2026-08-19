@@ -1,7 +1,7 @@
 using System;
-using DVG.MathsGen.CodeModel;
+using Delta.MathsGen.CodeModel;
 
-namespace DVG.MathsGen.Model.Rendering
+namespace Delta.MathsGen.Model.Rendering
 {
     internal sealed class MemberRenderer
     {

@@ -1,8 +1,8 @@
 using System;
-using DVG.MathsGen.CodeModel;
-using DVG.MathsGen.Model;
+using Delta.MathsGen.CodeModel;
+using Delta.MathsGen.Model;
 
-namespace DVG.MathsGen.Model.Rendering
+namespace Delta.MathsGen.Model.Rendering
 {
     public sealed class ScalarMathsRenderer
     {
@@ -13,7 +13,7 @@ namespace DVG.MathsGen.Model.Rendering
             writer.Line("#pragma warning disable IDE1006");
             writer.Line("#nullable enable");
             writer.Line();
-            writer.Block("namespace DVG.Maths", () =>
+            writer.Block("namespace Delta.Maths", () =>
             {
                 writer.Block("public static partial class maths", () =>
                 {

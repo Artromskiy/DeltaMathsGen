@@ -1,9 +1,9 @@
 using System.Linq;
 using System.Collections.Generic;
 using System;
-using static DVG.MathsGen.Model.DeclarationHelpers;
+using static Delta.MathsGen.Model.DeclarationHelpers;
 
-namespace DVG.MathsGen.Model
+namespace Delta.MathsGen.Model
 {
     internal sealed class VectorFamily
     {
@@ -66,7 +66,7 @@ namespace DVG.MathsGen.Model
 
             return new TypeSpec
             {
-                Namespace = "DVG.Maths",
+                Namespace = "Delta.Maths",
                 Name = name,
                 Kind = "struct",
                 Modifiers = Modifiers.Public | Modifiers.Partial,
@@ -285,6 +285,7 @@ namespace DVG.MathsGen.Model
 
         private OperatorSpec CreateUnaryOperator(string name, string fields, string symbol) => new()
         {
+            Name = UnaryOperatorName(symbol),
             Part = TypePart.Operators,
             Modifiers = Modifiers.Public | Modifiers.Static,
             Operator = symbol,
@@ -295,6 +296,7 @@ namespace DVG.MathsGen.Model
 
         private OperatorSpec CreateBinaryOperator(string name, string fields, string symbol) => new()
         {
+            Name = OperatorName(symbol),
             Part = TypePart.Operators,
             Modifiers = Modifiers.Public | Modifiers.Static,
             Operator = symbol,
@@ -310,6 +312,7 @@ namespace DVG.MathsGen.Model
             {
                 result.Add(new OperatorSpec
                 {
+                    Name = OperatorName(symbol),
                     Part = TypePart.Operators,
                     Modifiers = Modifiers.Public | Modifiers.Static,
                     Operator = symbol,
@@ -319,6 +322,7 @@ namespace DVG.MathsGen.Model
                 });
                 result.Add(new OperatorSpec
                 {
+                    Name = OperatorName(symbol),
                     Part = TypePart.Operators,
                     Modifiers = Modifiers.Public | Modifiers.Static,
                     Operator = symbol,
@@ -332,12 +336,33 @@ namespace DVG.MathsGen.Model
 
         private OperatorSpec CreateEqualityOperator(string name, string fields, string symbol) => new()
         {
+            Name = OperatorName(symbol),
             Part = TypePart.Operators,
             Modifiers = Modifiers.Public | Modifiers.Static,
             Operator = symbol,
             ReturnType = Type("bool"),
             Parameters = [Param("left", Type(name)), Param("right", Type(name))],
             Body = $"return {string.Join(symbol == "==" ? " && " : " || ", fields.Select(component => $"left.{component} {symbol} right.{component}"))};",
+        };
+
+        private static string OperatorName(string symbol) => symbol switch
+        {
+            "+" => "op_Addition",
+            "-" => "op_Subtraction",
+            "*" => "op_Multiply",
+            "/" => "op_Division",
+            "==" => "op_Equality",
+            "!=" => "op_Inequality",
+            _ => throw new InvalidOperationException($"Unsupported operator symbol '{symbol}'."),
+        };
+
+        private static string UnaryOperatorName(string symbol) => symbol switch
+        {
+            "+" => "op_UnaryPlus",
+            "-" => "op_UnaryNegation",
+            "++" => "op_Increment",
+            "--" => "op_Decrement",
+            _ => throw new InvalidOperationException($"Unsupported unary operator symbol '{symbol}'."),
         };
 
         private PropertySpec[] CreateSwizzles(string fields)

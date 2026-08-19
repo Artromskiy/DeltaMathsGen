@@ -6,7 +6,9 @@
     <LangVersion>12.0</LangVersion>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>DVG.MathsGen</RootNamespace>
+    <AssemblyName>Delta.MathsGen</AssemblyName>
+    <PackageId>Delta.MathsGen</PackageId>
+    <RootNamespace>Delta.MathsGen</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

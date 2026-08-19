@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DVG.MathsGen.Model;
+using Delta.MathsGen.Model;
 
-namespace DVG.MathsGen.Validation
+namespace Delta.MathsGen.Validation
 {
     internal static class ModelValidator
     {

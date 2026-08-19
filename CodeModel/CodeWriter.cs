@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace DVG.MathsGen.CodeModel
+namespace Delta.MathsGen.CodeModel
 {
     internal sealed class CodeWriter
     {

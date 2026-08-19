@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static DVG.MathsGen.Model.DeclarationHelpers;
+using static Delta.MathsGen.Model.DeclarationHelpers;
 
-namespace DVG.MathsGen.Model
+namespace Delta.MathsGen.Model
 {
     internal sealed class VectorFunctionRule
     {

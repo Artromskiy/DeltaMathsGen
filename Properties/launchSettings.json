@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "KibiHex.MathsGen": {
+    "Delta.MathsGen": {
       "commandName": "Project",
       "commandLineArgs": "/Users/rum/GitProjects/TheFurnace/Maths/Vectors"
     }

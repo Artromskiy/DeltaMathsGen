@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace DVG.MathsGen.Generation
+namespace Delta.MathsGen.Generation
 {
     internal sealed record GeneratedSource(string Name, string Source);
 
     internal static class GeneratedFileWriter
     {
-        private const string ManifestName = ".kibihex-generated-files";
+        private const string ManifestName = ".delta-generated-files";
 
         public static void Write(string folder, GeneratedSource[] sources)
         {

@@ -1,6 +1,6 @@
 using System;
 
-namespace DVG.MathsGen.Model
+namespace Delta.MathsGen.Model
 {
     [Flags]
     internal enum Modifiers
@@ -21,6 +21,24 @@ namespace DVG.MathsGen.Model
         ShaderMaths = 2,
     }
 
+    [Flags]
+    internal enum ShaderMappingKind
+    {
+        Unsupported = 0,
+        Builtin = 1,
+        Helper = 2,
+    }
+
+    internal sealed class ShaderContract
+    {
+        public string? GlslName { get; init; }
+        public ShaderMappingKind Mapping { get; init; } = ShaderMappingKind.Unsupported;
+        public string? RequiredCapability { get; init; }
+        public bool? ColumnMajor { get; init; }
+        public int? Alignment { get; init; }
+        public int? MatrixStride { get; init; }
+    }
+
     internal sealed class ParameterSpec
     {
         public required string Name { get; init; }
@@ -32,7 +50,7 @@ namespace DVG.MathsGen.Model
     {
         public string Name { get; init; } = "";
         public TypePart Part { get; init; } = TypePart.Core;
-        public Modifiers Modifiers { get; init; } = Modifiers.Public;
+        public Modifiers Modifiers { get; set; } = Modifiers.Public;
         public string[] Attributes { get; init; } = Array.Empty<string>();
         public string? Summary { get; init; }
     }
@@ -56,6 +74,7 @@ namespace DVG.MathsGen.Model
         public string Body { get; init; } = "";
         public string? Expression { get; init; }
         public FunctionTargets Targets { get; init; } = FunctionTargets.Type;
+        public ShaderContract ShaderContract { get; init; } = new();
 
         public string MathsName => LowercaseFirst(Name);
 
@@ -82,13 +101,14 @@ namespace DVG.MathsGen.Model
 
     internal sealed class TypeSpec
     {
-        public string Namespace { get; init; } = "DVG.Maths";
+        public string Namespace { get; init; } = "Delta.Maths";
         public required string Name { get; init; }
         public string? Comment { get; init; }
         public string Kind { get; init; } = "struct";
         public Modifiers Modifiers { get; init; } = Modifiers.Public;
         public string[] Attributes { get; init; } = Array.Empty<string>();
         public string[] Interfaces { get; init; } = Array.Empty<string>();
+        public ShaderContract ShaderContract { get; init; } = new();
         public MemberSpec[] Members { get; init; } = Array.Empty<MemberSpec>();
     }
 

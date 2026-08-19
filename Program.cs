@@ -3,9 +3,9 @@ using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Collections.Generic;
-using DVG.MathsGen.Generation;
+using Delta.MathsGen.Generation;
 
-namespace DVG.MathsGen
+namespace Delta.MathsGen
 {
     internal class Program
     {
@@ -16,7 +16,7 @@ namespace DVG.MathsGen
 
             if (args.Length != 1)
             {
-                Console.Error.WriteLine("Usage: DVG.MathsGen <vectors-output-directory>");
+                Console.Error.WriteLine("Usage: Delta.MathsGen <vectors-output-directory>");
                 Environment.ExitCode = 2;
                 return;
             }
@@ -26,14 +26,16 @@ namespace DVG.MathsGen
 
         private static void GenerateDeclarativeVectors(string folder)
         {
-            var typeList = new List<Model.TypeSpec>(Model.ScalarTypes.All.Length * 3);
+            var typeList = new List<Model.TypeSpec>(Model.ScalarTypes.All.Length * 3 + 2);
             foreach (var scalar in Model.ScalarTypes.All)
             foreach (var dimension in new[] { 2, 3, 4 })
                 typeList.Add(new Model.VectorFamily { Scalar = scalar, Dimension = dimension }.Create());
+            typeList.AddRange(Model.MatrixQuaternionDefinitions.Create());
             var types = typeList.ToArray();
             Validation.ModelValidator.Validate(Model.ScalarTypes.All, types);
             var layout = new Model.Rendering.TypeFileLayout();
             var sources = new List<GeneratedSource>();
+            var manifest = new Model.Rendering.ShaderContractManifestRenderer();
 
             foreach (var type in types)
             foreach (var file in layout.Render(type))
@@ -50,6 +52,7 @@ namespace DVG.MathsGen
             var scalarMethods = new Model.ScalarMathsScanner().Scan(mathsSources);
             var scalarMaths = new Model.Rendering.ScalarMathsRenderer().Render(scalarMethods);
             sources.Add(new GeneratedSource("maths.cs", scalarMaths));
+            sources.Add(new GeneratedSource("shader-contract.json", manifest.Render(types)));
 
             GeneratedFileWriter.Write(output, sources.ToArray());
         }

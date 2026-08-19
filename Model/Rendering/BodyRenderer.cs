@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
-using DVG.MathsGen.CodeModel;
+using Delta.MathsGen.CodeModel;
 
-namespace DVG.MathsGen.Model.Rendering
+namespace Delta.MathsGen.Model.Rendering
 {
     internal static class BodyRenderer
     {

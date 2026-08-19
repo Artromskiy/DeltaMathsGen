@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace DVG.MathsGen.Model
+namespace Delta.MathsGen.Model
 {
     public sealed record ScalarMathMethod(string ReturnType, string Name, string Parameters, string Arguments);
 

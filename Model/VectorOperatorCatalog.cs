@@ -1,8 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using static DVG.MathsGen.Model.DeclarationHelpers;
+using static Delta.MathsGen.Model.DeclarationHelpers;
 
-namespace DVG.MathsGen.Model
+namespace Delta.MathsGen.Model
 {
     internal static class VectorOperatorCatalog
     {
@@ -30,6 +31,7 @@ namespace DVG.MathsGen.Model
                 }
                 members.Add(new OperatorSpec
                 {
+                    Name = "OnesComplement",
                     Part = TypePart.Operators,
                     Modifiers = Modifiers.Public | Modifiers.Static,
                     Operator = "~",
@@ -81,6 +83,7 @@ namespace DVG.MathsGen.Model
                 var targetVector = target + context.Dimension;
                 members.Add(new OperatorSpec
                 {
+                    Name = OperatorName(kind),
                     Part = TypePart.Operators,
                     Modifiers = Modifiers.Public | Modifiers.Static,
                     Operator = kind,
@@ -93,6 +96,7 @@ namespace DVG.MathsGen.Model
 
         private static OperatorSpec Binary(string vector, string scalar, string fields, string symbol, string left, string right) => new()
         {
+            Name = OperatorName(symbol),
             Part = TypePart.Operators,
             Modifiers = Modifiers.Public | Modifiers.Static,
             Operator = symbol,
@@ -103,6 +107,7 @@ namespace DVG.MathsGen.Model
 
         private static OperatorSpec Unary(string vector, string fields, string symbol) => new()
         {
+            Name = OperatorName(symbol),
             Part = TypePart.Operators,
             Modifiers = Modifiers.Public | Modifiers.Static,
             Operator = symbol,
@@ -113,6 +118,7 @@ namespace DVG.MathsGen.Model
 
         private static OperatorSpec Comparison(VectorContext context, string symbol, string left, string right) => new()
         {
+            Name = OperatorName(symbol),
             Part = TypePart.Operators,
             Modifiers = Modifiers.Public | Modifiers.Static,
             Operator = symbol,
@@ -129,6 +135,33 @@ namespace DVG.MathsGen.Model
 
         private static string Operand(string name, string type, string scalar, char field) =>
             type == scalar ? name : $"{name}.{field}";
+
+        private static string OperatorName(string symbol) => symbol switch
+        {
+            "implicit" => "op_Implicit",
+            "explicit" => "op_Explicit",
+            "+" => "op_Addition",
+            "-" => "op_Subtraction",
+            "*" => "op_Multiply",
+            "/" => "op_Division",
+            "%" => "op_Modulus",
+            "++" => "op_Increment",
+            "--" => "op_Decrement",
+            "!" => "op_LogicalNot",
+            "~" => "op_OnesComplement",
+            "==" => "op_Equality",
+            "!=" => "op_Inequality",
+            "<" => "op_LessThan",
+            "<=" => "op_LessThanOrEqual",
+            ">" => "op_GreaterThan",
+            ">=" => "op_GreaterThanOrEqual",
+            "^" => "op_ExclusiveOr",
+            "&" => "op_BitwiseAnd",
+            "|" => "op_BitwiseOr",
+            "<<" => "op_LeftShift",
+            ">>" => "op_RightShift",
+            _ => throw new InvalidOperationException($"Unsupported operator symbol '{symbol}'."),
+        };
 
         private static FunctionSpec Aggregate(string name, string vector, string fields, string operation) => new()
         {
