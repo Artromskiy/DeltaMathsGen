@@ -1,0 +1,125 @@
+name: Build, tests and benchmarks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_benchmarks:
+        description: Run registered BenchmarkDotNet projects
+        required: true
+        default: false
+        type: boolean
+      filter:
+        description: BenchmarkDotNet filter
+        required: true
+        default: "*"
+        type: string
+      warmup_count:
+        required: true
+        default: 3
+        type: number
+      iteration_count:
+        required: true
+        default: 5
+        type: number
+      launch_count:
+        required: true
+        default: 1
+        type: number
+
+permissions:
+  contents: read
+
+concurrency:
+  group: delta-maths-gen-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: 1
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout Delta.MathsGen
+        uses: actions/checkout@v7
+        with:
+          path: MathsGen
+      - name: Checkout Delta.Maths fixture
+        uses: actions/checkout@v7
+        with:
+          repository: Artromskiy/DVG.Maths
+          path: Maths
+      - name: Install .NET 8
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: delta-maths-gen-nuget-${{ runner.os }}-${{ hashFiles('MathsGen/**/*.csproj', 'Maths/**/*.csproj') }}
+          restore-keys: delta-maths-gen-nuget-${{ runner.os }}-
+      - name: Build generator
+        working-directory: MathsGen
+        run: |
+          dotnet restore Delta.MathsGen.csproj
+          dotnet build Delta.MathsGen.csproj -c Release --no-restore
+      - name: Generate and compile isolated output
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cp -R Maths artifacts/GeneratedMaths
+          dotnet run --project MathsGen/Delta.MathsGen.csproj -c Release --no-build -- artifacts/GeneratedMaths/Vectors
+          dotnet build artifacts/GeneratedMaths/Delta.Maths.csproj -c Release
+      - name: Benchmark discovery smoke
+        working-directory: MathsGen
+        shell: bash
+        run: |
+          mapfile -t projects < <(find . -type f -name '*.Benchmarks.csproj' | sort)
+          for project in "${projects[@]}"; do
+            dotnet run --project "$project" -c Release -- --list flat --filter '*'
+          done
+
+  benchmarks:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_benchmarks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Install .NET 8
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+      - name: Run registered benchmarks
+        shell: bash
+        run: |
+          mkdir -p artifacts/benchmarks
+          mapfile -t projects < <(find . -type f -name '*.Benchmarks.csproj' | sort)
+          if [ ${#projects[@]} -eq 0 ]; then
+            echo 'No *.Benchmarks.csproj is registered.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          for project in "${projects[@]}"; do
+            dotnet run --project "$project" -c Release -- \
+              --filter '${{ inputs.filter }}' \
+              --warmupCount '${{ inputs.warmup_count }}' \
+              --iterationCount '${{ inputs.iteration_count }}' \
+              --launchCount '${{ inputs.launch_count }}' \
+              --exporters json csv markdown github \
+              --artifacts artifacts/benchmarks
+          done
+      - name: Upload benchmark artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: delta-maths-gen-benchmarks-${{ github.run_number }}
+          path: artifacts/benchmarks
+          if-no-files-found: warn
+          retention-days: 30
