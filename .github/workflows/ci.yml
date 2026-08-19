@@ -53,7 +53,7 @@ jobs:
       - name: Checkout Delta.Maths fixture
         uses: actions/checkout@v7
         with:
-          repository: Artromskiy/Delta.Maths
+          repository: Artromskiy/DeltaMaths
           path: Maths
       - name: Install .NET 8
         uses: actions/setup-dotnet@v6
