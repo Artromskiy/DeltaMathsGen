@@ -15,3 +15,9 @@ git -C Maths diff --check
 Run the generator a second time; it must produce no additional diff. Inspect
 the generated manifest and files before committing. Cross-project verification
 uses [../REVIEW_PLAYBOOK.md](../REVIEW_PLAYBOOK.md).
+
+## Code metrics
+
+Run the manual GitHub Actions `Code metrics` workflow when maintainability
+evidence is needed. It enables CA1501/CA1502/CA1505/CA1506 as report-only
+diagnostics and uploads the SARIF, build log and exit summary as artifacts.
