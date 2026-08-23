@@ -43,7 +43,9 @@ namespace Delta.MathsGen.Model.Rendering
             if (function.Targets.HasFlag(FunctionTargets.Type))
             {
                 var arguments = string.Join(", ", function.Parameters.Select(parameter =>
-                    string.IsNullOrWhiteSpace(parameter.Modifier) ? parameter.Name : parameter.Modifier + " " + parameter.Name));
+                    parameter.Modifier == ParameterModifier.None
+                        ? parameter.Name
+                        : ShaderMetadata.ModifierToken(parameter.Modifier) + " " + parameter.Name));
                 writer.Line($"{signature} => {type.Name}.{function.Name}({arguments});");
             }
             else if (!string.IsNullOrWhiteSpace(function.Expression))

@@ -96,7 +96,7 @@ namespace Delta.MathsGen.Model
                     GlslName = glslScalarName + Dimension,
                     Mapping = ShaderMappingKind.Builtin,
                     Alignment = Dimension == 2 ? 8 : 16,
-                    RequiredCapability = "std430",
+                    Capability = ShaderCapability.Std430,
                 };
         }
 
@@ -405,7 +405,7 @@ namespace Delta.MathsGen.Model
             {
                 GlslName = symbol,
                 Mapping = ShaderMappingKind.Builtin,
-                RequiredCapability = "vector",
+                Capability = ShaderCapability.Vector,
                 Stages = ShaderStages.All,
             };
         }
@@ -417,29 +417,29 @@ namespace Delta.MathsGen.Model
             AddComponentAliases(result, fields, "stpq");
 
             foreach (var alphabet in new[] { "xyzw", "rgba", "stpq" })
-            foreach (var length in new[] { 2, 3, 4 })
-            foreach (var indices in Combinations(length))
-            {
-                if (indices.All(index => index < 0))
-                    continue;
+                foreach (var length in new[] { 2, 3, 4 })
+                    foreach (var indices in Combinations(length))
+                    {
+                        if (indices.All(index => index < 0))
+                            continue;
 
-                var propertyName = string.Concat(indices.Select(index => index < 0 ? '_' : alphabet[index]));
-                var vectorType = Type(Scalar.Name + length);
-                var values = indices.Select(index => index < 0 ? DefaultValue() : fields[index].ToString()).ToArray();
-                var canWrite = indices.All(index => index >= 0) && indices.Distinct().Count() == indices.Length;
+                        var propertyName = string.Concat(indices.Select(index => index < 0 ? '_' : alphabet[index]));
+                        var vectorType = Type(Scalar.Name + length);
+                        var values = indices.Select(index => index < 0 ? DefaultValue() : fields[index].ToString()).ToArray();
+                        var canWrite = indices.All(index => index >= 0) && indices.Distinct().Count() == indices.Length;
 
-                result.Add(new PropertySpec
-                {
-                    Name = propertyName,
-                    Type = vectorType,
-                    Part = TypePart.Swizzles,
-                    Attributes = ["System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)"],
-                    Getter = $"new {vectorType}({string.Join(", ", values)})",
-                    Setter = canWrite
-                        ? string.Join("\n", indices.Select((index, component) => $"{fields[index]} = value.{"xyzw"[component]};"))
-                        : null,
-                });
-            }
+                        result.Add(new PropertySpec
+                        {
+                            Name = propertyName,
+                            Type = vectorType,
+                            Part = TypePart.Swizzles,
+                            Attributes = ["System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)"],
+                            Getter = $"new {vectorType}({string.Join(", ", values)})",
+                            Setter = canWrite
+                                ? string.Join("\n", indices.Select((index, component) => $"{fields[index]} = value.{"xyzw"[component]};"))
+                                : null,
+                        });
+                    }
 
             return result.ToArray();
         }

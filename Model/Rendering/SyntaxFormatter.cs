@@ -6,7 +6,7 @@ namespace Delta.MathsGen.Model.Rendering
     {
         public static string Parameters(ParameterSpec[] parameters) =>
             string.Join(", ", parameters.Select(parameter =>
-                $"{parameter.Modifier} {parameter.Type} {parameter.Name}".Trim()));
+                $"{ShaderMetadata.ModifierToken(parameter.Modifier)} {parameter.Type} {parameter.Name}".Trim()));
 
         public static string Modifiers(Modifiers modifiers)
         {
@@ -19,4 +19,3 @@ namespace Delta.MathsGen.Model.Rendering
         }
     }
 }
-

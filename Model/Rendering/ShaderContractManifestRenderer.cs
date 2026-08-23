@@ -79,7 +79,7 @@ namespace Delta.MathsGen.Model.Rendering
                 ColumnMajor = type.ShaderContract.ColumnMajor,
                 Alignment = type.ShaderContract.Alignment,
                 MatrixStride = type.ShaderContract.MatrixStride,
-                RequiredCapability = type.ShaderContract.RequiredCapability,
+                RequiredCapability = RequiredCapability(type.ShaderContract),
                 Swizzles = type.Members
                     .OfType<PropertySpec>()
                     .Where(property => property.Part == TypePart.Swizzles && !property.Name.Contains('_'))
@@ -116,7 +116,7 @@ namespace Delta.MathsGen.Model.Rendering
                 Mapping = function.ShaderContract.Mapping.ToString(),
                 ShaderZone = ShaderZone(function.ShaderContract),
                 Stages = StageNames(function.ShaderContract),
-                RequiredCapability = function.ShaderContract.RequiredCapability,
+                RequiredCapability = RequiredCapability(function.ShaderContract),
             };
         }
 
@@ -133,7 +133,10 @@ namespace Delta.MathsGen.Model.Rendering
         }
 
         private static string? ShaderZone(ShaderContract contract) =>
-            contract.Mapping == ShaderMappingKind.Unsupported ? null : contract.Zone ?? "Delta.Maths";
+            contract.Mapping == ShaderMappingKind.Unsupported ? null : ShaderMetadata.ZoneName(contract.Zone);
+
+        private static string? RequiredCapability(ShaderContract contract) =>
+            contract.Mapping == ShaderMappingKind.Unsupported ? null : ShaderMetadata.CapabilityName(contract.Capability);
 
         private static string[] StageNames(ShaderContract contract)
         {

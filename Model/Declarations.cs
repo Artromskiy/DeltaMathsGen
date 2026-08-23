@@ -29,6 +29,31 @@ namespace Delta.MathsGen.Model
         Helper = 2,
     }
 
+    internal enum ShaderCapability
+    {
+        None = 0,
+        Unknown = 1,
+        Vector = 2,
+        Matrix = 3,
+        Quaternion = 4,
+        Std430 = 5,
+    }
+
+    internal enum ShaderZoneKind
+    {
+        None = 0,
+        Unknown = 1,
+        DeltaMaths = 2,
+    }
+
+    internal enum ParameterModifier
+    {
+        None = 0,
+        Unknown = 1,
+        Out = 2,
+        Ref = 3,
+    }
+
     [Flags]
     internal enum ShaderStages
     {
@@ -43,8 +68,8 @@ namespace Delta.MathsGen.Model
     {
         public string? GlslName { get; init; }
         public ShaderMappingKind Mapping { get; init; } = ShaderMappingKind.Unsupported;
-        public string? RequiredCapability { get; init; }
-        public string? Zone { get; init; }
+        public ShaderCapability Capability { get; init; } = ShaderCapability.Unknown;
+        public ShaderZoneKind Zone { get; init; } = ShaderZoneKind.DeltaMaths;
         public ShaderStages Stages { get; init; }
         public bool? ColumnMajor { get; init; }
         public int? Alignment { get; init; }
@@ -55,7 +80,7 @@ namespace Delta.MathsGen.Model
     {
         public required string Name { get; init; }
         public required TypeRef Type { get; init; }
-        public string? Modifier { get; init; }
+        public ParameterModifier Modifier { get; init; }
     }
 
     internal abstract class MemberSpec

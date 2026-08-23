@@ -50,9 +50,9 @@ namespace Delta.MathsGen.Validation
             }
 
             foreach (var scalar in scalars)
-            foreach (var target in scalar.ImplicitTargets.Concat(scalar.ExplicitTargets))
-                if (!names.Contains(target))
-                    Fail($"Conversion from '{scalar.Name}' targets unknown scalar '{target}'.");
+                foreach (var target in scalar.ImplicitTargets.Concat(scalar.ExplicitTargets))
+                    if (!names.Contains(target))
+                        Fail($"Conversion from '{scalar.Name}' targets unknown scalar '{target}'.");
         }
 
         private static void ValidateType(TypeSpec type)
@@ -70,7 +70,10 @@ namespace Delta.MathsGen.Validation
                     if (function.Targets.HasFlag(FunctionTargets.ShaderMaths) &&
                         !function.Targets.HasFlag(FunctionTargets.Type))
                         Fail($"Function '{type.Name}.{function.Name}' cannot forward to maths without a type implementation.");
+                    ValidateParameters(type.Name + "." + function.Name, function.Parameters);
                 }
+                else if (member is ConstructorSpec constructor)
+                    ValidateParameters(type.Name + ".ctor", constructor.Parameters);
 
                 var signature = Signature(member);
                 if (!signatures.Add(signature))
@@ -82,15 +85,15 @@ namespace Delta.MathsGen.Validation
         {
             var signatures = new HashSet<string>(StringComparer.Ordinal);
             foreach (var type in types)
-            foreach (var function in type.Members.OfType<FunctionSpec>())
-            {
-                if (!function.Targets.HasFlag(FunctionTargets.ShaderMaths))
-                    continue;
+                foreach (var function in type.Members.OfType<FunctionSpec>())
+                {
+                    if (!function.Targets.HasFlag(FunctionTargets.ShaderMaths))
+                        continue;
 
-                var signature = function.MathsName + Parameters(function.Parameters);
-                if (!signatures.Add(signature))
-                    Fail($"Duplicate maths overload '{signature}', contributed by '{type.Name}.{function.Name}'.");
-            }
+                    var signature = function.MathsName + Parameters(function.Parameters);
+                    if (!signatures.Add(signature))
+                        Fail($"Duplicate maths overload '{signature}', contributed by '{type.Name}.{function.Name}'.");
+                }
         }
 
         private static void ValidateShaderContracts(TypeSpec[] types)
@@ -99,7 +102,9 @@ namespace Delta.MathsGen.Validation
             {
                 var typeContract = type.ShaderContract;
                 if (typeContract.Mapping != ShaderMappingKind.Unsupported &&
-                    (string.IsNullOrWhiteSpace(typeContract.GlslName) || string.IsNullOrWhiteSpace(typeContract.RequiredCapability)))
+                    (string.IsNullOrWhiteSpace(typeContract.GlslName) ||
+                     !ShaderMetadata.IsKnownCapability(typeContract.Capability) ||
+                     !ShaderMetadata.IsKnownZone(typeContract.Zone)))
                     Fail($"Shader type contract '{type.Name}' must define GLSL name and capability.");
 
                 foreach (var function in type.Members.OfType<FunctionSpec>())
@@ -109,7 +114,8 @@ namespace Delta.MathsGen.Validation
                         continue;
                     if (string.IsNullOrWhiteSpace(function.Name) ||
                         string.IsNullOrWhiteSpace(contract.GlslName) ||
-                        string.IsNullOrWhiteSpace(contract.RequiredCapability))
+                        !ShaderMetadata.IsKnownCapability(contract.Capability) ||
+                        !ShaderMetadata.IsKnownZone(contract.Zone))
                         Fail($"Shader function '{type.Name}.{function.Name}' has incomplete contract metadata.");
                 }
             }
@@ -130,7 +136,14 @@ namespace Delta.MathsGen.Validation
 
         private static string Parameters(ParameterSpec[] parameters) =>
             "(" + string.Join(",", parameters.Select(parameter =>
-                (string.IsNullOrWhiteSpace(parameter.Modifier) ? "" : "&") + parameter.Type.Name)) + ")";
+                (parameter.Modifier == ParameterModifier.None ? "" : "&") + parameter.Type.Name)) + ")";
+
+        private static void ValidateParameters(string owner, ParameterSpec[] parameters)
+        {
+            foreach (var parameter in parameters)
+                if (parameter.Modifier is not (ParameterModifier.None or ParameterModifier.Out or ParameterModifier.Ref))
+                    Fail($"Parameter '{owner}.{parameter.Name}' has an unknown modifier '{parameter.Modifier}'.");
+        }
 
         private static void Fail(string message) => throw new InvalidOperationException("Invalid generation model: " + message);
     }

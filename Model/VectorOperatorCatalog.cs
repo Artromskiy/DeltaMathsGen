@@ -176,7 +176,7 @@ namespace Delta.MathsGen.Model
             {
                 GlslName = name.ToLowerInvariant(),
                 Mapping = ShaderMappingKind.Builtin,
-                RequiredCapability = "vector",
+                Capability = ShaderCapability.Vector,
                 Stages = ShaderStages.All,
             },
         };

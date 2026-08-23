@@ -286,7 +286,7 @@ namespace Delta.MathsGen.Model
                     return current + delta * maxDelta * Maths.InverseSqrt(sqrDistance);
                     """, TypePart.Geometry),
                 Function("SmoothDamp", vector,
-                    [P("source", vector), P("target", vector), P("velocity", vector, "ref"), P("smoothTime", scalar), P("deltaTime", scalar)],
+                    [P("source", vector), P("target", vector), P("velocity", vector, ParameterModifier.Ref), P("smoothTime", scalar), P("deltaTime", scalar)],
                     $"return new({string.Join(", ", context.Fields.Select(field => $"Maths.SmoothDamp(source.{field}, target.{field}, ref velocity.{field}, smoothTime, deltaTime)"))});",
                     TypePart.Geometry, context),
             ];
@@ -366,16 +366,16 @@ namespace Delta.MathsGen.Model
             string body,
             TypePart part,
             VectorContext? context = null) => new()
-        {
-            Name = name,
-            ReturnType = returnType,
-            Parameters = parameters,
-            Body = body,
-            Modifiers = Modifiers.Public | Modifiers.Static,
-            Targets = PublicApi,
-            Part = part,
-            ShaderContract = context == null ? new ShaderContract() : CreateShaderContract(context, name, parameters),
-        };
+            {
+                Name = name,
+                ReturnType = returnType,
+                Parameters = parameters,
+                Body = body,
+                Modifiers = Modifiers.Public | Modifiers.Static,
+                Targets = PublicApi,
+                Part = part,
+                ShaderContract = context == null ? new ShaderContract() : CreateShaderContract(context, name, parameters),
+            };
 
         private static ParameterSpec[] Unary(VectorContext context) =>
             [P("value", Type(context.Name))];
@@ -383,7 +383,7 @@ namespace Delta.MathsGen.Model
         private static ParameterSpec[] Binary(VectorContext context) =>
             [P("a", Type(context.Name)), P("b", Type(context.Name))];
 
-        private static ParameterSpec P(string name, TypeRef type, string? modifier = null) =>
+        private static ParameterSpec P(string name, TypeRef type, ParameterModifier modifier = ParameterModifier.None) =>
             new() { Name = name, Type = type, Modifier = modifier };
 
         private static string[] Names(params string[] names) => names;
@@ -422,7 +422,7 @@ namespace Delta.MathsGen.Model
         {
             GlslName = name,
             Mapping = ShaderMappingKind.Builtin,
-            RequiredCapability = capability,
+            Capability = ParseCapability(capability),
             Stages = ShaderStages.All,
         };
 
@@ -430,8 +430,17 @@ namespace Delta.MathsGen.Model
         {
             GlslName = name,
             Mapping = ShaderMappingKind.Helper,
-            RequiredCapability = capability,
+            Capability = ParseCapability(capability),
             Stages = ShaderStages.All,
+        };
+
+        private static ShaderCapability ParseCapability(string capability) => capability switch
+        {
+            "vector" => ShaderCapability.Vector,
+            "matrix" => ShaderCapability.Matrix,
+            "quaternion" => ShaderCapability.Quaternion,
+            "std430" => ShaderCapability.Std430,
+            _ => throw new InvalidOperationException($"Unsupported shader capability '{capability}'."),
         };
 
     }

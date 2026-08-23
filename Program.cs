@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.IO;
 using System.Threading;
@@ -28,8 +28,8 @@ namespace Delta.MathsGen
         {
             var typeList = new List<Model.TypeSpec>(Model.ScalarTypes.All.Length * 3 + 2);
             foreach (var scalar in Model.ScalarTypes.All)
-            foreach (var dimension in new[] { 2, 3, 4 })
-                typeList.Add(new Model.VectorFamily { Scalar = scalar, Dimension = dimension }.Create());
+                foreach (var dimension in new[] { 2, 3, 4 })
+                    typeList.Add(new Model.VectorFamily { Scalar = scalar, Dimension = dimension }.Create());
             typeList.AddRange(Model.MatrixQuaternionDefinitions.Create());
             var types = typeList.ToArray();
             Validation.ModelValidator.Validate(Model.ScalarTypes.All, types);
@@ -38,8 +38,8 @@ namespace Delta.MathsGen
             var manifest = new Model.Rendering.ShaderContractManifestRenderer();
 
             foreach (var type in types)
-            foreach (var file in layout.Render(type))
-                sources.Add(new GeneratedSource(file.Name, file.Source));
+                foreach (var file in layout.Render(type))
+                    sources.Add(new GeneratedSource(file.Name, file.Source));
 
             var maths = new Model.Rendering.ShaderMathsRenderer();
             if (maths.CanRender(types))
