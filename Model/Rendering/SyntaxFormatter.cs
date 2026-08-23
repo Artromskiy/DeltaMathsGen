@@ -11,10 +11,26 @@ namespace Delta.MathsGen.Model.Rendering
         public static string Modifiers(Modifiers modifiers)
         {
             var result = modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Public) ? "public" : "";
-            if (modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Static)) result += " static";
-            if (modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Partial)) result += " partial";
-            if (modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Readonly)) result += " readonly";
-            if (modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Override)) result += " override";
+            if (modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Static))
+            {
+                result += " static";
+            }
+
+            if (modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Partial))
+            {
+                result += " partial";
+            }
+
+            if (modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Readonly))
+            {
+                result += " readonly";
+            }
+
+            if (modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Override))
+            {
+                result += " override";
+            }
+
             return result.Trim();
         }
     }

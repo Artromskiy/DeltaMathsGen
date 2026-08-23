@@ -3,15 +3,20 @@ using Delta.MathsGen.CodeModel;
 
 namespace Delta.MathsGen.Model.Rendering
 {
-    internal sealed class MemberRenderer
+    internal static class MemberRenderer
     {
-        public void Render(CodeWriter writer, MemberSpec member, string typeName)
+        public static void Render(CodeWriter writer, MemberSpec member, string typeName)
         {
             writer.Line();
             foreach (var attribute in member.Attributes)
+            {
                 writer.Line($"[{attribute}]");
+            }
+
             if (!string.IsNullOrWhiteSpace(member.Summary))
+            {
                 writer.Line($"/// <summary>{member.Summary}</summary>");
+            }
 
             switch (member)
             {
@@ -48,9 +53,13 @@ namespace Delta.MathsGen.Model.Rendering
         {
             var signature = $"{SyntaxFormatter.Modifiers(function.Modifiers)} {function.ReturnType} {function.Name}({SyntaxFormatter.Parameters(function.Parameters)})";
             if (!string.IsNullOrWhiteSpace(function.Expression))
+            {
                 writer.Line($"{signature} => {function.Expression};");
+            }
             else
+            {
                 BodyRenderer.Block(writer, signature, function.Body);
+            }
         }
 
         private static void RenderProperty(CodeWriter writer, PropertySpec property)
@@ -64,8 +73,15 @@ namespace Delta.MathsGen.Model.Rendering
 
             writer.Block(signature, () =>
             {
-                if (property.Getter != null) RenderAccessor(writer, "get", property.Getter);
-                if (property.Setter != null) RenderAccessor(writer, "set", property.Setter);
+                if (property.Getter != null)
+                {
+                    RenderAccessor(writer, "get", property.Getter);
+                }
+
+                if (property.Setter != null)
+                {
+                    RenderAccessor(writer, "set", property.Setter);
+                }
             });
         }
 
@@ -75,17 +91,28 @@ namespace Delta.MathsGen.Model.Rendering
 
             writer.Block(signature, () =>
             {
-                if (indexer.Getter != null) RenderAccessor(writer, "get", indexer.Getter);
-                if (indexer.Setter != null) RenderAccessor(writer, "set", indexer.Setter);
+                if (indexer.Getter != null)
+                {
+                    RenderAccessor(writer, "get", indexer.Getter);
+                }
+
+                if (indexer.Setter != null)
+                {
+                    RenderAccessor(writer, "set", indexer.Setter);
+                }
             });
         }
 
         private static void RenderAccessor(CodeWriter writer, string name, string body)
         {
-            if (!body.Contains("\n"))
+            if (!body.Contains('\n', StringComparison.Ordinal))
+            {
                 writer.Line($"{name} => {body};");
+            }
             else
+            {
                 BodyRenderer.Block(writer, name, body);
+            }
         }
     }
 }

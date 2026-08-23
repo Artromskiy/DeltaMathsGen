@@ -113,14 +113,7 @@ namespace Delta.MathsGen.Model
         public FunctionTargets Targets { get; init; } = FunctionTargets.Type;
         public ShaderContract ShaderContract { get; set; } = new();
 
-        public string MathsName => LowercaseFirst(Name);
-
-        private static string LowercaseFirst(string name)
-        {
-            if (string.IsNullOrEmpty(name))
-                return name;
-            return char.ToLowerInvariant(name[0]) + name[1..];
-        }
+        public string MathsName => DeclarationHelpers.LowercaseFirst(Name);
     }
 
     internal sealed class PropertySpec : MemberSpec

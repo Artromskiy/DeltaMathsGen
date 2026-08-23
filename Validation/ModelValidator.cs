@@ -15,10 +15,14 @@ namespace Delta.MathsGen.Validation
             var duplicateType = types.GroupBy(type => type.Name, StringComparer.Ordinal)
                 .FirstOrDefault(group => group.Count() > 1);
             if (duplicateType != null)
+            {
                 Fail($"Type '{duplicateType.Key}' is declared more than once.");
+            }
 
             foreach (var type in types)
+            {
                 ValidateType(type);
+            }
 
             ValidateShaderMaths(types);
             ValidateShaderContracts(types);
@@ -30,11 +34,19 @@ namespace Delta.MathsGen.Validation
             foreach (var rule in rules)
             {
                 if (string.IsNullOrWhiteSpace(rule.Name))
+                {
                     Fail("A vector function rule has no name.");
+                }
+
                 if (!names.Add(rule.Name))
+                {
                     Fail($"Vector function rule '{rule.Name}' is declared more than once.");
+                }
+
                 if (rule.RequiredDimension != 0 && rule.RequiredDimension is < 2 or > 4)
+                {
                     Fail($"Rule '{rule.Name}' requires unsupported dimension {rule.RequiredDimension}.");
+                }
             }
         }
 
@@ -44,21 +56,34 @@ namespace Delta.MathsGen.Validation
             foreach (var scalar in scalars)
             {
                 if (string.IsNullOrWhiteSpace(scalar.Name))
+                {
                     Fail("A scalar type has no name.");
+                }
+
                 if (!names.Add(scalar.Name))
+                {
                     Fail($"Scalar type '{scalar.Name}' is declared more than once.");
+                }
             }
 
             foreach (var scalar in scalars)
+            {
                 foreach (var target in scalar.ImplicitTargets.Concat(scalar.ExplicitTargets))
+                {
                     if (!names.Contains(target))
+                    {
                         Fail($"Conversion from '{scalar.Name}' targets unknown scalar '{target}'.");
+                    }
+                }
+            }
         }
 
         private static void ValidateType(TypeSpec type)
         {
             if (string.IsNullOrWhiteSpace(type.Name))
+            {
                 Fail("A generated type has no name.");
+            }
 
             var signatures = new HashSet<string>(StringComparer.Ordinal);
             foreach (var member in type.Members)
@@ -66,18 +91,28 @@ namespace Delta.MathsGen.Validation
                 if (member is FunctionSpec function)
                 {
                     if (function.Targets == FunctionTargets.None)
+                    {
                         Fail($"Function '{type.Name}.{function.Name}' has no target API.");
+                    }
+
                     if (function.Targets.HasFlag(FunctionTargets.ShaderMaths) &&
                         !function.Targets.HasFlag(FunctionTargets.Type))
+                    {
                         Fail($"Function '{type.Name}.{function.Name}' cannot forward to maths without a type implementation.");
+                    }
+
                     ValidateParameters(type.Name + "." + function.Name, function.Parameters);
                 }
                 else if (member is ConstructorSpec constructor)
+                {
                     ValidateParameters(type.Name + ".ctor", constructor.Parameters);
+                }
 
                 var signature = Signature(member);
                 if (!signatures.Add(signature))
+                {
                     Fail($"Duplicate member '{signature}' in type '{type.Name}'.");
+                }
             }
         }
 
@@ -85,15 +120,21 @@ namespace Delta.MathsGen.Validation
         {
             var signatures = new HashSet<string>(StringComparer.Ordinal);
             foreach (var type in types)
+            {
                 foreach (var function in type.Members.OfType<FunctionSpec>())
                 {
                     if (!function.Targets.HasFlag(FunctionTargets.ShaderMaths))
+                    {
                         continue;
+                    }
 
                     var signature = function.MathsName + Parameters(function.Parameters);
                     if (!signatures.Add(signature))
+                    {
                         Fail($"Duplicate maths overload '{signature}', contributed by '{type.Name}.{function.Name}'.");
+                    }
                 }
+            }
         }
 
         private static void ValidateShaderContracts(TypeSpec[] types)
@@ -105,18 +146,25 @@ namespace Delta.MathsGen.Validation
                     (string.IsNullOrWhiteSpace(typeContract.GlslName) ||
                      !ShaderMetadata.IsKnownCapability(typeContract.Capability) ||
                      !ShaderMetadata.IsKnownZone(typeContract.Zone)))
+                {
                     Fail($"Shader type contract '{type.Name}' must define GLSL name and capability.");
+                }
 
                 foreach (var function in type.Members.OfType<FunctionSpec>())
                 {
                     var contract = function.ShaderContract;
                     if (contract.Mapping == ShaderMappingKind.Unsupported)
+                    {
                         continue;
+                    }
+
                     if (string.IsNullOrWhiteSpace(function.Name) ||
                         string.IsNullOrWhiteSpace(contract.GlslName) ||
                         !ShaderMetadata.IsKnownCapability(contract.Capability) ||
                         !ShaderMetadata.IsKnownZone(contract.Zone))
+                    {
                         Fail($"Shader function '{type.Name}.{function.Name}' has incomplete contract metadata.");
+                    }
                 }
             }
         }
@@ -141,8 +189,12 @@ namespace Delta.MathsGen.Validation
         private static void ValidateParameters(string owner, ParameterSpec[] parameters)
         {
             foreach (var parameter in parameters)
+            {
                 if (parameter.Modifier is not (ParameterModifier.None or ParameterModifier.Out or ParameterModifier.Ref))
+                {
                     Fail($"Parameter '{owner}.{parameter.Name}' has an unknown modifier '{parameter.Modifier}'.");
+                }
+            }
         }
 
         private static void Fail(string message) => throw new InvalidOperationException("Invalid generation model: " + message);

@@ -11,7 +11,9 @@ namespace Delta.MathsGen.CodeModel
         public void Line(string text = "")
         {
             if (text.Length > 0)
+            {
                 builder.Append(' ', indent * 4);
+            }
 
             builder.AppendLine(text);
         }

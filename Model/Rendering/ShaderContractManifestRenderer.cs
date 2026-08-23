@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Delta.MathsGen.CodeModel;
 
 namespace Delta.MathsGen.Model.Rendering
 {
-    internal sealed class ShaderContractManifestRenderer
+    internal static class ShaderContractManifestRenderer
     {
-        private static readonly IReadOnlyDictionary<string, string> ScalarGlslNames =
-            new Dictionary<string, string>(StringComparer.Ordinal)
+        private static readonly Dictionary<string, string> ScalarGlslNames =
+            new(StringComparer.Ordinal)
             {
                 ["bool"] = "bool",
                 ["int"] = "int",
@@ -18,7 +17,9 @@ namespace Delta.MathsGen.Model.Rendering
                 ["float"] = "float",
             };
 
-        public string Render(TypeSpec[] types)
+        private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+
+        public static string Render(TypeSpec[] types)
         {
             var typeByName = types.ToDictionary(type => type.Name, StringComparer.Ordinal);
             var functions = types
@@ -34,7 +35,9 @@ namespace Delta.MathsGen.Model.Rendering
                 .GroupBy(function => function.Identity, StringComparer.Ordinal)
                 .FirstOrDefault(group => group.Count() > 1);
             if (duplicateFunction != null)
+            {
                 throw new InvalidOperationException($"Duplicate shader contract function identity '{duplicateFunction.Key}'.");
+            }
 
             var manifest = new Manifest
             {
@@ -47,8 +50,7 @@ namespace Delta.MathsGen.Model.Rendering
                 Functions = functionManifests,
             };
 
-            var options = new JsonSerializerOptions { WriteIndented = true };
-            return JsonSerializer.Serialize(manifest, options);
+            return JsonSerializer.Serialize(manifest, JsonOptions);
         }
 
         private static ManifestType ToManifestType(TypeSpec type, IReadOnlyDictionary<string, TypeSpec> types)
@@ -67,7 +69,9 @@ namespace Delta.MathsGen.Model.Rendering
                 .GroupBy(constructor => constructor.Identity, StringComparer.Ordinal)
                 .FirstOrDefault(group => group.Count() > 1);
             if (duplicateConstructor != null)
+            {
                 throw new InvalidOperationException($"Duplicate shader contract constructor identity '{duplicateConstructor.Key}'.");
+            }
 
             return new ManifestType
             {
@@ -82,7 +86,7 @@ namespace Delta.MathsGen.Model.Rendering
                 RequiredCapability = RequiredCapability(type.ShaderContract),
                 Swizzles = type.Members
                     .OfType<PropertySpec>()
-                    .Where(property => property.Part == TypePart.Swizzles && !property.Name.Contains('_'))
+                    .Where(property => property.Part == TypePart.Swizzles && !property.Name.Contains('_', StringComparison.Ordinal))
                     .OrderBy(property => property.Name, StringComparer.Ordinal)
                     .Select(property => new ManifestSwizzle
                     {
@@ -123,9 +127,15 @@ namespace Delta.MathsGen.Model.Rendering
         private static string? GlslType(string clrName, IReadOnlyDictionary<string, TypeSpec> types)
         {
             if (ScalarGlslNames.TryGetValue(clrName, out var scalarName))
+            {
                 return scalarName;
+            }
+
             if (clrName == "void")
+            {
                 return "void";
+            }
+
             return types.TryGetValue(clrName, out var type)
                 && type.ShaderContract.Mapping != ShaderMappingKind.Unsupported
                 ? type.ShaderContract.GlslName
@@ -144,16 +154,30 @@ namespace Delta.MathsGen.Model.Rendering
                 ? ShaderStages.None
                 : contract.Stages == ShaderStages.None ? ShaderStages.All : contract.Stages;
             var names = new List<string>(3);
-            if (stages.HasFlag(ShaderStages.Vertex)) names.Add("vertex");
-            if (stages.HasFlag(ShaderStages.Fragment)) names.Add("fragment");
-            if (stages.HasFlag(ShaderStages.Compute)) names.Add("compute");
+            if (stages.HasFlag(ShaderStages.Vertex))
+            {
+                names.Add("vertex");
+            }
+
+            if (stages.HasFlag(ShaderStages.Fragment))
+            {
+                names.Add("fragment");
+            }
+
+            if (stages.HasFlag(ShaderStages.Compute))
+            {
+                names.Add("compute");
+            }
+
             return names.ToArray();
         }
 
         private static string ClrName(FunctionSpec function)
         {
             if (function is not OperatorSpec operatorSpec)
+            {
                 return function.Name;
+            }
 
             var unary = operatorSpec.Parameters.Length == 1;
             return operatorSpec.Operator switch

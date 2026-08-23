@@ -22,7 +22,9 @@ namespace Delta.MathsGen.Model.Rendering
             ArgumentNullException.ThrowIfNull(type);
 
             if (string.IsNullOrWhiteSpace(type.Name))
+            {
                 throw new ArgumentException("A type name is required to create its file layout.", nameof(type));
+            }
 
             var parts = Parts.Where(part => type.Members.Any(member => member.Part == part)).ToArray();
             var files = new TypeFile[parts.Length];

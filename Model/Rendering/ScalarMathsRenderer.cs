@@ -1,11 +1,20 @@
 using System;
 using Delta.MathsGen.CodeModel;
-using Delta.MathsGen.Model;
 
 namespace Delta.MathsGen.Model.Rendering
 {
+    /// <summary>Renders the lowercase scalar maths façade.</summary>
     public sealed class ScalarMathsRenderer
     {
+        private readonly string _namespace;
+
+        /// <summary>Initializes a renderer for the Delta.Maths namespace.</summary>
+        public ScalarMathsRenderer()
+        {
+            _namespace = "Delta.Maths";
+        }
+
+        /// <summary>Renders forwarding methods for the supplied scalar declarations.</summary>
         public string Render(ScalarMathMethod[] methods)
         {
             var writer = new CodeWriter();
@@ -13,13 +22,17 @@ namespace Delta.MathsGen.Model.Rendering
             writer.Line("#pragma warning disable IDE1006");
             writer.Line("#nullable enable");
             writer.Line();
-            writer.Block("namespace Delta.Maths", () =>
+            writer.Block($"namespace {_namespace}", () =>
             {
                 writer.Block("public static partial class maths", () =>
                 {
                     foreach (var method in methods)
                     {
-                        if (method.Parameters.Contains('<')) continue;
+                        if (method.Parameters.Contains('<', StringComparison.Ordinal))
+                        {
+                            continue;
+                        }
+
                         writer.Line($"public static {method.ReturnType} {Lowercase(method.Name)}({method.Parameters}) => Maths.{method.Name}({method.Arguments});");
                     }
                 });

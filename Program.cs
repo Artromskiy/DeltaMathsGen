@@ -7,7 +7,7 @@ using Delta.MathsGen.Generation;
 
 namespace Delta.MathsGen
 {
-    internal class Program
+    internal sealed class Program
     {
         private static void Main(string[] args)
         {
@@ -28,22 +28,30 @@ namespace Delta.MathsGen
         {
             var typeList = new List<Model.TypeSpec>(Model.ScalarTypes.All.Length * 3 + 2);
             foreach (var scalar in Model.ScalarTypes.All)
+            {
                 foreach (var dimension in new[] { 2, 3, 4 })
+                {
                     typeList.Add(new Model.VectorFamily { Scalar = scalar, Dimension = dimension }.Create());
+                }
+            }
+
             typeList.AddRange(Model.MatrixQuaternionDefinitions.Create());
             var types = typeList.ToArray();
             Validation.ModelValidator.Validate(Model.ScalarTypes.All, types);
             var layout = new Model.Rendering.TypeFileLayout();
             var sources = new List<GeneratedSource>();
-            var manifest = new Model.Rendering.ShaderContractManifestRenderer();
-
             foreach (var type in types)
+            {
                 foreach (var file in layout.Render(type))
+                {
                     sources.Add(new GeneratedSource(file.Name, file.Source));
+                }
+            }
 
-            var maths = new Model.Rendering.ShaderMathsRenderer();
-            if (maths.CanRender(types))
-                sources.Add(new GeneratedSource("maths.vectors.cs", maths.Render(types)));
+            if (Model.Rendering.ShaderMathsRenderer.CanRender(types))
+            {
+                sources.Add(new GeneratedSource("maths.vectors.cs", Model.Rendering.ShaderMathsRenderer.Render(types)));
+            }
 
             var output = Path.GetFullPath(folder);
             var mathsFolder = Directory.GetParent(output)?.FullName
@@ -52,7 +60,7 @@ namespace Delta.MathsGen
             var scalarMethods = new Model.ScalarMathsScanner().Scan(mathsSources);
             var scalarMaths = new Model.Rendering.ScalarMathsRenderer().Render(scalarMethods);
             sources.Add(new GeneratedSource("maths.cs", scalarMaths));
-            sources.Add(new GeneratedSource("shader-contract.json", manifest.Render(types)));
+            sources.Add(new GeneratedSource("shader-contract.json", Model.Rendering.ShaderContractManifestRenderer.Render(types)));
 
             GeneratedFileWriter.Write(output, sources.ToArray());
         }

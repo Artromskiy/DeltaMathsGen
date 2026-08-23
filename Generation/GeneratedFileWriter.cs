@@ -19,7 +19,9 @@ namespace Delta.MathsGen.Generation
             var duplicate = sources.GroupBy(source => source.Name, StringComparer.Ordinal)
                 .FirstOrDefault(group => group.Count() > 1);
             if (duplicate != null)
+            {
                 throw new InvalidOperationException($"Generated file '{duplicate.Key}' was declared more than once.");
+            }
 
             var names = sources.Select(source => NormalizeName(root, source.Name)).ToArray();
             DeleteStaleFiles(root, names);
@@ -39,18 +41,24 @@ namespace Delta.MathsGen.Generation
         {
             var manifest = Path.Combine(root, ManifestName);
             if (!File.Exists(manifest))
+            {
                 return;
+            }
 
             var current = new HashSet<string>(currentNames, StringComparer.Ordinal);
             foreach (var previousName in File.ReadAllLines(manifest))
             {
                 var normalized = NormalizeName(root, previousName);
                 if (current.Contains(normalized))
+                {
                     continue;
+                }
 
                 var path = Path.Combine(root, normalized);
                 if (!File.Exists(path))
+                {
                     continue;
+                }
 
                 File.Delete(path);
                 Console.WriteLine("    REMOVED " + path);
@@ -60,14 +68,18 @@ namespace Delta.MathsGen.Generation
         private static string NormalizeName(string root, string name)
         {
             if (string.IsNullOrWhiteSpace(name) || Path.IsPathRooted(name))
+            {
                 throw new InvalidOperationException($"Invalid generated file name '{name}'.");
+            }
 
             var path = Path.GetFullPath(Path.Combine(root, name));
             var rootPrefix = root.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal)
                 ? root
                 : root + Path.DirectorySeparatorChar;
             if (!path.StartsWith(rootPrefix, StringComparison.Ordinal))
+            {
                 throw new InvalidOperationException($"Generated file '{name}' escapes the output directory.");
+            }
 
             return Path.GetRelativePath(root, path);
         }

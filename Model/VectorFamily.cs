@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using System;
+using System.Globalization;
 using static Delta.MathsGen.Model.DeclarationHelpers;
 
 namespace Delta.MathsGen.Model
@@ -13,7 +14,9 @@ namespace Delta.MathsGen.Model
         public TypeSpec Create()
         {
             if (Dimension is < 2 or > 4)
+            {
                 throw new ArgumentOutOfRangeException(nameof(Dimension), "Vector dimensions must be between 2 and 4.");
+            }
 
             var scalarName = Scalar.Name;
             var name = scalarName + Dimension;
@@ -28,25 +31,33 @@ namespace Delta.MathsGen.Model
                 Modifiers = Modifiers.Public | Modifiers.Static | Modifiers.Readonly,
                 Initializer = $"new {name}({string.Join(", ", Enumerable.Repeat(DefaultValue(), Dimension))})",
             });
-            members.Add(CreateConstructor(name, fields));
-            members.Add(CreateScalarConstructor(name, fields));
-            members.AddRange(CreateVectorConstructors(name, fields));
-            members.Add(CreateIndexer(fields));
+            members.Add(CreateConstructor(fields));
+            members.Add(CreateScalarConstructor(fields));
+            members.AddRange(CreateVectorConstructors(fields));
+            members.Add(CreateIndexer());
             members.Add(new PropertySpec
             {
                 Name = "Count",
                 Type = Type("int"),
-                Expression = Dimension.ToString(),
+                Expression = Dimension.ToString(CultureInfo.InvariantCulture),
             });
             members.Add(CreateEqualityOperator(name, fields, "=="));
             members.Add(CreateEqualityOperator(name, fields, "!="));
             members.AddRange(CreateObjectContract(name, fields));
-            members.AddRange(CreateParseFunctions(name, fields));
+            members.AddRange(CreateParseFunctions(name));
 
             if (Scalar.Supports(ScalarCapabilities.Arithmetic))
             {
-                if (Scalar.Supports(ScalarCapabilities.UnaryPlus)) members.Add(CreateUnaryOperator(name, fields, "+"));
-                if (Scalar.Supports(ScalarCapabilities.Signed)) members.Add(CreateUnaryOperator(name, fields, "-"));
+                if (Scalar.Supports(ScalarCapabilities.UnaryPlus))
+                {
+                    members.Add(CreateUnaryOperator(name, fields, "+"));
+                }
+
+                if (Scalar.Supports(ScalarCapabilities.Signed))
+                {
+                    members.Add(CreateUnaryOperator(name, fields, "-"));
+                }
+
                 if (Scalar.Supports(ScalarCapabilities.Increment))
                 {
                     members.Add(CreateUnaryOperator(name, fields, "++"));
@@ -108,7 +119,7 @@ namespace Delta.MathsGen.Model
                 Attributes = [$"System.Runtime.Serialization.DataMember(Order = {index})"],
             }).ToArray();
 
-        private MemberSpec[] CreateParseFunctions(string name, string fields)
+        private MemberSpec[] CreateParseFunctions(string name)
         {
             var split = $$"""
                 value = value.Trim();
@@ -148,19 +159,19 @@ namespace Delta.MathsGen.Model
             return result.ToArray();
         }
 
-        private ConstructorSpec CreateConstructor(string name, string fields) => new()
+        private ConstructorSpec CreateConstructor(string fields) => new()
         {
             Parameters = fields.Select(component => Param(component.ToString(), Type(Scalar.Name))).ToArray(),
             Body = string.Join("\n", fields.Select(component => $"this.{component} = {component};")),
         };
 
-        private ConstructorSpec CreateScalarConstructor(string name, string fields) => new()
+        private ConstructorSpec CreateScalarConstructor(string fields) => new()
         {
             Parameters = [Param("value", Type(Scalar.Name))],
             Body = string.Join("\n", fields.Select(component => $"{component} = value;")),
         };
 
-        private ConstructorSpec[] CreateVectorConstructors(string name, string fields)
+        private ConstructorSpec[] CreateVectorConstructors(string fields)
         {
             var constructors = new List<ConstructorSpec>();
             foreach (var sourceDimension in new[] { 2, 3, 4 })
@@ -184,7 +195,9 @@ namespace Delta.MathsGen.Model
             foreach (var partition in ComponentPartitions(Dimension))
             {
                 if (partition.Length == 1 || partition.All(length => length == 1))
+                {
                     continue;
+                }
 
                 var parameters = new List<ParameterSpec>();
                 var assignments = new List<string>();
@@ -226,10 +239,12 @@ namespace Delta.MathsGen.Model
             }
 
             for (var length = 1; length <= Math.Min(3, remaining); length++)
+            {
                 BuildPartition(remaining - length, [.. prefix, length], result);
+            }
         }
 
-        private MemberSpec[] CreateObjectContract(string name, string fields)
+        private static MemberSpec[] CreateObjectContract(string name, string fields)
         {
             var equality = string.Join(" && ", fields.Select(component => $"{component}.Equals(other.{component})"));
             var hashBody = "unchecked\n{\n    var hash = 17;\n" +
@@ -288,7 +303,7 @@ namespace Delta.MathsGen.Model
             return string.Join("\n", lines);
         }
 
-        private IndexerSpec CreateIndexer(string fields) => new()
+        private IndexerSpec CreateIndexer() => new()
         {
             Type = Type(Scalar.Name),
             Parameter = Param("index", Type("int")),
@@ -361,7 +376,7 @@ namespace Delta.MathsGen.Model
             return result.ToArray();
         }
 
-        private OperatorSpec CreateEqualityOperator(string name, string fields, string symbol) => new()
+        private static OperatorSpec CreateEqualityOperator(string name, string fields, string symbol) => new()
         {
             Name = OperatorName(symbol),
             Part = TypePart.Operators,
@@ -395,11 +410,19 @@ namespace Delta.MathsGen.Model
         private ShaderContract CreateOperatorShaderContract(string symbol, bool unary = false)
         {
             if (Scalar.Name is not ("float" or "int" or "uint"))
+            {
                 return new ShaderContract();
+            }
+
             if (unary && symbol is not ("+" or "-"))
+            {
                 return new ShaderContract();
+            }
+
             if (!unary && symbol is not ("+" or "-" or "*" or "/"))
+            {
                 return new ShaderContract();
+            }
 
             return new ShaderContract
             {
@@ -417,11 +440,15 @@ namespace Delta.MathsGen.Model
             AddComponentAliases(result, fields, "stpq");
 
             foreach (var alphabet in new[] { "xyzw", "rgba", "stpq" })
+            {
                 foreach (var length in new[] { 2, 3, 4 })
+                {
                     foreach (var indices in Combinations(length))
                     {
                         if (indices.All(index => index < 0))
+                        {
                             continue;
+                        }
 
                         var propertyName = string.Concat(indices.Select(index => index < 0 ? '_' : alphabet[index]));
                         var vectorType = Type(Scalar.Name + length);
@@ -440,6 +467,8 @@ namespace Delta.MathsGen.Model
                                 : null,
                         });
                     }
+                }
+            }
 
             return result.ToArray();
         }

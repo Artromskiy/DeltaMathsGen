@@ -462,6 +462,7 @@ namespace Delta.MathsGen.Model
             var columns = new[] { "c0", "c1", "c2", "c3" };
             var components = new[] { "x", "y", "z", "w" };
             for (var row = 0; row < 4; row++)
+            {
                 for (var column = 0; column < 4; column++)
                 {
                     var name = $"M{row + 1}{column + 1}";
@@ -476,17 +477,22 @@ namespace Delta.MathsGen.Model
                         Setter = $"{columnName}.{component} = value",
                     });
                 }
+            }
         }
 
         private static void MarkShaderFunctionsStatic(List<MemberSpec> members, string typeName)
         {
             foreach (var function in members.OfType<FunctionSpec>())
+            {
                 if (function.Targets.HasFlag(FunctionTargets.ShaderMaths))
                 {
                     function.Modifiers |= Modifiers.Static;
                     if (function.ShaderContract.Mapping == ShaderMappingKind.Unsupported)
+                    {
                         function.ShaderContract = CreateDefaultShaderContract(typeName, function);
+                    }
                 }
+            }
         }
 
         private static ShaderContract CreateDefaultShaderContract(string typeName, FunctionSpec function)

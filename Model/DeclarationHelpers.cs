@@ -9,5 +9,9 @@ namespace Delta.MathsGen.Model
             Type = type,
             Modifier = modifier,
         };
+
+        public static string LowercaseFirst(string name) => string.IsNullOrEmpty(name)
+            ? name
+            : char.ToLowerInvariant(name[0]) + name[1..];
     }
 }

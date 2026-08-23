@@ -19,7 +19,7 @@ namespace Delta.MathsGen.Model
 
     internal static class VectorFunctionCatalog
     {
-        private static readonly FunctionTargets PublicApi =
+        private const FunctionTargets PublicApi =
             FunctionTargets.Type | FunctionTargets.ShaderMaths;
 
         public static readonly VectorFunctionRule[] Rules =
@@ -223,7 +223,9 @@ namespace Delta.MathsGen.Model
             foreach (var rule in Rules)
             {
                 if (rule.AppliesTo(context))
+                {
                     members.AddRange(rule.Build(context));
+                }
             }
             return members.ToArray();
         }
@@ -393,7 +395,9 @@ namespace Delta.MathsGen.Model
             var scalar = context.Scalar.Name;
             var shaderScalar = scalar is "bool" or "int" or "uint" or "float";
             if (!shaderScalar)
+            {
                 return new ShaderContract();
+            }
 
             return name switch
             {
@@ -402,13 +406,13 @@ namespace Delta.MathsGen.Model
                     && scalar != "bool" => Helper("delta_select", "vector"),
                 "Equal" when parameters.All(parameter => parameter.Type.Name == context.Name) => Builtin("equal", "vector"),
                 "NotEqual" when parameters.All(parameter => parameter.Type.Name == context.Name) => Builtin("notEqual", "vector"),
-                "Min" or "Max" or "Clamp" when scalar != "bool" => Builtin(name.ToLowerInvariant(), "vector"),
+                "Min" or "Max" or "Clamp" when scalar != "bool" => Builtin(LowercaseFirst(name), "vector"),
                 "Abs" when scalar is "float" or "int" => Builtin("abs", "vector"),
                 "Lerp" when scalar == "float" => Builtin("mix", "vector"),
                 "SmoothStep" when scalar == "float" => Builtin("smoothstep", "vector"),
                 "Step" when scalar == "float" => Builtin("step", "vector"),
                 "Dot" when scalar == "float" => Builtin("dot", "vector"),
-                "Length" or "Distance" when scalar == "float" => Builtin(name.ToLowerInvariant(), "vector"),
+                "Length" or "Distance" when scalar == "float" => Builtin(LowercaseFirst(name), "vector"),
                 "Normalize" when scalar == "float" => Builtin("normalize", "vector"),
                 "FaceForward" when scalar == "float" => Builtin("faceforward", "vector"),
                 "Reflect" when scalar == "float" => Builtin("reflect", "vector"),

@@ -174,7 +174,7 @@ namespace Delta.MathsGen.Model
             Body = $"return {string.Join($" {operation} ", fields.Select(c => $"value.{c}"))};",
             ShaderContract = new ShaderContract
             {
-                GlslName = name.ToLowerInvariant(),
+                GlslName = LowercaseFirst(name),
                 Mapping = ShaderMappingKind.Builtin,
                 Capability = ShaderCapability.Vector,
                 Stages = ShaderStages.All,

@@ -2,25 +2,34 @@ using Delta.MathsGen.CodeModel;
 
 namespace Delta.MathsGen.Model.Rendering
 {
-    internal sealed class TypeRenderer
+    internal static class TypeRenderer
     {
-        private readonly MemberRenderer members = new();
-
-        public void Render(CodeWriter writer, TypeSpec type, TypePart part)
+        public static void Render(CodeWriter writer, TypeSpec type, TypePart part)
         {
             if (part == TypePart.Core && !string.IsNullOrWhiteSpace(type.Comment))
+            {
                 writer.Line($"/// <summary>{type.Comment}</summary>");
+            }
+
             if (part == TypePart.Core)
+            {
                 foreach (var attribute in type.Attributes)
+                {
                     writer.Line($"[{attribute}]");
+                }
+            }
 
             var interfaces = part != TypePart.Core || type.Interfaces.Length == 0 ? "" : " : " + string.Join(", ", type.Interfaces);
             writer.Block($"{SyntaxFormatter.Modifiers(type.Modifiers)} {type.Kind} {type.Name}{interfaces}".Trim(), () =>
             {
                 foreach (var member in type.Members)
+                {
                     if (member.Part == part &&
                         (member is not FunctionSpec function || function.Targets.HasFlag(FunctionTargets.Type)))
-                        members.Render(writer, member, type.Name);
+                    {
+                        MemberRenderer.Render(writer, member, type.Name);
+                    }
+                }
             });
         }
     }
