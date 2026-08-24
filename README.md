@@ -3,6 +3,9 @@
 Declarative .NET 8 generator for `Delta.Maths`. It owns vectors, matrices,
 quaternions, lowercase `maths` APIs and the generated
 `Maths/Vectors/shader-contract.json`.
+Maths consumes the generated runtime/API output; the committed JSON file is
+the generated ABI artifact that DeltaShader validates and consumes, never
+recreates.
 
 The model is intentionally explicit:
 

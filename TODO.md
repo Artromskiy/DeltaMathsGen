@@ -1,4 +1,8 @@
 # MathsGen TODO
 
-No project-local task is currently selected. Keep generator and Maths changes
-in one bounded contract update and verify a second generation produces no diff.
+- Keep generator and Maths changes in one bounded contract update.
+- Make the producer workflow build MathsGen, generate twice with no second
+  diff, validate `shader-contract.json` layout/schema, then hand off to both
+  Maths target builds/tests.
+- Remove DeltaText implementation detail from `ARCHITECTURE.md`; link to the
+  DeltaText owner instead.

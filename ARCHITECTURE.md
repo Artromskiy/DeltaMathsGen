@@ -1,4 +1,4 @@
-# MathsGen, Delta.Maths and Delta.Text architecture
+# MathsGen and Delta.Maths architecture
 
 This document describes the implementation that exists in the workspace. It
 is intentionally kept beside `MathsGen`, because the generator model owns the
@@ -137,64 +137,6 @@ These conventions are covered by the runtime matrix/quaternion and GLSL
 conformance tests. A consumer that needs a new GPU-visible function should add
 its declaration and contract in MathsGen, then regenerate and test the output.
 
-## Delta.Text pipeline
-
-`Delta.Text` is a renderer-neutral CPU project. It owns no XAML, Vulkan, SDL,
-DeltaRender or shader code. Its public boundary is value-based:
-
-* `FontKey` identifies source bytes by family, style and stable source ID;
-* `FontFace` owns copied font bytes and HarfBuzz blob/face/font handles;
-* `TextShapingRequest` carries text, em size, culture, direction and OpenType
-  feature toggles;
-* `ShapedGlyphRun` exposes immutable `ShapedGlyph` and `PositionedGlyph` memory,
-  advances and bounds;
-* `GlyphAtlasRequest` selects glyph IDs, pixel size, padding, distance range and
-  `GlyphAtlasMode`;
-* `GlyphAtlasResult` contains packed pages and per-glyph UVs, bounds, bearings,
-  advances, stride and pixel memory.
-
-The actual pipeline is:
-
-```mermaid
-flowchart LR
-    A[Font bytes] --> B[FontFace]
-    B --> C[HarfBuzz hb_shape]
-    C --> D[ShapedGlyphRun]
-    D --> E[Positioned glyph IDs]
-    E --> F{GlyphAtlasMode}
-    F -->|Grayscale| G[Skia path + managed Gray8 SDF]
-    F -->|Msdf| H[HarfBuzz draw callbacks]
-    H --> I[Contour representation]
-    I --> J[DeltaTextMsdf native bridge]
-    J --> K[Vendored msdfgen core]
-    G --> L[Common cache and deterministic packer]
-    K --> L
-    L --> M[GlyphAtlasResult for renderer]
-```
-
-Shaping and outline extraction use the pinned HarfBuzz runtime. HarfBuzz draw
-callbacks translate move, line, quadratic, cubic and close events into the
-neutral `GlyphContours` representation. The MSDF bridge accepts those contours,
-returns RGB8 pixels and is copied/freed by the managed layer. The bridge uses
-the vendored msdfgen core; FreeType is not an engine dependency. Grayscale is
-the managed fallback and remains usable when the optional MSDF bridge is not
-present. MTSDF is declared in the value enum but is intentionally unsupported.
-
-Both atlas modes share glyph/request caches and deterministic page packing.
-Cache identity includes font key, glyph ID, pixel size, padding, distance range
-and mode. Repeated requests reuse the cached result; the renderer receives
-glyph IDs and metrics rather than the original string.
-
-### Native and platform boundary
-
-The managed/native boundary is `NativeHarfBuzz`, `NativeHarfBuzzOutline` and
-`NativeMsdf`, with `NativeLibraryResolver` loading beside the managed assembly.
-Native handles are owned by `FontFace`; MSDF pixel allocations are owned by the
-bridge until the managed copy is complete, then released through the explicit
-free function. CI covers Linux x64, macOS arm64 and Windows x64 native smoke.
-The managed contract does not claim that an arbitrary system HarfBuzz library
-or an unbuilt bridge is available.
-
 ## Known limitations
 
 * `MathsGen` has a model/renderer architecture, not a general C# parser; body
@@ -203,19 +145,13 @@ or an unbuilt bridge is available.
   `Helper` identities. `Unsupported` entries are not registrations.
 * The shader manifest currently describes the supported Delta.Maths surface;
   shader-only operations such as derivatives are outside MathsGen.
-* Delta.Text's MSDF route requires the native bridge and its packaged HarfBuzz
-  assets. The managed Gray8 SDF path is the fallback.
-* MTSDF, GPU atlas uploads, Vulkan integration, shaping UI controls and font
-  fallback selection are not implemented in Delta.Text.
-* Atlas fixtures and native packaging/CI remain the selected follow-up work in
-  `DeltaText/TODO.md`; this document does not turn those items into completed
-  features.
 
 ## Ownership rule
 
 MathsGen owns declarations and generated contract text. Maths owns the runtime
-types and tests that consume the generated output. Delta.Text owns shaping,
-outline extraction, atlas generation and native lifetime. DeltaShader consumes
-the generated manifest; DeltaRender consumes positioned glyphs and atlas pages.
-None of those consumers should duplicate producer metadata to bypass a missing
-declaration.
+types and tests that consume the generated output. The committed
+`shader-contract.json` is the generated ABI artifact consumed and validated by
+DeltaShader; consumers never recreate it. Text shaping and glyph generation are
+owned and documented by [DeltaText](../DeltaText/README.md), not by this
+generator architecture. No consumer should duplicate producer metadata to
+bypass a missing declaration.
