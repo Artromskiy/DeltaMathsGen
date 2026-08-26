@@ -3,9 +3,9 @@ using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Collections.Generic;
-using DeltaMathsGen.Generation;
+using Delta.MathsGen.Generation;
 
-namespace DeltaMathsGen
+namespace Delta.MathsGen
 {
     internal sealed class Program
     {

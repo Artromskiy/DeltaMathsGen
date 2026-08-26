@@ -1,4 +1,4 @@
-namespace DeltaMathsGen.Model
+namespace Delta.MathsGen.Model
 {
     internal static class DeclarationHelpers
     {

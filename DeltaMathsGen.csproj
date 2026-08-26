@@ -9,7 +9,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>DeltaMathsGen</AssemblyName>
     <PackageId>DeltaMathsGen</PackageId>
-    <RootNamespace>DeltaMathsGen</RootNamespace>
+    <RootNamespace>Delta.MathsGen</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

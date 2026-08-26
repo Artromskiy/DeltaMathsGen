@@ -1,7 +1,7 @@
 using System;
-using DeltaMathsGen.CodeModel;
+using Delta.MathsGen.CodeModel;
 
-namespace DeltaMathsGen.Model.Rendering
+namespace Delta.MathsGen.Model.Rendering
 {
     /// <summary>Renders the lowercase scalar maths façade.</summary>
     public sealed class ScalarDeltaMathsRenderer

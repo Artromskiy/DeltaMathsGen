@@ -1,4 +1,4 @@
-namespace DeltaMathsGen.Model
+namespace Delta.MathsGen.Model
 {
     internal sealed class IndexerSpec : MemberSpec
     {

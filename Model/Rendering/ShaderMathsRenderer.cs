@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DeltaMathsGen.CodeModel;
+using Delta.MathsGen.CodeModel;
 
-namespace DeltaMathsGen.Model.Rendering
+namespace Delta.MathsGen.Model.Rendering
 {
     internal static class ShaderDeltaMathsRenderer
     {
@@ -23,7 +23,7 @@ namespace DeltaMathsGen.Model.Rendering
             writer.Line("#nullable enable");
             writer.Line("using System.Runtime.CompilerServices;");
             writer.Line();
-            writer.Block("namespace DeltaMaths", () =>
+            writer.Block("namespace Delta.Maths", () =>
             {
                 writer.Block("public static partial class maths", () =>
                 {

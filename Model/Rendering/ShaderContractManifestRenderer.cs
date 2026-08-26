@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace DeltaMathsGen.Model.Rendering
+namespace Delta.MathsGen.Model.Rendering
 {
     internal static class ShaderContractManifestRenderer
     {
@@ -42,7 +42,7 @@ namespace DeltaMathsGen.Model.Rendering
             var manifest = new Manifest
             {
                 SchemaVersion = "1.1.0",
-                Namespace = "DeltaMaths",
+                Namespace = "Delta.Maths",
                 Types = types
                     .OrderBy(type => type.Name, StringComparer.Ordinal)
                     .Select(type => ToManifestType(type, typeByName))

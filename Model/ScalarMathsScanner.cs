@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace DeltaMathsGen.Model
+namespace Delta.MathsGen.Model
 {
     /// <summary>Describes a scalar maths method discovered in a source file.</summary>
     /// <param name="ReturnType">The CLR return type text.</param>

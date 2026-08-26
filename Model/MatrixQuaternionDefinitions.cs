@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static DeltaMathsGen.Model.DeclarationHelpers;
+using static Delta.MathsGen.Model.DeclarationHelpers;
 
-namespace DeltaMathsGen.Model
+namespace Delta.MathsGen.Model
 {
     internal static class MatrixQuaternionDefinitions
     {
@@ -437,7 +437,7 @@ namespace DeltaMathsGen.Model
             MarkShaderFunctionsStatic(members, "float4x4");
             return new TypeSpec
             {
-                Namespace = "DeltaMaths",
+                Namespace = "Delta.Maths",
                 Name = "float4x4",
                 Kind = "struct",
                 Modifiers = Modifiers.Public | Modifiers.Partial,
@@ -614,7 +614,7 @@ namespace DeltaMathsGen.Model
             MarkShaderFunctionsStatic(members, "quaternion");
             return new TypeSpec
             {
-                Namespace = "DeltaMaths",
+                Namespace = "Delta.Maths",
                 Name = "quaternion",
                 Kind = "struct",
                 Modifiers = Modifiers.Public | Modifiers.Partial,
