@@ -8,10 +8,10 @@ namespace Delta.MathsGen.Model.Rendering
     {
         private readonly string _namespace;
 
-        /// <summary>Initializes a renderer for the DeltaMaths namespace.</summary>
+        /// <summary>Initializes a renderer for the Delta.Maths namespace.</summary>
         public ScalarDeltaMathsRenderer()
         {
-            _namespace = "DeltaMaths";
+            _namespace = "Delta.Maths";
         }
 
         /// <summary>Renders forwarding methods for the supplied scalar declarations.</summary>

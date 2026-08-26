@@ -56,7 +56,7 @@ namespace Delta.MathsGen
             var output = Path.GetFullPath(folder);
             var mathsFolder = Directory.GetParent(output)?.FullName
                 ?? throw new InvalidOperationException("The vectors output directory must have a parent directory.");
-            var mathsSources = Directory.GetFiles(mathsFolder, "DeltaMaths*.cs", SearchOption.TopDirectoryOnly);
+            var mathsSources = Directory.GetFiles(mathsFolder, "Maths*.cs", SearchOption.TopDirectoryOnly);
             var scalarMethods = new Model.ScalarDeltaMathsScanner().Scan(mathsSources);
             var scalarDeltaMaths = new Model.Rendering.ScalarDeltaMathsRenderer().Render(scalarMethods);
             sources.Add(new GeneratedSource("maths.cs", scalarDeltaMaths));
