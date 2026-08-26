@@ -60,7 +60,7 @@ namespace Delta.MathsGen
             var scalarMethods = new Model.ScalarDeltaMathsScanner().Scan(mathsSources);
             var scalarDeltaMaths = new Model.Rendering.ScalarDeltaMathsRenderer().Render(scalarMethods);
             sources.Add(new GeneratedSource("maths.cs", scalarDeltaMaths));
-            sources.Add(new GeneratedSource("shader-contract.json", Model.Rendering.ShaderContractManifestRenderer.Render(types)));
+            sources.Add(new GeneratedSource("shader-contract.json", Model.Rendering.ShaderContractManifestRenderer.Render(types, scalarMethods)));
 
             GeneratedFileWriter.Write(output, sources.ToArray());
         }

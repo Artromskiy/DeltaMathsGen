@@ -19,8 +19,10 @@ namespace Delta.MathsGen.Model.Rendering
 
         private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
-        public static string Render(TypeSpec[] types)
+        public static string Render(TypeSpec[] types, ScalarMathMethod[] scalarMethods)
         {
+            ArgumentNullException.ThrowIfNull(types);
+            ArgumentNullException.ThrowIfNull(scalarMethods);
             var typeByName = types.ToDictionary(type => type.Name, StringComparer.Ordinal);
             var functions = types
                 .SelectMany(type => type.Members.OfType<FunctionSpec>(), (type, function) => new { Type = type, Function = function })
@@ -30,7 +32,12 @@ namespace Delta.MathsGen.Model.Rendering
                 .ThenBy(item => item.Function.ReturnType.Name, StringComparer.Ordinal)
                 .ToArray();
 
-            var functionManifests = functions.Select(item => ToManifestFunction(item.Type, item.Function, typeByName)).ToArray();
+            var functionManifests = functions
+                .Select(item => ToManifestFunction(item.Type, item.Function, typeByName))
+                .Concat(scalarMethods
+                    .Where(IsShaderScalarFunction)
+                    .Select(ToManifestScalarFunction))
+                .ToArray();
             var duplicateFunction = functionManifests
                 .GroupBy(function => function.Identity, StringComparer.Ordinal)
                 .FirstOrDefault(group => group.Count() > 1);
@@ -124,6 +131,56 @@ namespace Delta.MathsGen.Model.Rendering
             };
         }
 
+        private static ManifestFunction ToManifestScalarFunction(ScalarMathMethod method)
+        {
+            var parameterTypes = ScalarParameterTypes(method.Parameters);
+            return new ManifestFunction
+            {
+                Identity = "maths." + DeclarationHelpers.LowercaseFirst(method.Name) + StringParameters(parameterTypes) + ":" + method.ReturnType,
+                TypeClrName = "maths",
+                ClrName = DeclarationHelpers.LowercaseFirst(method.Name),
+                DeltaMathsName = DeclarationHelpers.LowercaseFirst(method.Name),
+                ParameterClrNames = parameterTypes,
+                GlslParameterTypes = parameterTypes,
+                ReturnClrName = method.ReturnType,
+                GlslReturnType = method.ReturnType,
+                GlslName = "mod",
+                Mapping = ShaderMappingKind.Builtin.ToString(),
+                ShaderZone = ShaderMetadata.ZoneName(ShaderZoneKind.DeltaMaths),
+                Stages = StageNames(new ShaderContract
+                {
+                    Mapping = ShaderMappingKind.Builtin,
+                    Stages = ShaderStages.All,
+                }),
+                RequiredCapability = ShaderMetadata.CapabilityName(ShaderCapability.Scalar),
+            };
+        }
+
+        private static bool IsShaderScalarFunction(ScalarMathMethod method) =>
+            method.Name == "Mod" && method.ReturnType == "float" &&
+            ScalarParameterTypes(method.Parameters).SequenceEqual(["float", "float"], StringComparer.Ordinal);
+
+        private static string[] ScalarParameterTypes(string parameters)
+        {
+            if (string.IsNullOrWhiteSpace(parameters))
+            {
+                return [];
+            }
+
+            return parameters.Split(',')
+                .Select(parameter =>
+                {
+                    var tokens = parameter.Trim().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+                    if (tokens.Length < 2)
+                    {
+                        throw new InvalidOperationException($"Unable to parse scalar parameter declaration '{parameter}'.");
+                    }
+
+                    return tokens[^2];
+                })
+                .ToArray();
+        }
+
         private static string? GlslType(string clrName, IReadOnlyDictionary<string, TypeSpec> types)
         {
             if (ScalarGlslNames.TryGetValue(clrName, out var scalarName))
@@ -210,6 +267,9 @@ namespace Delta.MathsGen.Model.Rendering
 
         private static string Parameters(ParameterSpec[] parameters) =>
             "(" + string.Join(",", parameters.Select(parameter => parameter.Type.Name)) + ")";
+
+        private static string StringParameters(string[] parameters) =>
+            "(" + string.Join(",", parameters) + ")";
 
         private sealed record Manifest
         {

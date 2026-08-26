@@ -140,6 +140,22 @@ namespace Delta.MathsGen.Model
             },
             new()
             {
+                Name = "FloatingRemainder",
+                Requires = ScalarCapabilities.FloatingPoint,
+                Build = context => context.Scalar.Name == "float"
+                    ?
+                    [
+                        ComponentWise(context, "Mod", Type(context.Name),
+                            [P("x", Type(context.Name)), P("y", Type(context.Name))],
+                            field => $"DeltaMaths.Mod(x.{field}, y.{field})", TypePart.Common),
+                        ComponentWise(context, "Mod", Type(context.Name),
+                            [P("x", Type(context.Name)), P("y", Type(context.Scalar.Name))],
+                            field => $"DeltaMaths.Mod(x.{field}, y)", TypePart.Common),
+                    ]
+                    : [],
+            },
+            new()
+            {
                 Name = "Rounding",
                 Requires = ScalarCapabilities.Rounding,
                 Build = context => Names("Floor", "Ceil", "Round", "Truncate", "Fract")
@@ -408,6 +424,7 @@ namespace Delta.MathsGen.Model
                 "NotEqual" when parameters.All(parameter => parameter.Type.Name == context.Name) => Builtin("notEqual", "vector"),
                 "Min" or "Max" or "Clamp" when scalar != "bool" => Builtin(LowercaseFirst(name), "vector"),
                 "Abs" when scalar is "float" or "int" => Builtin("abs", "vector"),
+                "Mod" when scalar == "float" => Builtin("mod", "vector"),
                 "Lerp" when scalar == "float" => Builtin("mix", "vector"),
                 "SmoothStep" when scalar == "float" => Builtin("smoothstep", "vector"),
                 "Step" when scalar == "float" => Builtin("step", "vector"),

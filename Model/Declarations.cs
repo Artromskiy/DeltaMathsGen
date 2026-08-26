@@ -37,6 +37,7 @@ namespace Delta.MathsGen.Model
         Matrix = 3,
         Quaternion = 4,
         Std430 = 5,
+        Scalar = 6,
     }
 
     internal enum ShaderZoneKind

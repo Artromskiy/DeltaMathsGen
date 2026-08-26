@@ -16,9 +16,9 @@ namespace Delta.MathsGen.Model
 
             if (scalar.Supports(ScalarCapabilities.Remainder))
             {
-                members.Add(Binary(vector, scalar.Name, fields, "%", vector, vector, RemainderShaderContract(scalar, vector, vector)));
-                members.Add(Binary(vector, scalar.Name, fields, "%", vector, scalar.Name, RemainderShaderContract(scalar, vector, vector)));
-                members.Add(Binary(vector, scalar.Name, fields, "%", scalar.Name, vector, RemainderShaderContract(scalar, vector, scalar.Name)));
+                members.Add(Binary(vector, scalar.Name, fields, "%", vector, vector));
+                members.Add(Binary(vector, scalar.Name, fields, "%", vector, scalar.Name));
+                members.Add(Binary(vector, scalar.Name, fields, "%", scalar.Name, vector));
             }
 
             if (scalar.Supports(ScalarCapabilities.Bitwise))
@@ -94,35 +94,16 @@ namespace Delta.MathsGen.Model
             }
         }
 
-        private static OperatorSpec Binary(
-            string vector,
-            string scalar,
-            string fields,
-            string symbol,
-            string left,
-            string right,
-            ShaderContract? shaderContract = null) => new()
-            {
-                Name = OperatorName(symbol),
-                Part = TypePart.Operators,
-                Modifiers = Modifiers.Public | Modifiers.Static,
-                Operator = symbol,
-                ReturnType = Type(vector),
-                Parameters = [Param("left", Type(left == scalar ? scalar : vector)), Param("right", Type(right == scalar ? scalar : vector))],
-                Body = $"return new({string.Join(", ", fields.Select(c => Operand("left", left, scalar, c) + " " + symbol + " " + Operand("right", right, scalar, c)))});",
-                ShaderContract = shaderContract ?? new ShaderContract(),
-            };
-
-        private static ShaderContract? RemainderShaderContract(ScalarDefinition scalar, string vector, string left) =>
-            scalar.Name == "float" && left == vector
-                ? new ShaderContract
-                {
-                    GlslName = "mod",
-                    Mapping = ShaderMappingKind.Builtin,
-                    Capability = ShaderCapability.Vector,
-                    Stages = ShaderStages.All,
-                }
-                : null;
+        private static OperatorSpec Binary(string vector, string scalar, string fields, string symbol, string left, string right) => new()
+        {
+            Name = OperatorName(symbol),
+            Part = TypePart.Operators,
+            Modifiers = Modifiers.Public | Modifiers.Static,
+            Operator = symbol,
+            ReturnType = Type(vector),
+            Parameters = [Param("left", Type(left == scalar ? scalar : vector)), Param("right", Type(right == scalar ? scalar : vector))],
+            Body = $"return new({string.Join(", ", fields.Select(c => Operand("left", left, scalar, c) + " " + symbol + " " + Operand("right", right, scalar, c)))});",
+        };
 
         private static OperatorSpec Unary(string vector, string fields, string symbol) => new()
         {

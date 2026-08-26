@@ -12,6 +12,7 @@ namespace Delta.MathsGen.Model
             ShaderCapability.Matrix => "matrix",
             ShaderCapability.Quaternion => "quaternion",
             ShaderCapability.Std430 => "std430",
+            ShaderCapability.Scalar => "scalar",
             _ => throw new InvalidOperationException($"Unsupported shader capability value '{capability}'."),
         };
 
@@ -33,7 +34,7 @@ namespace Delta.MathsGen.Model
         };
 
         public static bool IsKnownCapability(ShaderCapability capability) => capability is
-            ShaderCapability.Vector or ShaderCapability.Matrix or ShaderCapability.Quaternion or ShaderCapability.Std430;
+            ShaderCapability.Vector or ShaderCapability.Matrix or ShaderCapability.Quaternion or ShaderCapability.Std430 or ShaderCapability.Scalar;
 
         public static bool IsKnownZone(ShaderZoneKind zone) => zone == ShaderZoneKind.DeltaMaths;
     }
