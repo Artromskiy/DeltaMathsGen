@@ -2,9 +2,9 @@ using System.Linq;
 using System.Collections.Generic;
 using System;
 using System.Globalization;
-using static Delta.MathsGen.Model.DeclarationHelpers;
+using static DeltaMathsGen.Model.DeclarationHelpers;
 
-namespace Delta.MathsGen.Model
+namespace DeltaMathsGen.Model
 {
     internal sealed class VectorFamily
     {
@@ -77,7 +77,7 @@ namespace Delta.MathsGen.Model
 
             return new TypeSpec
             {
-                Namespace = "Delta.Maths",
+                Namespace = "DeltaMaths",
                 Name = name,
                 Kind = "struct",
                 Modifiers = Modifiers.Public | Modifiers.Partial,

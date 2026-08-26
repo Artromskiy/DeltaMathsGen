@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 
-namespace Delta.MathsGen.CodeModel
+namespace DeltaMathsGen.CodeModel
 {
     internal sealed class CodeWriter
     {

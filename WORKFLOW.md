@@ -1,21 +1,21 @@
-# MathsGen workflow
+# DeltaMathsGen workflow
 
 From the workspace root:
 
 ```bash
-dotnet build MathsGen/Delta.MathsGen.csproj -c Release \
+dotnet build DeltaMathsGen/DeltaMathsGen.csproj -c Release \
   --disable-build-servers -m:1 /p:UseSharedCompilation=false
-dotnet MathsGen/bin/Release/net8.0/Delta.MathsGen.dll Maths/Vectors
-dotnet MathsGen/bin/Release/net8.0/Delta.MathsGen.dll Maths/Vectors
-dotnet build Maths/Delta.Maths.csproj -c Release -f netstandard2.0
-dotnet build Maths/Delta.Maths.csproj -c Release -f netstandard2.1
-dotnet run --project Maths/Tests/Delta.Maths.Tests.csproj -c Release
-git -C Maths diff --check
+dotnet DeltaMathsGen/bin/Release/net8.0/DeltaMathsGen.dll DeltaMaths/Vectors
+dotnet DeltaMathsGen/bin/Release/net8.0/DeltaMathsGen.dll DeltaMaths/Vectors
+dotnet build DeltaMaths/DeltaMaths.csproj -c Release -f netstandard2.0
+dotnet build DeltaMaths/DeltaMaths.csproj -c Release -f netstandard2.1
+dotnet run --project DeltaMaths/Tests/DeltaMaths.Tests.csproj -c Release
+git -C DeltaMaths diff --check
 ```
 
 The second invocation must produce no additional diff. Inspect
 `.delta-generated-files` and validate the generated
-`Maths/Vectors/shader-contract.json` schema/layout before committing.
+`DeltaMaths/Vectors/shader-contract.json` schema/layout before committing.
 Cross-project verification uses
 [../REVIEW_PLAYBOOK.md](../REVIEW_PLAYBOOK.md).
 

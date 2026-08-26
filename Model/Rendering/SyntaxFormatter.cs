@@ -1,6 +1,6 @@
 using System.Linq;
 
-namespace Delta.MathsGen.Model.Rendering
+namespace DeltaMathsGen.Model.Rendering
 {
     internal static class SyntaxFormatter
     {
@@ -10,23 +10,23 @@ namespace Delta.MathsGen.Model.Rendering
 
         public static string Modifiers(Modifiers modifiers)
         {
-            var result = modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Public) ? "public" : "";
-            if (modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Static))
+            var result = modifiers.HasFlag(global::DeltaMathsGen.Model.Modifiers.Public) ? "public" : "";
+            if (modifiers.HasFlag(global::DeltaMathsGen.Model.Modifiers.Static))
             {
                 result += " static";
             }
 
-            if (modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Partial))
+            if (modifiers.HasFlag(global::DeltaMathsGen.Model.Modifiers.Partial))
             {
                 result += " partial";
             }
 
-            if (modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Readonly))
+            if (modifiers.HasFlag(global::DeltaMathsGen.Model.Modifiers.Readonly))
             {
                 result += " readonly";
             }
 
-            if (modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Override))
+            if (modifiers.HasFlag(global::DeltaMathsGen.Model.Modifiers.Override))
             {
                 result += " override";
             }

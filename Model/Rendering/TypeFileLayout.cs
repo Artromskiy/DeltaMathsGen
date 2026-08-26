@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Delta.MathsGen.Model.Rendering
+namespace DeltaMathsGen.Model.Rendering
 {
     internal sealed record TypeFile(string Name, TypePart Part, string Source);
 

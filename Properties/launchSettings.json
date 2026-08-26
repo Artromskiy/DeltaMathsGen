@@ -1,8 +1,8 @@
 {
   "profiles": {
-    "Delta.MathsGen": {
+    "DeltaMathsGen": {
       "commandName": "Project",
-      "commandLineArgs": "/Users/rum/GitProjects/TheFurnace/Maths/Vectors"
+      "commandLineArgs": "/Users/rum/GitProjects/TheFurnace/DeltaMaths/Vectors"
     }
   }
 }

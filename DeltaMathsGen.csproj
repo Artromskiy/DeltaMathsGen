@@ -7,9 +7,9 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <AssemblyName>Delta.MathsGen</AssemblyName>
-    <PackageId>Delta.MathsGen</PackageId>
-    <RootNamespace>Delta.MathsGen</RootNamespace>
+    <AssemblyName>DeltaMathsGen</AssemblyName>
+    <PackageId>DeltaMathsGen</PackageId>
+    <RootNamespace>DeltaMathsGen</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Delta.MathsGen.Model;
+using DeltaMathsGen.Model;
 
-namespace Delta.MathsGen.Validation
+namespace DeltaMathsGen.Validation
 {
     internal static class ModelValidator
     {
@@ -24,7 +24,7 @@ namespace Delta.MathsGen.Validation
                 ValidateType(type);
             }
 
-            ValidateShaderMaths(types);
+            ValidateShaderDeltaMaths(types);
             ValidateShaderContracts(types);
         }
 
@@ -95,7 +95,7 @@ namespace Delta.MathsGen.Validation
                         Fail($"Function '{type.Name}.{function.Name}' has no target API.");
                     }
 
-                    if (function.Targets.HasFlag(FunctionTargets.ShaderMaths) &&
+                    if (function.Targets.HasFlag(FunctionTargets.ShaderDeltaMaths) &&
                         !function.Targets.HasFlag(FunctionTargets.Type))
                     {
                         Fail($"Function '{type.Name}.{function.Name}' cannot forward to maths without a type implementation.");
@@ -116,19 +116,19 @@ namespace Delta.MathsGen.Validation
             }
         }
 
-        private static void ValidateShaderMaths(TypeSpec[] types)
+        private static void ValidateShaderDeltaMaths(TypeSpec[] types)
         {
             var signatures = new HashSet<string>(StringComparer.Ordinal);
             foreach (var type in types)
             {
                 foreach (var function in type.Members.OfType<FunctionSpec>())
                 {
-                    if (!function.Targets.HasFlag(FunctionTargets.ShaderMaths))
+                    if (!function.Targets.HasFlag(FunctionTargets.ShaderDeltaMaths))
                     {
                         continue;
                     }
 
-                    var signature = function.MathsName + Parameters(function.Parameters);
+                    var signature = function.DeltaMathsName + Parameters(function.Parameters);
                     if (!signatures.Add(signature))
                     {
                         Fail($"Duplicate maths overload '{signature}', contributed by '{type.Name}.{function.Name}'.");

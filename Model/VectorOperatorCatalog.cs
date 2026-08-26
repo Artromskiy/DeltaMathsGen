@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static Delta.MathsGen.Model.DeclarationHelpers;
+using static DeltaMathsGen.Model.DeclarationHelpers;
 
-namespace Delta.MathsGen.Model
+namespace DeltaMathsGen.Model
 {
     internal static class VectorOperatorCatalog
     {
@@ -168,7 +168,7 @@ namespace Delta.MathsGen.Model
             Name = name,
             ReturnType = Type("bool"),
             Modifiers = Modifiers.Public | Modifiers.Static,
-            Targets = FunctionTargets.Type | FunctionTargets.ShaderMaths,
+            Targets = FunctionTargets.Type | FunctionTargets.ShaderDeltaMaths,
             Part = TypePart.Relational,
             Parameters = [Param("value", Type(vector))],
             Body = $"return {string.Join($" {operation} ", fields.Select(c => $"value.{c}"))};",

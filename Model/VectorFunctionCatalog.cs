@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static Delta.MathsGen.Model.DeclarationHelpers;
+using static DeltaMathsGen.Model.DeclarationHelpers;
 
-namespace Delta.MathsGen.Model
+namespace DeltaMathsGen.Model
 {
     internal sealed class VectorFunctionRule
     {
@@ -20,7 +20,7 @@ namespace Delta.MathsGen.Model
     internal static class VectorFunctionCatalog
     {
         private const FunctionTargets PublicApi =
-            FunctionTargets.Type | FunctionTargets.ShaderMaths;
+            FunctionTargets.Type | FunctionTargets.ShaderDeltaMaths;
 
         public static readonly VectorFunctionRule[] Rules =
         [
@@ -56,18 +56,18 @@ namespace Delta.MathsGen.Model
                 Requires = ScalarCapabilities.Ordered,
                 Build = context =>
                 [
-                    ComponentWise(context, "Min", Type(context.Name), Binary(context), field => $"Maths.Min(a.{field}, b.{field})"),
-                    ComponentWise(context, "Min", Type(context.Name), [P("a", Type(context.Name)), P("b", Type(context.Scalar.Name))], field => $"Maths.Min(a.{field}, b)"),
-                    ComponentWise(context, "Min", Type(context.Name), [P("a", Type(context.Scalar.Name)), P("b", Type(context.Name))], field => $"Maths.Min(a, b.{field})"),
-                    ComponentWise(context, "Max", Type(context.Name), Binary(context), field => $"Maths.Max(a.{field}, b.{field})"),
-                    ComponentWise(context, "Max", Type(context.Name), [P("a", Type(context.Name)), P("b", Type(context.Scalar.Name))], field => $"Maths.Max(a.{field}, b)"),
-                    ComponentWise(context, "Max", Type(context.Name), [P("a", Type(context.Scalar.Name)), P("b", Type(context.Name))], field => $"Maths.Max(a, b.{field})"),
+                    ComponentWise(context, "Min", Type(context.Name), Binary(context), field => $"DeltaMaths.Min(a.{field}, b.{field})"),
+                    ComponentWise(context, "Min", Type(context.Name), [P("a", Type(context.Name)), P("b", Type(context.Scalar.Name))], field => $"DeltaMaths.Min(a.{field}, b)"),
+                    ComponentWise(context, "Min", Type(context.Name), [P("a", Type(context.Scalar.Name)), P("b", Type(context.Name))], field => $"DeltaMaths.Min(a, b.{field})"),
+                    ComponentWise(context, "Max", Type(context.Name), Binary(context), field => $"DeltaMaths.Max(a.{field}, b.{field})"),
+                    ComponentWise(context, "Max", Type(context.Name), [P("a", Type(context.Name)), P("b", Type(context.Scalar.Name))], field => $"DeltaMaths.Max(a.{field}, b)"),
+                    ComponentWise(context, "Max", Type(context.Name), [P("a", Type(context.Scalar.Name)), P("b", Type(context.Name))], field => $"DeltaMaths.Max(a, b.{field})"),
                     ComponentWise(context, "Clamp", Type(context.Name),
                         [P("value", Type(context.Name)), P("min", Type(context.Scalar.Name)), P("max", Type(context.Scalar.Name))],
-                        field => $"Maths.Clamp(value.{field}, min, max)"),
+                        field => $"DeltaMaths.Clamp(value.{field}, min, max)"),
                     ComponentWise(context, "Clamp", Type(context.Name),
                         [P("value", Type(context.Name)), P("min", Type(context.Name)), P("max", Type(context.Name))],
-                        field => $"Maths.Clamp(value.{field}, min.{field}, max.{field})"),
+                        field => $"DeltaMaths.Clamp(value.{field}, min.{field}, max.{field})"),
                 ],
             },
             new()
@@ -88,8 +88,8 @@ namespace Delta.MathsGen.Model
                 Requires = ScalarCapabilities.Signed,
                 Build = context =>
                 [
-                    UnaryMaths(context, "Abs"),
-                    UnaryMaths(context, "Sign"),
+                    UnaryDeltaMaths(context, "Abs"),
+                    UnaryDeltaMaths(context, "Sign"),
                 ],
             },
             new()
@@ -106,36 +106,36 @@ namespace Delta.MathsGen.Model
                 [
                     ComponentWise(context, "Lerp", Type(context.Name),
                         [P("a", Type(context.Name)), P("b", Type(context.Name)), P("t", Type(context.Scalar.Name))],
-                        field => $"Maths.Lerp(a.{field}, b.{field}, t)"),
+                        field => $"DeltaMaths.Lerp(a.{field}, b.{field}, t)"),
                     ComponentWise(context, "Lerp", Type(context.Name),
                         [P("a", Type(context.Name)), P("b", Type(context.Name)), P("t", Type(context.Name))],
-                        field => $"Maths.Lerp(a.{field}, b.{field}, t.{field})"),
+                        field => $"DeltaMaths.Lerp(a.{field}, b.{field}, t.{field})"),
                     ComponentWise(context, "InvLerp", Type(context.Name),
                         [P("edge0", Type(context.Name)), P("edge1", Type(context.Name)), P("value", Type(context.Name))],
-                        field => $"Maths.InvLerp(edge0.{field}, edge1.{field}, value.{field})"),
+                        field => $"DeltaMaths.InvLerp(edge0.{field}, edge1.{field}, value.{field})"),
                     ComponentWise(context, "InvLerp", Type(context.Name),
                         [P("edge0", Type(context.Name)), P("edge1", Type(context.Name)), P("value", Type(context.Scalar.Name))],
-                        field => $"Maths.InvLerp(edge0.{field}, edge1.{field}, value)"),
+                        field => $"DeltaMaths.InvLerp(edge0.{field}, edge1.{field}, value)"),
                     ComponentWise(context, "SmoothStep", Type(context.Name),
                         [P("edge0", Type(context.Name)), P("edge1", Type(context.Name)), P("value", Type(context.Name))],
-                        field => $"Maths.SmoothStep(edge0.{field}, edge1.{field}, value.{field})"),
+                        field => $"DeltaMaths.SmoothStep(edge0.{field}, edge1.{field}, value.{field})"),
                     ComponentWise(context, "SmoothStep", Type(context.Name),
                         [P("edge0", Type(context.Scalar.Name)), P("edge1", Type(context.Scalar.Name)), P("value", Type(context.Name))],
-                        field => $"Maths.SmoothStep(edge0, edge1, value.{field})"),
+                        field => $"DeltaMaths.SmoothStep(edge0, edge1, value.{field})"),
                     ComponentWise(context, "Step", Type(context.Name),
                         [P("edge", Type(context.Name)), P("value", Type(context.Name))],
-                        field => $"Maths.Step(edge.{field}, value.{field})"),
+                        field => $"DeltaMaths.Step(edge.{field}, value.{field})"),
                     ComponentWise(context, "Step", Type(context.Name),
                         [P("edge", Type(context.Scalar.Name)), P("value", Type(context.Name))],
-                        field => $"Maths.Step(edge, value.{field})"),
+                        field => $"DeltaMaths.Step(edge, value.{field})"),
                     ComponentWise(context, "Saturate", Type(context.Name), Unary(context),
-                        field => $"Maths.Saturate(value.{field})"),
+                        field => $"DeltaMaths.Saturate(value.{field})"),
                     ComponentWise(context, "Fma", Type(context.Name),
                         [P("a", Type(context.Name)), P("b", Type(context.Name)), P("c", Type(context.Name))],
-                        field => $"Maths.Fma(a.{field}, b.{field}, c.{field})"),
+                        field => $"DeltaMaths.Fma(a.{field}, b.{field}, c.{field})"),
                     ComponentWise(context, "Remap", Type(context.Name),
                         [P("value", Type(context.Name)), P("sourceFrom", Type(context.Name)), P("sourceTo", Type(context.Name)), P("targetFrom", Type(context.Name)), P("targetTo", Type(context.Name))],
-                        field => $"Maths.Remap(value.{field}, sourceFrom.{field}, sourceTo.{field}, targetFrom.{field}, targetTo.{field})"),
+                        field => $"DeltaMaths.Remap(value.{field}, sourceFrom.{field}, sourceTo.{field}, targetFrom.{field}, targetTo.{field})"),
                 ],
             },
             new()
@@ -143,14 +143,14 @@ namespace Delta.MathsGen.Model
                 Name = "Rounding",
                 Requires = ScalarCapabilities.Rounding,
                 Build = context => Names("Floor", "Ceil", "Round", "Truncate", "Fract")
-                    .Select(name => UnaryMaths(context, name, TypePart.Common)).ToArray(),
+                    .Select(name => UnaryDeltaMaths(context, name, TypePart.Common)).ToArray(),
             },
             new()
             {
                 Name = "Angles",
                 Requires = ScalarCapabilities.Real,
                 Build = context => Names("Radians", "Degrees")
-                    .Select(name => UnaryMaths(context, name, TypePart.Common)).ToArray(),
+                    .Select(name => UnaryDeltaMaths(context, name, TypePart.Common)).ToArray(),
             },
             new()
             {
@@ -159,8 +159,8 @@ namespace Delta.MathsGen.Model
                 Build = context =>
                 [
                     .. Names("Sin", "Cos", "Tan", "Asin", "Acos", "Atan")
-                        .Select(name => UnaryMaths(context, name, TypePart.Trigonometry)),
-                    .. BinaryMathsOverloads(context, "Atan2", "y", "x", TypePart.Trigonometry),
+                        .Select(name => UnaryDeltaMaths(context, name, TypePart.Trigonometry)),
+                    .. BinaryDeltaMathsOverloads(context, "Atan2", "y", "x", TypePart.Trigonometry),
                 ],
             },
             new()
@@ -168,7 +168,7 @@ namespace Delta.MathsGen.Model
                 Name = "Hyperbolic",
                 Requires = ScalarCapabilities.Hyperbolic,
                 Build = context => Names("Sinh", "Cosh", "Tanh", "Asinh", "Acosh", "Atanh")
-                    .Select(name => UnaryMaths(context, name, TypePart.Trigonometry)).ToArray(),
+                    .Select(name => UnaryDeltaMaths(context, name, TypePart.Trigonometry)).ToArray(),
             },
             new()
             {
@@ -177,8 +177,8 @@ namespace Delta.MathsGen.Model
                 Build = context =>
                 [
                     .. Names("Exp", "Exp2", "Log", "Log2", "Log10", "Sqrt", "InverseSqrt", "Cbrt")
-                        .Select(name => UnaryMaths(context, name, TypePart.Exponential)),
-                    .. BinaryMathsOverloads(context, "Pow", "a", "b", TypePart.Exponential),
+                        .Select(name => UnaryDeltaMaths(context, name, TypePart.Exponential)),
+                    .. BinaryDeltaMathsOverloads(context, "Pow", "a", "b", TypePart.Exponential),
                 ],
             },
             new()
@@ -187,8 +187,8 @@ namespace Delta.MathsGen.Model
                 Requires = ScalarCapabilities.FixedPoint,
                 Build = context =>
                 [
-                    UnaryMaths(context, "Sqrt", TypePart.Exponential),
-                    UnaryMaths(context, "InverseSqrt", TypePart.Exponential),
+                    UnaryDeltaMaths(context, "Sqrt", TypePart.Exponential),
+                    UnaryDeltaMaths(context, "InverseSqrt", TypePart.Exponential),
                 ],
             },
             new()
@@ -197,9 +197,9 @@ namespace Delta.MathsGen.Model
                 Requires = ScalarCapabilities.FloatingPoint,
                 Build = context =>
                 [
-                    BoolUnaryMaths(context, "IsNaN"),
-                    BoolUnaryMaths(context, "IsInfinity"),
-                    BoolUnaryMaths(context, "IsFinite"),
+                    BoolUnaryDeltaMaths(context, "IsNaN"),
+                    BoolUnaryDeltaMaths(context, "IsInfinity"),
+                    BoolUnaryDeltaMaths(context, "IsFinite"),
                 ],
             },
             new()
@@ -236,19 +236,19 @@ namespace Delta.MathsGen.Model
             var scalar = Type(context.Scalar.Name);
             return
             [
-                Function("Length", scalar, [P("value", vector)], "return Maths.Sqrt(SqrLength(value));", TypePart.Geometry, context),
+                Function("Length", scalar, [P("value", vector)], "return DeltaMaths.Sqrt(SqrLength(value));", TypePart.Geometry, context),
                 Function("Distance", scalar, [P("a", vector), P("b", vector)], "return Length(a - b);", TypePart.Geometry, context),
                 Function("SqrDistance", scalar, [P("a", vector), P("b", vector)], "return SqrLength(a - b);", TypePart.Geometry),
                 Function("Normalize", vector, [P("value", vector)], "return value / Length(value);", TypePart.Geometry, context),
                 Function("NormalizeSafe", vector, [P("value", vector)],
                     $$"""
                     var sqrLength = SqrLength(value);
-                    return sqrLength <= {{context.Scalar.NormalizeSafeThreshold}} ? zero : value * Maths.InverseSqrt(sqrLength);
+                    return sqrLength <= {{context.Scalar.NormalizeSafeThreshold}} ? zero : value * DeltaMaths.InverseSqrt(sqrLength);
                     """, TypePart.Geometry),
                 Function("NormalizeSafe", vector, [P("value", vector), P("fallback", vector)],
                     $$"""
                     var sqrLength = SqrLength(value);
-                    return sqrLength <= {{context.Scalar.NormalizeSafeThreshold}} ? fallback : value * Maths.InverseSqrt(sqrLength);
+                    return sqrLength <= {{context.Scalar.NormalizeSafeThreshold}} ? fallback : value * DeltaMaths.InverseSqrt(sqrLength);
                     """, TypePart.Geometry),
                 Function("FaceForward", vector, [P("N", vector), P("I", vector), P("Nref", vector)],
                     "return Dot(Nref, I) < 0 ? N : -N;", TypePart.Geometry, context),
@@ -259,7 +259,7 @@ namespace Delta.MathsGen.Model
                     var dNI = Dot(N, I);
                     var k = 1 - eta * eta * (1 - dNI * dNI);
                     if (k < 0) return zero;
-                    return eta * I - (eta * dNI + Maths.Sqrt(k)) * N;
+                    return eta * I - (eta * dNI + DeltaMaths.Sqrt(k)) * N;
                     """, TypePart.Geometry),
                 Function("Project", vector, [P("value", vector), P("onto", vector)],
                     "return onto * (Dot(value, onto) / SqrLength(onto));", TypePart.Geometry),
@@ -270,26 +270,26 @@ namespace Delta.MathsGen.Model
                     """, TypePart.Geometry),
                 Function("ClampLength", vector, [P("value", vector), P("maxLength", scalar)],
                     """
-                    maxLength = Maths.Max(maxLength, 0);
+                    maxLength = DeltaMaths.Max(maxLength, 0);
                     var sqrLength = SqrLength(value);
                     if (sqrLength > maxLength * maxLength)
                     {
-                        return value * maxLength * Maths.InverseSqrt(sqrLength);
+                        return value * maxLength * DeltaMaths.InverseSqrt(sqrLength);
                     }
                     return value;
                     """, TypePart.Geometry),
                 Function("MoveTowards", vector, [P("current", vector), P("target", vector), P("maxDelta", scalar)],
                     """
-                    maxDelta = Maths.Max(maxDelta, 0);
+                    maxDelta = DeltaMaths.Max(maxDelta, 0);
                     var delta = target - current;
                     var sqrDistance = SqrLength(delta);
                     if (sqrDistance == 0 || sqrDistance <= maxDelta * maxDelta)
                         return target;
-                    return current + delta * maxDelta * Maths.InverseSqrt(sqrDistance);
+                    return current + delta * maxDelta * DeltaMaths.InverseSqrt(sqrDistance);
                     """, TypePart.Geometry),
                 Function("SmoothDamp", vector,
                     [P("source", vector), P("target", vector), P("velocity", vector, ParameterModifier.Ref), P("smoothTime", scalar), P("deltaTime", scalar)],
-                    $"return new({string.Join(", ", context.Fields.Select(field => $"Maths.SmoothDamp(source.{field}, target.{field}, ref velocity.{field}, smoothTime, deltaTime)"))});",
+                    $"return new({string.Join(", ", context.Fields.Select(field => $"DeltaMaths.SmoothDamp(source.{field}, target.{field}, ref velocity.{field}, smoothTime, deltaTime)"))});",
                     TypePart.Geometry, context),
             ];
         }
@@ -314,26 +314,26 @@ namespace Delta.MathsGen.Model
             "return new(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);",
             TypePart.Geometry, context);
 
-        private static FunctionSpec UnaryMaths(VectorContext context, string name, TypePart part = TypePart.Common) =>
-            ComponentWise(context, name, Type(context.Name), Unary(context), field => $"Maths.{name}(value.{field})", part);
+        private static FunctionSpec UnaryDeltaMaths(VectorContext context, string name, TypePart part = TypePart.Common) =>
+            ComponentWise(context, name, Type(context.Name), Unary(context), field => $"DeltaMaths.{name}(value.{field})", part);
 
-        private static FunctionSpec BoolUnaryMaths(VectorContext context, string name) =>
-            ComponentWise(context, name, Type(context.BoolVectorName), Unary(context), field => $"Maths.{name}(value.{field})", TypePart.Relational);
+        private static FunctionSpec BoolUnaryDeltaMaths(VectorContext context, string name) =>
+            ComponentWise(context, name, Type(context.BoolVectorName), Unary(context), field => $"DeltaMaths.{name}(value.{field})", TypePart.Relational);
 
-        private static FunctionSpec BinaryMaths(VectorContext context, string name, string left, string right, TypePart part) =>
+        private static FunctionSpec BinaryDeltaMaths(VectorContext context, string name, string left, string right, TypePart part) =>
             ComponentWise(context, name, Type(context.Name),
                 [P(left, Type(context.Name)), P(right, Type(context.Name))],
-                field => $"Maths.{name}({left}.{field}, {right}.{field})", part);
+                field => $"DeltaMaths.{name}({left}.{field}, {right}.{field})", part);
 
-        private static FunctionSpec[] BinaryMathsOverloads(VectorContext context, string name, string left, string right, TypePart part) =>
+        private static FunctionSpec[] BinaryDeltaMathsOverloads(VectorContext context, string name, string left, string right, TypePart part) =>
         [
-            BinaryMaths(context, name, left, right, part),
+            BinaryDeltaMaths(context, name, left, right, part),
             ComponentWise(context, name, Type(context.Name),
                 [P(left, Type(context.Name)), P(right, Type(context.Scalar.Name))],
-                field => $"Maths.{name}({left}.{field}, {right})", part),
+                field => $"DeltaMaths.{name}({left}.{field}, {right})", part),
             ComponentWise(context, name, Type(context.Name),
                 [P(left, Type(context.Scalar.Name)), P(right, Type(context.Name))],
-                field => $"Maths.{name}({left}, {right}.{field})", part),
+                field => $"DeltaMaths.{name}({left}, {right}.{field})", part),
         ];
 
         private static FunctionSpec Mask(VectorContext context, string name, string operation) =>

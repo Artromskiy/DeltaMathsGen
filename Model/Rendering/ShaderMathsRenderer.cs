@@ -1,17 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Delta.MathsGen.CodeModel;
+using DeltaMathsGen.CodeModel;
 
-namespace Delta.MathsGen.Model.Rendering
+namespace DeltaMathsGen.Model.Rendering
 {
-    internal static class ShaderMathsRenderer
+    internal static class ShaderDeltaMathsRenderer
     {
-        public static bool CanRender(IReadOnlyList<TypeSpec> types) => ShaderMathsFunctions(types).Length != 0;
+        public static bool CanRender(IReadOnlyList<TypeSpec> types) => ShaderDeltaMathsFunctions(types).Length != 0;
 
         public static string Render(IReadOnlyList<TypeSpec> types)
         {
-            var functions = ShaderMathsFunctions(types).ToArray();
+            var functions = ShaderDeltaMathsFunctions(types).ToArray();
             if (functions.Length == 0)
             {
                 throw new InvalidOperationException("No shader maths functions found.");
@@ -23,7 +23,7 @@ namespace Delta.MathsGen.Model.Rendering
             writer.Line("#nullable enable");
             writer.Line("using System.Runtime.CompilerServices;");
             writer.Line();
-            writer.Block("namespace Delta.Maths", () =>
+            writer.Block("namespace DeltaMaths", () =>
             {
                 writer.Block("public static partial class maths", () =>
                 {
@@ -39,7 +39,7 @@ namespace Delta.MathsGen.Model.Rendering
 
         private static void RenderFunction(CodeWriter writer, TypeSpec type, FunctionSpec function)
         {
-            var signature = $"public static {function.ReturnType} {function.MathsName}({SyntaxFormatter.Parameters(function.Parameters)})";
+            var signature = $"public static {function.ReturnType} {function.DeltaMathsName}({SyntaxFormatter.Parameters(function.Parameters)})";
             writer.Line("[MethodImpl(MethodImplOptions.AggressiveInlining)]");
 
             if (function.Targets.HasFlag(FunctionTargets.Type))
@@ -60,10 +60,10 @@ namespace Delta.MathsGen.Model.Rendering
             }
         }
 
-        private static (TypeSpec Type, FunctionSpec Function)[] ShaderMathsFunctions(IReadOnlyList<TypeSpec> types) =>
+        private static (TypeSpec Type, FunctionSpec Function)[] ShaderDeltaMathsFunctions(IReadOnlyList<TypeSpec> types) =>
             types.SelectMany(type => type.Members
                 .OfType<FunctionSpec>()
-                .Where(function => function.Targets.HasFlag(FunctionTargets.ShaderMaths))
+                .Where(function => function.Targets.HasFlag(FunctionTargets.ShaderDeltaMaths))
                 .Select(function => (type, function))).ToArray();
     }
 }

@@ -1,4 +1,4 @@
-# MathsGen ideas
+# DeltaMathsGen ideas
 
 Not active work:
 

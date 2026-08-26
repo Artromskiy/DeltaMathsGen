@@ -1,6 +1,6 @@
 using System;
 
-namespace Delta.MathsGen.Model
+namespace DeltaMathsGen.Model
 {
     [Flags]
     internal enum Modifiers
@@ -18,7 +18,7 @@ namespace Delta.MathsGen.Model
     {
         None = 0,
         Type = 1,
-        ShaderMaths = 2,
+        ShaderDeltaMaths = 2,
     }
 
     [Flags]
@@ -113,7 +113,7 @@ namespace Delta.MathsGen.Model
         public FunctionTargets Targets { get; init; } = FunctionTargets.Type;
         public ShaderContract ShaderContract { get; set; } = new();
 
-        public string MathsName => DeclarationHelpers.LowercaseFirst(Name);
+        public string DeltaMathsName => DeclarationHelpers.LowercaseFirst(Name);
     }
 
     internal sealed class PropertySpec : MemberSpec
@@ -131,7 +131,7 @@ namespace Delta.MathsGen.Model
 
     internal sealed class TypeSpec
     {
-        public string Namespace { get; init; } = "Delta.Maths";
+        public string Namespace { get; init; } = "DeltaMaths";
         public required string Name { get; init; }
         public string? Comment { get; init; }
         public string Kind { get; init; } = "struct";

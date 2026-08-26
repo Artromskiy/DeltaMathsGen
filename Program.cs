@@ -3,9 +3,9 @@ using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Collections.Generic;
-using Delta.MathsGen.Generation;
+using DeltaMathsGen.Generation;
 
-namespace Delta.MathsGen
+namespace DeltaMathsGen
 {
     internal sealed class Program
     {
@@ -16,7 +16,7 @@ namespace Delta.MathsGen
 
             if (args.Length != 1)
             {
-                Console.Error.WriteLine("Usage: Delta.MathsGen <vectors-output-directory>");
+                Console.Error.WriteLine("Usage: DeltaMathsGen <vectors-output-directory>");
                 Environment.ExitCode = 2;
                 return;
             }
@@ -48,18 +48,18 @@ namespace Delta.MathsGen
                 }
             }
 
-            if (Model.Rendering.ShaderMathsRenderer.CanRender(types))
+            if (Model.Rendering.ShaderDeltaMathsRenderer.CanRender(types))
             {
-                sources.Add(new GeneratedSource("maths.vectors.cs", Model.Rendering.ShaderMathsRenderer.Render(types)));
+                sources.Add(new GeneratedSource("maths.vectors.cs", Model.Rendering.ShaderDeltaMathsRenderer.Render(types)));
             }
 
             var output = Path.GetFullPath(folder);
             var mathsFolder = Directory.GetParent(output)?.FullName
                 ?? throw new InvalidOperationException("The vectors output directory must have a parent directory.");
-            var mathsSources = Directory.GetFiles(mathsFolder, "Maths*.cs", SearchOption.TopDirectoryOnly);
-            var scalarMethods = new Model.ScalarMathsScanner().Scan(mathsSources);
-            var scalarMaths = new Model.Rendering.ScalarMathsRenderer().Render(scalarMethods);
-            sources.Add(new GeneratedSource("maths.cs", scalarMaths));
+            var mathsSources = Directory.GetFiles(mathsFolder, "DeltaMaths*.cs", SearchOption.TopDirectoryOnly);
+            var scalarMethods = new Model.ScalarDeltaMathsScanner().Scan(mathsSources);
+            var scalarDeltaMaths = new Model.Rendering.ScalarDeltaMathsRenderer().Render(scalarMethods);
+            sources.Add(new GeneratedSource("maths.cs", scalarDeltaMaths));
             sources.Add(new GeneratedSource("shader-contract.json", Model.Rendering.ShaderContractManifestRenderer.Render(types)));
 
             GeneratedFileWriter.Write(output, sources.ToArray());

@@ -1,7 +1,7 @@
-# MathsGen agent guide
+# DeltaMathsGen agent guide
 
-Scope: declarative generation of `Delta.Maths` source and
-`Maths/Vectors/shader-contract.json`.
+Scope: declarative generation of `DeltaMaths` source and
+`DeltaMaths/Vectors/shader-contract.json`.
 
 Read only what the task needs:
 
@@ -9,13 +9,13 @@ Read only what the task needs:
 - [TODO.md](TODO.md) for selected work.
 - [IDEAS.md](IDEAS.md) only for research or task selection.
 - [WORKFLOW.md](WORKFLOW.md) before generation or verification.
-- [../Maths/AGENTS.md](../Maths/AGENTS.md) when generated runtime/API output
+- [../DeltaMaths/AGENTS.md](../DeltaMaths/AGENTS.md) when generated runtime/API output
   changes; [../DeltaShader/AGENTS.md](../DeltaShader/AGENTS.md) when the shader
   contract changes.
 - [../HIGH_PRIORITY_TODO.md](../HIGH_PRIORITY_TODO.md) for the independent
   generation/ABI acceptance lane.
 
-Never edit generated Maths files directly. Preserve the column-vector,
+Never edit generated DeltaMaths files directly. Preserve the column-vector,
 column-major `T * R * S` convention and explicit
 `Builtin`/`Helper`/`Unsupported` mappings.
 

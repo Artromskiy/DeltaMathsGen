@@ -1,14 +1,14 @@
-# MathsGen and Delta.Maths architecture
+# DeltaMathsGen and DeltaMaths architecture
 
 This document describes the implementation that exists in the workspace. It
-is intentionally kept beside `MathsGen`, because the generator model owns the
+is intentionally kept beside `DeltaMathsGen`, because the generator model owns the
 generated API and shader contract. It is not a promise that an unimplemented
 backend or a future shader intrinsic already exists.
 
 ## Generation lifecycle
 
-`Delta.MathsGen` is a console application targeting `net8.0`. Its only command
-argument is the generated vectors directory, normally `Maths/Vectors`.
+`DeltaMathsGen` is a console application targeting `net8.0`. Its only command
+argument is the generated vectors directory, normally `DeltaMaths/Vectors`.
 
 The lifecycle is:
 
@@ -20,9 +20,9 @@ The lifecycle is:
    signatures, maths forwarding and shader metadata.
 5. `TypeFileLayout` groups each type's members by `TypePart` and
    `CSharpRenderer` renders one partial file per non-empty part.
-6. `ShaderMathsRenderer` renders the lowercase `maths` forwarding facade.
-7. `ScalarMathsScanner` reads the handwritten `Maths*.cs` files and
-   `ScalarMathsRenderer` emits the generated scalar facade.
+6. `ShaderDeltaMathsRenderer` renders the lowercase `maths` forwarding facade.
+7. `ScalarDeltaMathsScanner` reads the handwritten `DeltaMaths*.cs` files and
+   `ScalarDeltaMathsRenderer` emits the generated scalar facade.
 8. `ShaderContractManifestRenderer` serializes the same model to
    `shader-contract.json` schema `1.1.0`.
 9. `GeneratedFileWriter` validates names, removes files listed as stale in
@@ -32,23 +32,23 @@ The lifecycle is:
 Generation is deterministic: ordering uses ordinal name/signature ordering and
 the process culture is invariant. Generated files are outputs, never editing
 targets. Add a type, member, or shader symbol in the model and regenerate;
-do not patch `Maths/Vectors` by hand.
+do not patch `DeltaMaths/Vectors` by hand.
 
 ```mermaid
 flowchart TD
-    A[Delta.MathsGen Program] --> B[ScalarDefinition catalog]
+    A[DeltaMathsGen Program] --> B[ScalarDefinition catalog]
     B --> C[VectorContext and VectorFamily]
     C --> D[TypeSpec and MemberSpec]
     D --> E[MatrixQuaternionDefinitions]
     E --> F[ModelValidator]
     F --> G[TypeFileLayout + CSharpRenderer]
-    F --> H[ShaderMathsRenderer]
+    F --> H[ShaderDeltaMathsRenderer]
     F --> I[ShaderContractManifestRenderer]
-    G --> J[Maths/Vectors partial C#]
+    G --> J[DeltaMaths/Vectors partial C#]
     H --> J
-    I --> K[Maths/Vectors/shader-contract.json]
-    J --> L[Delta.Maths runtime]
-    K --> M[Delta.Shader contract consumer]
+    I --> K[DeltaMaths/Vectors/shader-contract.json]
+    J --> L[DeltaMaths runtime]
+    K --> M[DeltaShader contract consumer]
 ```
 
 ## Generator model
@@ -92,7 +92,7 @@ The model distinguishes stable contract categories from dynamic ABI names:
 | `ShaderCapability.Matrix` | `"matrix"` | matrix capability |
 | `ShaderCapability.Quaternion` | `"quaternion"` | quaternion helper capability |
 | `ShaderCapability.Std430` | `"std430"` | storage/layout capability |
-| `ShaderZoneKind.DeltaMaths` | `"Delta.Maths"` | owning shader zone |
+| `ShaderZoneKind.DeltaMaths` | `"DeltaMaths"` | owning shader zone |
 | `ParameterModifier.Out` | `"out"` in C# | output parameter |
 | `ParameterModifier.Ref` | `"ref"` in C# | ref parameter |
 
@@ -113,14 +113,14 @@ GLSL signatures. `float4x4` is four sequential `float4` columns and uses
 column-vector CPU/GLSL semantics. `quaternion` is a sequential `vec4` with
 `(x, y, z, w)` storage. `double` and `fix` vector families remain CPU-only.
 
-## Delta.Maths runtime boundary
+## DeltaMaths runtime boundary
 
-`Maths` is a portable `netstandard2.0`/`netstandard2.1` assembly. Generated
-partial structs live in `Maths/Vectors`; handwritten scalar and extension
+`DeltaMaths` is a portable `netstandard2.0`/`netstandard2.1` assembly. Generated
+partial structs live in `DeltaMaths/Vectors`; handwritten scalar and extension
 facades live in the project root. The generated `maths` class forwards
 shader-like lowercase calls such as `maths.normalize`, while the handwritten
-`Maths` class remains the stable scalar API. Consumers use values directly;
-there is no runtime dependency on `MathsGen`, a renderer, Unity or
+`DeltaMaths` class remains the stable scalar API. Consumers use values directly;
+there is no runtime dependency on `DeltaMathsGen`, a renderer, Unity or
 `System.Numerics`.
 
 The matrix convention is independent of the source layout convention:
@@ -135,20 +135,20 @@ The matrix convention is independent of the source layout convention:
 
 These conventions are covered by the runtime matrix/quaternion and GLSL
 conformance tests. A consumer that needs a new GPU-visible function should add
-its declaration and contract in MathsGen, then regenerate and test the output.
+its declaration and contract in DeltaMathsGen, then regenerate and test the output.
 
 ## Known limitations
 
-* `MathsGen` has a model/renderer architecture, not a general C# parser; body
+* `DeltaMathsGen` has a model/renderer architecture, not a general C# parser; body
   fragments remain source strings.
 * Shader consumers still need to register the manifest's `Builtin` and
   `Helper` identities. `Unsupported` entries are not registrations.
-* The shader manifest currently describes the supported Delta.Maths surface;
-  shader-only operations such as derivatives are outside MathsGen.
+* The shader manifest currently describes the supported DeltaMaths surface;
+  shader-only operations such as derivatives are outside DeltaMathsGen.
 
 ## Ownership rule
 
-MathsGen owns declarations and generated contract text. Maths owns the runtime
+DeltaMathsGen owns declarations and generated contract text. DeltaMaths owns the runtime
 types and tests that consume the generated output. The committed
 `shader-contract.json` is the generated ABI artifact consumed and validated by
 DeltaShader; consumers never recreate it. Text shaping and glyph generation are

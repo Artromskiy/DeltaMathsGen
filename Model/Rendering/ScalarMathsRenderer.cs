@@ -1,17 +1,17 @@
 using System;
-using Delta.MathsGen.CodeModel;
+using DeltaMathsGen.CodeModel;
 
-namespace Delta.MathsGen.Model.Rendering
+namespace DeltaMathsGen.Model.Rendering
 {
     /// <summary>Renders the lowercase scalar maths façade.</summary>
-    public sealed class ScalarMathsRenderer
+    public sealed class ScalarDeltaMathsRenderer
     {
         private readonly string _namespace;
 
-        /// <summary>Initializes a renderer for the Delta.Maths namespace.</summary>
-        public ScalarMathsRenderer()
+        /// <summary>Initializes a renderer for the DeltaMaths namespace.</summary>
+        public ScalarDeltaMathsRenderer()
         {
-            _namespace = "Delta.Maths";
+            _namespace = "DeltaMaths";
         }
 
         /// <summary>Renders forwarding methods for the supplied scalar declarations.</summary>
@@ -33,7 +33,7 @@ namespace Delta.MathsGen.Model.Rendering
                             continue;
                         }
 
-                        writer.Line($"public static {method.ReturnType} {Lowercase(method.Name)}({method.Parameters}) => Maths.{method.Name}({method.Arguments});");
+                        writer.Line($"public static {method.ReturnType} {Lowercase(method.Name)}({method.Parameters}) => DeltaMaths.{method.Name}({method.Arguments});");
                     }
                 });
             });

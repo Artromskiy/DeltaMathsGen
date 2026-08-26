@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Delta.MathsGen.Model.Rendering
+namespace DeltaMathsGen.Model.Rendering
 {
     internal static class ShaderContractManifestRenderer
     {
@@ -42,7 +42,7 @@ namespace Delta.MathsGen.Model.Rendering
             var manifest = new Manifest
             {
                 SchemaVersion = "1.1.0",
-                Namespace = "Delta.Maths",
+                Namespace = "DeltaMaths",
                 Types = types
                     .OrderBy(type => type.Name, StringComparer.Ordinal)
                     .Select(type => ToManifestType(type, typeByName))
@@ -111,7 +111,7 @@ namespace Delta.MathsGen.Model.Rendering
                 Identity = type.Name + "." + clrName + Parameters(function.Parameters) + ":" + function.ReturnType.Name,
                 TypeClrName = type.Name,
                 ClrName = clrName,
-                MathsName = function.MathsName,
+                DeltaMathsName = function.DeltaMathsName,
                 ParameterClrNames = function.Parameters.Select(parameter => parameter.Type.Name).ToArray(),
                 GlslParameterTypes = function.Parameters.Select(parameter => GlslType(parameter.Type.Name, types)).ToArray(),
                 ReturnClrName = function.ReturnType.Name,
@@ -254,7 +254,7 @@ namespace Delta.MathsGen.Model.Rendering
             [JsonPropertyName("identity")] public required string Identity { get; init; }
             [JsonPropertyName("typeClrName")] public required string TypeClrName { get; init; }
             [JsonPropertyName("clrName")] public required string ClrName { get; init; }
-            [JsonPropertyName("mathsName")] public required string MathsName { get; init; }
+            [JsonPropertyName("mathsName")] public required string DeltaMathsName { get; init; }
             [JsonPropertyName("parameterClrNames")] public required string[] ParameterClrNames { get; init; }
             [JsonPropertyName("parameterGlslTypes")] public required string?[] GlslParameterTypes { get; init; }
             [JsonPropertyName("returnClrName")] public required string ReturnClrName { get; init; }

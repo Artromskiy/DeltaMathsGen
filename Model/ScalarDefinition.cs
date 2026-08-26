@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 
-namespace Delta.MathsGen.Model
+namespace DeltaMathsGen.Model
 {
     [Flags]
     internal enum ScalarCapabilities

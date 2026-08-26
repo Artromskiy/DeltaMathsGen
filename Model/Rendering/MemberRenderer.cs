@@ -1,7 +1,7 @@
 using System;
-using Delta.MathsGen.CodeModel;
+using DeltaMathsGen.CodeModel;
 
-namespace Delta.MathsGen.Model.Rendering
+namespace DeltaMathsGen.Model.Rendering
 {
     internal static class MemberRenderer
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Delta.MathsGen.Generation
+namespace DeltaMathsGen.Generation
 {
     internal sealed record GeneratedSource(string Name, string Source);
 

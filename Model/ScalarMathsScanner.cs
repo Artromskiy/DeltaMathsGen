@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Delta.MathsGen.Model
+namespace DeltaMathsGen.Model
 {
     /// <summary>Describes a scalar maths method discovered in a source file.</summary>
     /// <param name="ReturnType">The CLR return type text.</param>
@@ -13,14 +13,14 @@ namespace Delta.MathsGen.Model
     /// <param name="Arguments">The generated argument forwarding text.</param>
     public sealed record ScalarMathMethod(string ReturnType, string Name, string Parameters, string Arguments);
 
-    /// <summary>Small, dependency-free scanner for the scalar Maths source files.</summary>
+    /// <summary>Small, dependency-free scanner for the scalar DeltaMaths source files.</summary>
     /// <summary>Scans scalar maths source files for public static methods.</summary>
-    public sealed partial class ScalarMathsScanner
+    public sealed partial class ScalarDeltaMathsScanner
     {
         private readonly Encoding _encoding;
 
         /// <summary>Initializes a scanner using UTF-8 source decoding.</summary>
-        public ScalarMathsScanner()
+        public ScalarDeltaMathsScanner()
         {
             _encoding = Encoding.UTF8;
         }
@@ -47,7 +47,7 @@ namespace Delta.MathsGen.Model
 
         /// <summary>Scans all scalar maths files in a directory.</summary>
         public ScalarMathMethod[] ScanDirectory(string directory) => Scan(
-            Directory.GetFiles(directory, "Maths*.cs", SearchOption.TopDirectoryOnly));
+            Directory.GetFiles(directory, "DeltaMaths*.cs", SearchOption.TopDirectoryOnly));
 
         private static void ScanSource(string source, List<ScalarMathMethod> result, HashSet<string> signatures)
         {

@@ -1,6 +1,6 @@
 using System;
 
-namespace Delta.MathsGen.Model
+namespace DeltaMathsGen.Model
 {
     internal static class ShaderMetadata
     {
@@ -19,7 +19,7 @@ namespace Delta.MathsGen.Model
         {
             ShaderZoneKind.None => null,
             ShaderZoneKind.Unknown => throw new InvalidOperationException("Unknown shader zone cannot be serialized."),
-            ShaderZoneKind.DeltaMaths => "Delta.Maths",
+            ShaderZoneKind.DeltaMaths => "DeltaMaths",
             _ => throw new InvalidOperationException($"Unsupported shader zone value '{zone}'."),
         };
 
