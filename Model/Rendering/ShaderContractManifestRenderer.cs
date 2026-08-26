@@ -35,13 +35,11 @@ namespace Delta.MathsGen.Model.Rendering
             var functionManifests = functions
                 .Select(item => ToManifestFunction(item.Type, item.Function, typeByName))
                 .Concat(functions
-                    .Where(item => item.Function.Name == "Mod" &&
+                    .Where(item =>
                         item.Function.Targets.HasFlag(FunctionTargets.ShaderDeltaMaths) &&
                         item.Function.ShaderContract.Mapping != ShaderMappingKind.Unsupported)
-                    .Select(item => ToManifestFacadeFunction(item.Type, item.Function, typeByName)))
-                .Concat(scalarMethods
-                    .Where(IsShaderScalarFunction)
-                    .Select(ToManifestScalarFunction))
+                    .Select(item => ToManifestFacadeFunction(item.Function, typeByName)))
+                .Concat(ShaderScalarFunctions(scalarMethods))
                 .ToArray();
             var duplicateFunction = functionManifests
                 .GroupBy(function => function.Identity, StringComparer.Ordinal)
@@ -136,7 +134,7 @@ namespace Delta.MathsGen.Model.Rendering
             };
         }
 
-        private static ManifestFunction ToManifestScalarFunction(ScalarMathMethod method)
+        private static ManifestFunction ToManifestScalarFunction(ScalarMathMethod method, string glslName)
         {
             var parameterTypes = ScalarParameterTypes(method.Parameters);
             return new ManifestFunction
@@ -149,7 +147,7 @@ namespace Delta.MathsGen.Model.Rendering
                 GlslParameterTypes = parameterTypes,
                 ReturnClrName = method.ReturnType,
                 GlslReturnType = method.ReturnType,
-                GlslName = "mod",
+                GlslName = glslName,
                 Mapping = ShaderMappingKind.Builtin.ToString(),
                 ShaderZone = ShaderMetadata.ZoneName(ShaderZoneKind.DeltaMaths),
                 Stages = StageNames(new ShaderContract
@@ -162,7 +160,6 @@ namespace Delta.MathsGen.Model.Rendering
         }
 
         private static ManifestFunction ToManifestFacadeFunction(
-            TypeSpec type,
             FunctionSpec function,
             IReadOnlyDictionary<string, TypeSpec> types)
         {
@@ -184,9 +181,55 @@ namespace Delta.MathsGen.Model.Rendering
             };
         }
 
-        private static bool IsShaderScalarFunction(ScalarMathMethod method) =>
-            method.Name == "Mod" && method.ReturnType == "float" &&
-            ScalarParameterTypes(method.Parameters).SequenceEqual(["float", "float"], StringComparer.Ordinal);
+        private static IEnumerable<ManifestFunction> ShaderScalarFunctions(ScalarMathMethod[] methods)
+        {
+            foreach (var method in methods)
+            {
+                if (TryGetScalarGlslName(method, out var glslName))
+                {
+                    yield return ToManifestScalarFunction(method, glslName);
+                }
+            }
+        }
+
+        private static bool TryGetScalarGlslName(ScalarMathMethod method, out string glslName)
+        {
+            glslName = string.Empty;
+            if (method.ReturnType != "float")
+            {
+                return false;
+            }
+
+            var parameterTypes = ScalarParameterTypes(method.Parameters);
+            if (parameterTypes.Any(parameterType => parameterType != "float"))
+            {
+                return false;
+            }
+
+            glslName = method.Name switch
+            {
+                "Mod" when parameterTypes.SequenceEqual(["float", "float"], StringComparer.Ordinal) => "mod",
+                "Fract" or "InverseSqrt" or "Radians" or "Degrees" or "Floor" or "Ceil"
+                    when parameterTypes.SequenceEqual(["float"], StringComparer.Ordinal) =>
+                    method.Name switch
+                    {
+                        "InverseSqrt" => "inversesqrt",
+                        _ => DeclarationHelpers.LowercaseFirst(method.Name),
+                    },
+                "RoundEven" when parameterTypes.SequenceEqual(["float"], StringComparer.Ordinal) => "roundEven",
+                "Truncate" when parameterTypes.SequenceEqual(["float"], StringComparer.Ordinal) => "trunc",
+                "Round" when parameterTypes.SequenceEqual(["float"], StringComparer.Ordinal) => "round",
+                "Atan" when parameterTypes.SequenceEqual(["float"], StringComparer.Ordinal) => "atan",
+                "Atan2" when parameterTypes.SequenceEqual(["float", "float"], StringComparer.Ordinal) => "atan",
+                "Step" when parameterTypes.SequenceEqual(["float", "float"], StringComparer.Ordinal) => "step",
+                "SmoothStep" when parameterTypes.SequenceEqual(["float", "float", "float"], StringComparer.Ordinal) => "smoothstep",
+                "Min" or "Max" when parameterTypes.SequenceEqual(["float", "float"], StringComparer.Ordinal) =>
+                    DeclarationHelpers.LowercaseFirst(method.Name),
+                "Clamp" when parameterTypes.SequenceEqual(["float", "float", "float"], StringComparer.Ordinal) => "clamp",
+                _ => string.Empty,
+            };
+            return glslName.Length != 0;
+        }
 
         private static string[] ScalarParameterTypes(string parameters)
         {

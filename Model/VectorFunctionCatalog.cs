@@ -158,7 +158,9 @@ namespace Delta.MathsGen.Model
             {
                 Name = "Rounding",
                 Requires = ScalarCapabilities.Rounding,
-                Build = context => Names("Floor", "Ceil", "Round", "Truncate", "Fract")
+                Build = context => (context.Scalar.Name == "fix"
+                    ? Names("Floor", "Ceil", "Round", "Truncate", "Fract")
+                    : Names("Floor", "Ceil", "Round", "RoundEven", "Truncate", "Fract"))
                     .Select(name => UnaryDeltaMaths(context, name, TypePart.Common)).ToArray(),
             },
             new()
@@ -276,7 +278,7 @@ namespace Delta.MathsGen.Model
                     var k = 1 - eta * eta * (1 - dNI * dNI);
                     if (k < 0) return zero;
                     return eta * I - (eta * dNI + DeltaMaths.Sqrt(k)) * N;
-                    """, TypePart.Geometry),
+                    """, TypePart.Geometry, context),
                 Function("Project", vector, [P("value", vector), P("onto", vector)],
                     "return onto * (Dot(value, onto) / SqrLength(onto));", TypePart.Geometry),
                 Function("ProjectSafe", vector, [P("value", vector), P("onto", vector)],
@@ -422,14 +424,29 @@ namespace Delta.MathsGen.Model
                     && scalar != "bool" => Helper("delta_select", "vector"),
                 "Equal" when parameters.All(parameter => parameter.Type.Name == context.Name) => Builtin("equal", "vector"),
                 "NotEqual" when parameters.All(parameter => parameter.Type.Name == context.Name) => Builtin("notEqual", "vector"),
-                "Min" or "Max" or "Clamp" when scalar != "bool" => Builtin(LowercaseFirst(name), "vector"),
+                "Min" or "Max" when scalar != "bool" && FirstParameterIsVector(context, parameters)
+                    => Builtin(LowercaseFirst(name), "vector"),
+                "Clamp" when scalar != "bool" && FirstParameterIsVector(context, parameters)
+                    => Builtin("clamp", "vector"),
                 "Abs" when scalar is "float" or "int" => Builtin("abs", "vector"),
                 "Mod" when scalar == "float" => Builtin("mod", "vector"),
+                "Fract" when scalar == "float" => Builtin("fract", "vector"),
+                "InverseSqrt" when scalar == "float" => Builtin("inversesqrt", "vector"),
+                "Radians" or "Degrees" when scalar == "float" => Builtin(LowercaseFirst(name), "vector"),
+                "Floor" or "Ceil" or "Round" or "RoundEven" or "Truncate" when scalar == "float"
+                    => Builtin(name switch
+                    {
+                        "RoundEven" => "roundEven",
+                        "Truncate" => "trunc",
+                        _ => LowercaseFirst(name),
+                    }, "vector"),
                 "Lerp" when scalar == "float" => Builtin("mix", "vector"),
                 "SmoothStep" when scalar == "float" => Builtin("smoothstep", "vector"),
                 "Step" when scalar == "float" => Builtin("step", "vector"),
                 "Dot" when scalar == "float" => Builtin("dot", "vector"),
                 "Length" or "Distance" when scalar == "float" => Builtin(LowercaseFirst(name), "vector"),
+                "Atan" when scalar == "float" => Builtin("atan", "vector"),
+                "Atan2" when scalar == "float" && FirstParameterIsVector(context, parameters) => Builtin("atan", "vector"),
                 "Normalize" when scalar == "float" => Builtin("normalize", "vector"),
                 "FaceForward" when scalar == "float" => Builtin("faceforward", "vector"),
                 "Reflect" when scalar == "float" => Builtin("reflect", "vector"),
@@ -438,6 +455,9 @@ namespace Delta.MathsGen.Model
                 _ => new ShaderContract(),
             };
         }
+
+        private static bool FirstParameterIsVector(VectorContext context, ParameterSpec[] parameters) =>
+            parameters.Length > 0 && parameters[0].Type.Name == context.Name;
 
         private static ShaderContract Builtin(string name, string capability) => new()
         {
