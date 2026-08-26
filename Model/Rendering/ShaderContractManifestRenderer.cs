@@ -34,6 +34,11 @@ namespace Delta.MathsGen.Model.Rendering
 
             var functionManifests = functions
                 .Select(item => ToManifestFunction(item.Type, item.Function, typeByName))
+                .Concat(functions
+                    .Where(item => item.Function.Name == "Mod" &&
+                        item.Function.Targets.HasFlag(FunctionTargets.ShaderDeltaMaths) &&
+                        item.Function.ShaderContract.Mapping != ShaderMappingKind.Unsupported)
+                    .Select(item => ToManifestFacadeFunction(item.Type, item.Function, typeByName)))
                 .Concat(scalarMethods
                     .Where(IsShaderScalarFunction)
                     .Select(ToManifestScalarFunction))
@@ -153,6 +158,29 @@ namespace Delta.MathsGen.Model.Rendering
                     Stages = ShaderStages.All,
                 }),
                 RequiredCapability = ShaderMetadata.CapabilityName(ShaderCapability.Scalar),
+            };
+        }
+
+        private static ManifestFunction ToManifestFacadeFunction(
+            TypeSpec type,
+            FunctionSpec function,
+            IReadOnlyDictionary<string, TypeSpec> types)
+        {
+            return new ManifestFunction
+            {
+                Identity = "maths." + function.DeltaMathsName + Parameters(function.Parameters) + ":" + function.ReturnType.Name,
+                TypeClrName = "maths",
+                ClrName = function.DeltaMathsName,
+                DeltaMathsName = function.DeltaMathsName,
+                ParameterClrNames = function.Parameters.Select(parameter => parameter.Type.Name).ToArray(),
+                GlslParameterTypes = function.Parameters.Select(parameter => GlslType(parameter.Type.Name, types)).ToArray(),
+                ReturnClrName = function.ReturnType.Name,
+                GlslReturnType = GlslType(function.ReturnType.Name, types),
+                GlslName = function.ShaderContract.GlslName,
+                Mapping = function.ShaderContract.Mapping.ToString(),
+                ShaderZone = ShaderZone(function.ShaderContract),
+                Stages = StageNames(function.ShaderContract),
+                RequiredCapability = RequiredCapability(function.ShaderContract),
             };
         }
 
