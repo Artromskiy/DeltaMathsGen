@@ -429,6 +429,7 @@ namespace Delta.MathsGen.Model
                 "Clamp" when scalar != "bool" && FirstParameterIsVector(context, parameters)
                     => Builtin("clamp", "vector"),
                 "Abs" when scalar is "float" or "int" => Builtin("abs", "vector"),
+                "Sign" when scalar is "float" or "int" => Builtin("sign", "vector"),
                 "Mod" when scalar == "float" => Builtin("mod", "vector"),
                 "Fract" when scalar == "float" => Builtin("fract", "vector"),
                 "InverseSqrt" when scalar == "float" => Builtin("inversesqrt", "vector"),
@@ -436,10 +437,20 @@ namespace Delta.MathsGen.Model
                 "Floor" or "Ceil" or "Round" or "RoundEven" or "Truncate" when scalar == "float"
                     => Builtin(name switch
                     {
-                        "RoundEven" => "roundEven",
+                        "Round" or "RoundEven" => "roundEven",
                         "Truncate" => "trunc",
                         _ => LowercaseFirst(name),
                     }, "vector"),
+                "Sin" or "Cos" or "Tan" or "Asin" or "Acos" or "Atan"
+                    when scalar == "float" => Builtin(LowercaseFirst(name), "vector"),
+                "Sinh" or "Cosh" or "Tanh" or "Asinh" or "Acosh" or "Atanh"
+                    when scalar == "float" => Builtin(LowercaseFirst(name), "vector"),
+                "Exp" or "Exp2" or "Log" or "Log2" or "Sqrt"
+                    when scalar == "float" => Builtin(LowercaseFirst(name), "vector"),
+                "Pow" when scalar == "float" && AllParametersAreVector(context, parameters)
+                    => Builtin("pow", "vector"),
+                "Fma" when scalar == "float" && AllParametersAreVector(context, parameters)
+                    => Builtin("fma", "vector"),
                 "Lerp" when scalar == "float" => Builtin("mix", "vector"),
                 "Smoothstep" when scalar == "float" => Builtin("smoothstep", "vector"),
                 "Step" when scalar == "float" => Builtin("step", "vector"),
@@ -452,9 +463,14 @@ namespace Delta.MathsGen.Model
                 "Reflect" when scalar == "float" => Builtin("reflect", "vector"),
                 "Refract" when scalar == "float" => Builtin("refract", "vector"),
                 "Cross" when scalar == "float" && context.Dimension == 3 => Builtin("cross", "vector"),
+                "IsNaN" when scalar == "float" => Builtin("isnan", "vector"),
+                "IsInfinity" when scalar == "float" => Builtin("isinf", "vector"),
                 _ => new ShaderContract(),
             };
         }
+
+        private static bool AllParametersAreVector(VectorContext context, ParameterSpec[] parameters) =>
+            parameters.Length != 0 && parameters.All(parameter => parameter.Type.Name == context.Name);
 
         private static bool FirstParameterIsVector(VectorContext context, ParameterSpec[] parameters) =>
             parameters.Length > 0 && parameters[0].Type.Name == context.Name;

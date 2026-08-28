@@ -41,6 +41,11 @@ ScaffoldingReadMe.txt
 *~
 CodeCoverage/
 
+# Keep the required repository layout marker while ignoring generated artifacts.
+!artifacts/
+artifacts/*
+!artifacts/.gitkeep
+
 # MSBuild Binary and Structured Log
 *.binlog
 

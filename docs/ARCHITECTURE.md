@@ -8,7 +8,7 @@ backend or a future shader intrinsic already exists.
 ## Generation lifecycle
 
 `DeltaMathsGen` is a console application targeting `net8.0`. Its only command
-argument is the generated vectors directory, normally `DeltaMaths/Vectors`.
+argument is the generated vectors directory, normally `DeltaMaths/src/DeltaMaths/Vectors`.
 
 The lifecycle is:
 
@@ -32,7 +32,7 @@ The lifecycle is:
 Generation is deterministic: ordering uses ordinal name/signature ordering and
 the process culture is invariant. Generated files are outputs, never editing
 targets. Add a type, member, or shader symbol in the model and regenerate;
-do not patch `DeltaMaths/Vectors` by hand.
+do not patch `DeltaMaths/src/DeltaMaths/Vectors` by hand.
 
 ```mermaid
 flowchart TD
@@ -44,9 +44,9 @@ flowchart TD
     F --> G[TypeFileLayout + CSharpRenderer]
     F --> H[ShaderDeltaMathsRenderer]
     F --> I[ShaderContractManifestRenderer]
-    G --> J[DeltaMaths/Vectors partial C#]
+    G --> J[DeltaMaths/src/DeltaMaths/Vectors partial C#]
     H --> J
-    I --> K[DeltaMaths/Vectors/shader-contract.json]
+    I --> K[DeltaMaths/src/DeltaMaths/Vectors/shader-contract.json]
     J --> L[DeltaMaths runtime]
     K --> M[DeltaShader contract consumer]
 ```
@@ -116,7 +116,7 @@ column-vector CPU/GLSL semantics. `quaternion` is a sequential `vec4` with
 ## DeltaMaths runtime boundary
 
 `DeltaMaths` is a portable `netstandard2.0`/`netstandard2.1` assembly. Generated
-partial structs live in `DeltaMaths/Vectors`; handwritten scalar and extension
+partial structs live in `DeltaMaths/src/DeltaMaths/Vectors`; handwritten scalar and extension
 facades live in the project root. The generated `maths` class forwards
 shader-like lowercase calls such as `maths.normalize`, while the handwritten
 `DeltaMaths` class remains the stable scalar API. Consumers use values directly;

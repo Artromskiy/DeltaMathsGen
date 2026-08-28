@@ -1,7 +1,7 @@
 # DeltaMathsGen agent guide
 
 Scope: declarative generation of `DeltaMaths` source and
-`DeltaMaths/Vectors/shader-contract.json`.
+`DeltaMaths/src/DeltaMaths/Vectors/shader-contract.json`.
 
 Read only what the task needs:
 

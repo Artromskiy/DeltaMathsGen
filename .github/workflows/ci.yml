@@ -68,15 +68,15 @@ jobs:
       - name: Build generator
         working-directory: DeltaMathsGen
         run: |
-          dotnet restore DeltaMathsGen.csproj
-          dotnet build DeltaMathsGen.csproj -c Release --no-restore
+          dotnet restore src/DeltaMathsGen/DeltaMathsGen.csproj
+          dotnet build src/DeltaMathsGen/DeltaMathsGen.csproj -c Release --no-restore
       - name: Generate and compile isolated output
         shell: bash
         run: |
           mkdir -p artifacts
           cp -R DeltaMaths artifacts/GeneratedDeltaMaths
-          dotnet run --project DeltaMathsGen/DeltaMathsGen.csproj -c Release --no-build -- artifacts/GeneratedDeltaMaths/Vectors
-          dotnet build artifacts/GeneratedDeltaMaths/DeltaMaths.csproj -c Release
+          dotnet run --project DeltaMathsGen/src/DeltaMathsGen/DeltaMathsGen.csproj -c Release --no-build -- artifacts/GeneratedDeltaMaths/src/DeltaMaths/Vectors
+          dotnet build artifacts/GeneratedDeltaMaths/src/DeltaMaths/DeltaMaths.csproj -c Release
       - name: Benchmark discovery smoke
         working-directory: DeltaMathsGen
         shell: bash

@@ -19,19 +19,19 @@ headless/compiler/contract checks. Empty mandatory domains stay tracked with
 From the workspace root:
 
 ```bash
-dotnet build DeltaMathsGen/DeltaMathsGen.csproj -c Release \
+dotnet build DeltaMathsGen/src/DeltaMathsGen/DeltaMathsGen.csproj -c Release \
   --disable-build-servers -m:1 /p:UseSharedCompilation=false
-dotnet DeltaMathsGen/bin/Release/net8.0/DeltaMathsGen.dll DeltaMaths/Vectors
-dotnet DeltaMathsGen/bin/Release/net8.0/DeltaMathsGen.dll DeltaMaths/Vectors
-dotnet build DeltaMaths/DeltaMaths.csproj -c Release -f netstandard2.0
-dotnet build DeltaMaths/DeltaMaths.csproj -c Release -f netstandard2.1
-dotnet run --project DeltaMaths/Tests/DeltaMaths.Tests.csproj -c Release
+dotnet DeltaMathsGen/src/DeltaMathsGen/bin/Release/net8.0/DeltaMathsGen.dll DeltaMaths/src/DeltaMaths/Vectors
+dotnet DeltaMathsGen/src/DeltaMathsGen/bin/Release/net8.0/DeltaMathsGen.dll DeltaMaths/src/DeltaMaths/Vectors
+dotnet build DeltaMaths/src/DeltaMaths/DeltaMaths.csproj -c Release -f netstandard2.0
+dotnet build DeltaMaths/src/DeltaMaths/DeltaMaths.csproj -c Release -f netstandard2.1
+dotnet run --project DeltaMaths/tests/DeltaMaths.Tests/DeltaMaths.Tests.csproj -c Release
 git -C DeltaMaths diff --check
 ```
 
 The second invocation must produce no additional diff. Inspect
 `.delta-generated-files` and validate the generated
-`DeltaMaths/Vectors/shader-contract.json` schema/layout before committing.
+`DeltaMaths/src/DeltaMaths/Vectors/shader-contract.json` schema/layout before committing.
 Cross-project verification uses
 [../REVIEW_PLAYBOOK.md](../REVIEW_PLAYBOOK.md).
 
