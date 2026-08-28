@@ -222,7 +222,7 @@ namespace Delta.MathsGen.Model.Rendering
                 "Atan" when parameterTypes.SequenceEqual(["float"], StringComparer.Ordinal) => "atan",
                 "Atan2" when parameterTypes.SequenceEqual(["float", "float"], StringComparer.Ordinal) => "atan",
                 "Step" when parameterTypes.SequenceEqual(["float", "float"], StringComparer.Ordinal) => "step",
-                "SmoothStep" when parameterTypes.SequenceEqual(["float", "float", "float"], StringComparer.Ordinal) => "smoothstep",
+                "Smoothstep" when parameterTypes.SequenceEqual(["float", "float", "float"], StringComparer.Ordinal) => "smoothstep",
                 "Min" or "Max" when parameterTypes.SequenceEqual(["float", "float"], StringComparer.Ordinal) =>
                     DeclarationHelpers.LowercaseFirst(method.Name),
                 "Clamp" when parameterTypes.SequenceEqual(["float", "float", "float"], StringComparer.Ordinal) => "clamp",
