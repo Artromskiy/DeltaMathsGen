@@ -240,22 +240,6 @@ namespace Delta.MathsGen.Model
                 },
                 new FunctionSpec
                 {
-                    Name = "Multiply",
-                    ReturnType = Type("float4x4"),
-                    Parameters = [Param("left", Type("float4x4")), Param("right", Type("float4x4"))],
-                    Part = TypePart.Operators,
-                    ShaderContract = new ShaderContract
-                    {
-                        GlslName = "*",
-                        Mapping = ShaderMappingKind.Builtin,
-                        Capability = ShaderCapability.Matrix,
-                        Stages = ShaderStages.All,
-                    },
-                    Targets = FunctionTargets.Type | FunctionTargets.ShaderDeltaMaths,
-                    Body = "return left * right;",
-                },
-                new FunctionSpec
-                {
                     Name = "TransformPoint",
                     ReturnType = Type("float3"),
                     Parameters = [Param("matrix", Type("float4x4")), Param("point", Type("float3"))],
