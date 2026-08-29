@@ -247,9 +247,14 @@ namespace Delta.MathsGen.Model
         private static MemberSpec[] CreateObjectContract(string name, string fields)
         {
             var equality = string.Join(" && ", fields.Select(component => $"{component}.Equals(other.{component})"));
-            var hashBody = "unchecked\n{\n    var hash = 17;\n" +
-                string.Join("\n", fields.Select(component => $"    hash = hash * 31 + {component}.GetHashCode();")) +
-                "\n    return hash;\n}";
+            var hashBody = $$"""
+            unchecked
+            {
+                var hash = 17;
+            {{string.Join("\n", fields.Select(component => $"    hash = hash * 31 + {component}.GetHashCode();"))}}
+                return hash;
+            }
+            """;
             return
             [
                 new FunctionSpec

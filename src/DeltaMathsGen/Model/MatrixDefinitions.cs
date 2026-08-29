@@ -401,7 +401,19 @@ namespace Delta.MathsGen.Model
                 Parameters = [Param("rotation", Type("quaternion"))],
                 Part = TypePart.Geometry,
                 Targets = FunctionTargets.Type | FunctionTargets.ShaderDeltaMaths,
-                Body = "var xx = rotation.x * rotation.x;\nvar yy = rotation.y * rotation.y;\nvar zz = rotation.z * rotation.z;\nvar xy = rotation.x * rotation.y;\nvar xz = rotation.x * rotation.z;\nvar yz = rotation.y * rotation.z;\nvar wx = rotation.w * rotation.x;\nvar wy = rotation.w * rotation.y;\nvar wz = rotation.w * rotation.z;\nreturn new float4x4(1f - 2f * (yy + zz), 2f * (xy - wz), 2f * (xz + wy), 0f, 2f * (xy + wz), 1f - 2f * (xx + zz), 2f * (yz - wx), 0f, 2f * (xz - wy), 2f * (yz + wx), 1f - 2f * (xx + yy), 0f, 0f, 0f, 0f, 1f);",
+                Body =
+                """
+                var xx = rotation.x * rotation.x;
+                var yy = rotation.y * rotation.y;
+                var zz = rotation.z * rotation.z;
+                var xy = rotation.x * rotation.y;
+                var xz = rotation.x * rotation.z;
+                var yz = rotation.y * rotation.z;
+                var wx = rotation.w * rotation.x;
+                var wy = rotation.w * rotation.y;
+                var wz = rotation.w * rotation.z;
+                return new float4x4(1f - 2f * (yy + zz), 2f * (xy - wz), 2f * (xz + wy), 0f, 2f * (xy + wz), 1f - 2f * (xx + zz), 2f * (yz - wx), 0f, 2f * (xz - wy), 2f * (yz + wx), 1f - 2f * (xx + yy), 0f, 0f, 0f, 0f, 1f);
+                """,
             });
             members.Add(new FunctionSpec
             {
@@ -419,7 +431,11 @@ namespace Delta.MathsGen.Model
                 Parameters = [Param("matrix", Type("float4x4")), Param("point", Type("float3"))],
                 Part = TypePart.Geometry,
                 Targets = FunctionTargets.Type | FunctionTargets.ShaderDeltaMaths,
-                Body = "var transformed = matrix * new float4(point, 1f);\nreturn transformed.w == 0f ? transformed.xyz : transformed.xyz / transformed.w;",
+                Body =
+                """
+                var transformed = matrix * new float4(point, 1f);
+                return transformed.w == 0f ? transformed.xyz : transformed.xyz / transformed.w;
+                """,
             });
             members.Add(new FunctionSpec
             {
@@ -437,7 +453,13 @@ namespace Delta.MathsGen.Model
                 Parameters = [Param("eye", Type("float3")), Param("direction", Type("float3")), Param("up", Type("float3"))],
                 Part = TypePart.Geometry,
                 Targets = FunctionTargets.Type | FunctionTargets.ShaderDeltaMaths,
-                Body = "var zaxis = float3.NormalizeSafe(direction);\nvar xaxis = float3.NormalizeSafe(float3.Cross(up, zaxis));\nvar yaxis = float3.Cross(zaxis, xaxis);\nreturn new float4x4(xaxis.x, yaxis.x, zaxis.x, -float3.Dot(xaxis, eye), xaxis.y, yaxis.y, zaxis.y, -float3.Dot(yaxis, eye), xaxis.z, yaxis.z, zaxis.z, -float3.Dot(zaxis, eye), 0f, 0f, 0f, 1f);",
+                Body =
+                """
+                var zaxis = float3.NormalizeSafe(direction);
+                var xaxis = float3.NormalizeSafe(float3.Cross(up, zaxis));
+                var yaxis = float3.Cross(zaxis, xaxis);
+                return new float4x4(xaxis.x, yaxis.x, zaxis.x, -float3.Dot(xaxis, eye), xaxis.y, yaxis.y, zaxis.y, -float3.Dot(yaxis, eye), xaxis.z, yaxis.z, zaxis.z, -float3.Dot(zaxis, eye), 0f, 0f, 0f, 1f);
+                """,
             });
             members.Add(new FunctionSpec
             {
@@ -446,7 +468,13 @@ namespace Delta.MathsGen.Model
                 Parameters = [Param("fieldOfView", Type("float")), Param("aspectRatio", Type("float")), Param("nearPlaneDistance", Type("float")), Param("farPlaneDistance", Type("float"))],
                 Part = TypePart.Geometry,
                 Targets = FunctionTargets.Type | FunctionTargets.ShaderDeltaMaths,
-                Body = "var yScale = 1f / DeltaMaths.Tan(fieldOfView * 0.5f);\nvar xScale = yScale / aspectRatio;\nvar range = farPlaneDistance / (farPlaneDistance - nearPlaneDistance);\nreturn new float4x4(xScale, 0f, 0f, 0f, 0f, yScale, 0f, 0f, 0f, 0f, range, -nearPlaneDistance * range, 0f, 0f, 1f, 0f);",
+                Body =
+                """
+                var yScale = 1f / DeltaMaths.Tan(fieldOfView * 0.5f);
+                var xScale = yScale / aspectRatio;
+                var range = farPlaneDistance / (farPlaneDistance - nearPlaneDistance);
+                return new float4x4(xScale, 0f, 0f, 0f, 0f, yScale, 0f, 0f, 0f, 0f, range, -nearPlaneDistance * range, 0f, 0f, 1f, 0f);
+                """,
             });
             members.Add(new FunctionSpec
             {
@@ -455,7 +483,22 @@ namespace Delta.MathsGen.Model
                 Parameters = [Param("value", Type("float4x4")), Param("scale", Type("float3"), ParameterModifier.Out), Param("rotation", Type("quaternion"), ParameterModifier.Out), Param("translation", Type("float3"), ParameterModifier.Out)],
                 Part = TypePart.Geometry,
                 Targets = FunctionTargets.Type | FunctionTargets.ShaderDeltaMaths,
-                Body = "translation = new float3(value.M14, value.M24, value.M34);\nvar x = new float3(value.M11, value.M21, value.M31);\nvar y = new float3(value.M12, value.M22, value.M32);\nvar z = new float3(value.M13, value.M23, value.M33);\nscale = new float3(float3.Length(x), float3.Length(y), float3.Length(z));\nif (scale.x <= 1e-20f || scale.y <= 1e-20f || scale.z <= 1e-20f) { rotation = quaternion.identity; return false; }\nx /= scale.x;\ny /= scale.y;\nz /= scale.z;\nif (float3.Dot(float3.Cross(x, y), z) < 0f) { scale.x = -scale.x; x = -x; }\nvar rotationMatrix = new float4x4(x.x, y.x, z.x, 0f, x.y, y.y, z.y, 0f, x.z, y.z, z.z, 0f, 0f, 0f, 0f, 1f);\nrotation = quaternion.NormalizeSafe(quaternion.CreateFromRotationMatrix(rotationMatrix));\nreturn true;",
+                Body =
+                """
+                translation = new float3(value.M14, value.M24, value.M34);
+                var x = new float3(value.M11, value.M21, value.M31);
+                var y = new float3(value.M12, value.M22, value.M32);
+                var z = new float3(value.M13, value.M23, value.M33);
+                scale = new float3(float3.Length(x), float3.Length(y), float3.Length(z));
+                if (scale.x <= 1e-20f || scale.y <= 1e-20f || scale.z <= 1e-20f) { rotation = quaternion.identity; return false; }
+                x /= scale.x;
+                y /= scale.y;
+                z /= scale.z;
+                if (float3.Dot(float3.Cross(x, y), z) < 0f) { scale.x = -scale.x; x = -x; }
+                var rotationMatrix = new float4x4(x.x, y.x, z.x, 0f, x.y, y.y, z.y, 0f, x.z, y.z, z.z, 0f, 0f, 0f, 0f, 1f);
+                rotation = quaternion.NormalizeSafe(quaternion.CreateFromRotationMatrix(rotationMatrix));
+                return true;
+                """,
             });
         }
 
@@ -463,7 +506,11 @@ namespace Delta.MathsGen.Model
         {
             2 => "return value.M11 * value.M22 - value.M12 * value.M21;",
             3 => "return value.M11 * (value.M22 * value.M33 - value.M23 * value.M32) - value.M12 * (value.M21 * value.M33 - value.M23 * value.M31) + value.M13 * (value.M21 * value.M32 - value.M22 * value.M31);",
-            4 => "static float minor(float a11, float a12, float a13, float a21, float a22, float a23, float a31, float a32, float a33) => a11 * (a22 * a33 - a23 * a32) - a12 * (a21 * a33 - a23 * a31) + a13 * (a21 * a32 - a22 * a31);\nreturn value.M11 * minor(value.M22, value.M23, value.M24, value.M32, value.M33, value.M34, value.M42, value.M43, value.M44) - value.M12 * minor(value.M21, value.M23, value.M24, value.M31, value.M33, value.M34, value.M41, value.M43, value.M44) + value.M13 * minor(value.M21, value.M22, value.M24, value.M31, value.M32, value.M34, value.M41, value.M42, value.M44) - value.M14 * minor(value.M21, value.M22, value.M23, value.M31, value.M32, value.M33, value.M41, value.M42, value.M43);",
+            4 =>
+            """
+            static float minor(float a11, float a12, float a13, float a21, float a22, float a23, float a31, float a32, float a33) => a11 * (a22 * a33 - a23 * a32) - a12 * (a21 * a33 - a23 * a31) + a13 * (a21 * a32 - a22 * a31);
+            return value.M11 * minor(value.M22, value.M23, value.M24, value.M32, value.M33, value.M34, value.M42, value.M43, value.M44) - value.M12 * minor(value.M21, value.M23, value.M24, value.M31, value.M33, value.M34, value.M41, value.M43, value.M44) + value.M13 * minor(value.M21, value.M22, value.M24, value.M31, value.M32, value.M34, value.M41, value.M42, value.M44) - value.M14 * minor(value.M21, value.M22, value.M23, value.M31, value.M32, value.M33, value.M41, value.M42, value.M43);
+            """,
             _ => throw new ArgumentOutOfRangeException(nameof(size)),
         };
 
@@ -472,12 +519,59 @@ namespace Delta.MathsGen.Model
             var name = MatrixName(size, size);
             return size switch
             {
-                2 => $"var determinant = Determinant(value);\nif (DeltaMaths.Abs(determinant) <= 1e-8f) {{ result = default; return false; }}\nvar inverse = 1f / determinant;\nresult = new {name}(value.M22 * inverse, -value.M12 * inverse, -value.M21 * inverse, value.M11 * inverse);\nreturn true;",
-                3 => $"var c11 = value.M22 * value.M33 - value.M23 * value.M32;\nvar c12 = value.M13 * value.M32 - value.M12 * value.M33;\nvar c13 = value.M12 * value.M23 - value.M13 * value.M22;\nvar c21 = value.M23 * value.M31 - value.M21 * value.M33;\nvar c22 = value.M11 * value.M33 - value.M13 * value.M31;\nvar c23 = value.M13 * value.M21 - value.M11 * value.M23;\nvar c31 = value.M21 * value.M32 - value.M22 * value.M31;\nvar c32 = value.M12 * value.M31 - value.M11 * value.M32;\nvar c33 = value.M11 * value.M22 - value.M12 * value.M21;\nvar determinant = value.M11 * c11 + value.M12 * c12 + value.M13 * c13;\nif (DeltaMaths.Abs(determinant) <= 1e-8f) {{ result = default; return false; }}\nvar inverse = 1f / determinant;\nresult = new {name}(c11 * inverse, c21 * inverse, c31 * inverse, c12 * inverse, c22 * inverse, c32 * inverse, c13 * inverse, c23 * inverse, c33 * inverse);\nreturn true;",
-                4 => "var determinant = Determinant(value);\nif (DeltaMaths.Abs(determinant) <= 1e-8f) { result = default; return false; }\nvar inverse = 1f / determinant;\nstatic float minor(float a11, float a12, float a13, float a21, float a22, float a23, float a31, float a32, float a33) => a11 * (a22 * a33 - a23 * a32) - a12 * (a21 * a33 - a23 * a31) + a13 * (a21 * a32 - a22 * a31);\nresult = new float4x4(\n    minor(value.M22, value.M23, value.M24, value.M32, value.M33, value.M34, value.M42, value.M43, value.M44) * inverse,\n    -minor(value.M12, value.M13, value.M14, value.M32, value.M33, value.M34, value.M42, value.M43, value.M44) * inverse,\n    minor(value.M12, value.M13, value.M14, value.M22, value.M23, value.M24, value.M42, value.M43, value.M44) * inverse,\n    -minor(value.M12, value.M13, value.M14, value.M22, value.M23, value.M24, value.M32, value.M33, value.M34) * inverse,\n    -minor(value.M21, value.M23, value.M24, value.M31, value.M33, value.M34, value.M41, value.M43, value.M44) * inverse,\n    minor(value.M11, value.M13, value.M14, value.M31, value.M33, value.M34, value.M41, value.M43, value.M44) * inverse,\n    -minor(value.M11, value.M13, value.M14, value.M21, value.M23, value.M24, value.M41, value.M43, value.M44) * inverse,\n    minor(value.M11, value.M13, value.M14, value.M21, value.M23, value.M24, value.M31, value.M33, value.M34) * inverse,\n    minor(value.M21, value.M22, value.M24, value.M31, value.M32, value.M34, value.M41, value.M42, value.M44) * inverse,\n    -minor(value.M11, value.M12, value.M14, value.M31, value.M32, value.M34, value.M41, value.M42, value.M44) * inverse,\n    minor(value.M11, value.M12, value.M14, value.M21, value.M22, value.M24, value.M41, value.M42, value.M44) * inverse,\n    -minor(value.M11, value.M12, value.M14, value.M21, value.M22, value.M24, value.M31, value.M32, value.M34) * inverse,\n    -minor(value.M21, value.M22, value.M23, value.M31, value.M32, value.M33, value.M41, value.M42, value.M43) * inverse,\n    minor(value.M11, value.M12, value.M13, value.M31, value.M32, value.M33, value.M41, value.M42, value.M43) * inverse,\n    -minor(value.M11, value.M12, value.M13, value.M21, value.M22, value.M23, value.M41, value.M42, value.M43) * inverse,\n    minor(value.M11, value.M12, value.M13, value.M21, value.M22, value.M23, value.M31, value.M32, value.M33) * inverse);\nreturn true;",
+                2 => $$"""
+                var determinant = Determinant(value);
+                if (DeltaMaths.Abs(determinant) <= 1e-8f) { result = default; return false; }
+                var inverse = 1f / determinant;
+                result = new {{name}}(value.M22 * inverse, -value.M12 * inverse, -value.M21 * inverse, value.M11 * inverse);
+                return true;
+                """,
+                3 => $$"""
+                var c11 = value.M22 * value.M33 - value.M23 * value.M32;
+                var c12 = value.M13 * value.M32 - value.M12 * value.M33;
+                var c13 = value.M12 * value.M23 - value.M13 * value.M22;
+                var c21 = value.M23 * value.M31 - value.M21 * value.M33;
+                var c22 = value.M11 * value.M33 - value.M13 * value.M31;
+                var c23 = value.M13 * value.M21 - value.M11 * value.M23;
+                var c31 = value.M21 * value.M32 - value.M22 * value.M31;
+                var c32 = value.M12 * value.M31 - value.M11 * value.M32;
+                var c33 = value.M11 * value.M22 - value.M12 * value.M21;
+                var determinant = value.M11 * c11 + value.M12 * c12 + value.M13 * c13;
+                if (DeltaMaths.Abs(determinant) <= 1e-8f) { result = default; return false; }
+                var inverse = 1f / determinant;
+                result = new {{name}}(c11 * inverse, c21 * inverse, c31 * inverse, c12 * inverse, c22 * inverse, c32 * inverse, c13 * inverse, c23 * inverse, c33 * inverse);
+                return true;
+                """,
+                4 => InverseFourBody(),
                 _ => throw new ArgumentOutOfRangeException(nameof(size)),
             };
         }
+
+        private static string InverseFourBody() =>
+            """
+            var determinant = Determinant(value);
+            if (DeltaMaths.Abs(determinant) <= 1e-8f) { result = default; return false; }
+            var inverse = 1f / determinant;
+            static float minor(float a11, float a12, float a13, float a21, float a22, float a23, float a31, float a32, float a33) => a11 * (a22 * a33 - a23 * a32) - a12 * (a21 * a33 - a23 * a31) + a13 * (a21 * a32 - a22 * a31);
+            result = new float4x4(
+                minor(value.M22, value.M23, value.M24, value.M32, value.M33, value.M34, value.M42, value.M43, value.M44) * inverse,
+                -minor(value.M12, value.M13, value.M14, value.M32, value.M33, value.M34, value.M42, value.M43, value.M44) * inverse,
+                minor(value.M12, value.M13, value.M14, value.M22, value.M23, value.M24, value.M42, value.M43, value.M44) * inverse,
+                -minor(value.M12, value.M13, value.M14, value.M22, value.M23, value.M24, value.M32, value.M33, value.M34) * inverse,
+                -minor(value.M21, value.M23, value.M24, value.M31, value.M33, value.M34, value.M41, value.M43, value.M44) * inverse,
+                minor(value.M11, value.M13, value.M14, value.M31, value.M33, value.M34, value.M41, value.M43, value.M44) * inverse,
+                -minor(value.M11, value.M13, value.M14, value.M21, value.M23, value.M24, value.M41, value.M43, value.M44) * inverse,
+                minor(value.M11, value.M13, value.M14, value.M21, value.M23, value.M24, value.M31, value.M33, value.M34) * inverse,
+                minor(value.M21, value.M22, value.M24, value.M31, value.M32, value.M34, value.M41, value.M42, value.M44) * inverse,
+                -minor(value.M11, value.M12, value.M14, value.M31, value.M32, value.M34, value.M41, value.M42, value.M44) * inverse,
+                minor(value.M11, value.M12, value.M14, value.M21, value.M22, value.M24, value.M41, value.M42, value.M44) * inverse,
+                -minor(value.M11, value.M12, value.M14, value.M21, value.M22, value.M24, value.M31, value.M32, value.M34) * inverse,
+                -minor(value.M21, value.M22, value.M23, value.M31, value.M32, value.M33, value.M41, value.M42, value.M43) * inverse,
+                minor(value.M11, value.M12, value.M13, value.M31, value.M32, value.M33, value.M41, value.M42, value.M43) * inverse,
+                -minor(value.M11, value.M12, value.M13, value.M21, value.M22, value.M23, value.M41, value.M42, value.M43) * inverse,
+                minor(value.M11, value.M12, value.M13, value.M21, value.M22, value.M23, value.M31, value.M32, value.M33) * inverse);
+            return true;
+            """;
 
         private static string AssignColumns(int columns, bool includePadding)
         {
@@ -550,8 +644,16 @@ namespace Delta.MathsGen.Model
             return string.Join("\n", lines);
         }
 
-        private static string SetElementBody(int columns, int rows) =>
-            $"if ((uint)column >= {columns}u || (uint)row >= {rows}u) throw new ArgumentOutOfRangeException();\nvar columnValue = GetColumn(column);\ncolumnValue[row] = value;\nswitch (column) {{ " + string.Join(" ", Enumerable.Range(0, columns).Select(column => $"case {column}: c{column} = columnValue; break;")) + " }";
+        private static string SetElementBody(int columns, int rows)
+        {
+            var cases = string.Join(" ", Enumerable.Range(0, columns).Select(column => $"case {column}: c{column} = columnValue; break;"));
+            return $$"""
+            if ((uint)column >= {{columns}}u || (uint)row >= {{rows}}u) throw new ArgumentOutOfRangeException();
+            var columnValue = GetColumn(column);
+            columnValue[row] = value;
+            switch (column) { {{cases}} }
+            """;
+        }
 
         private static string HashCodeBody(int columns) =>
             "unchecked { var hash = 17; " + string.Join(" ", Enumerable.Range(0, columns).Select(column => $"hash = hash * 31 + c{column}.GetHashCode();")) + " return hash; }";

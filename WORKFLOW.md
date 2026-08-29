@@ -35,6 +35,14 @@ The second invocation must produce no additional diff. Inspect
 Cross-project verification uses
 [../REVIEW_PLAYBOOK.md](../REVIEW_PLAYBOOK.md).
 
+## Generator source authoring
+
+For multiline generated code and templates, prefer C# raw string literals
+(`"""..."""`). Keep the emitted text readable in the generator source and
+avoid reconstructing multiline snippets through escaped strings or repeated
+concatenation unless interpolation or a target-language escaping requirement
+makes the raw form impractical.
+
 ## Code metrics
 
 Run the same analyzer/code-metrics build locally and in the manual GitHub
