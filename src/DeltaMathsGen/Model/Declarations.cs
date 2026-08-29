@@ -39,6 +39,8 @@ namespace Delta.MathsGen.Model
         Quaternion = 4,
         Std430 = 5,
         Scalar = 6,
+        Float16 = 7,
+        Float64 = 8,
     }
 
     internal enum ShaderZoneKind
@@ -137,7 +139,7 @@ namespace Delta.MathsGen.Model
 
     internal sealed class TypeSpec
     {
-        public string Namespace { get; init; } = "DeltaMaths";
+        public string Namespace { get; init; } = "Delta.Maths";
         public required string Name { get; init; }
         public string? Comment { get; init; }
         public string Kind { get; init; } = "struct";

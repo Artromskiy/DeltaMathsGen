@@ -16,24 +16,22 @@ by hand.
 
 ### Pure functions and select semantics
 
-- Add shader metadata and CPU/GLSL conformance cases for vector relational
+- [x] Add shader metadata and CPU/GLSL conformance cases for vector relational
   functions `lessThan`, `lessThanEqual`, `greaterThan`, `greaterThanEqual`, and
   boolean-vector `not` for the supported `vec`, `ivec`, and `uvec` families.
-  The corresponding CPU methods/operators already exist, but their current
-  manifest entries are `Unsupported`.
-- Add `modf`, `frexp`, and `ldexp`, including their `out`/vector exponent
+- [x] Add `modf`, `frexp`, and `ldexp`, including their `out`/vector exponent
   signatures and defined zero/finite-value behavior.
-- Add the bit-preserving conversions
+- [x] Add the bit-preserving conversions
   `floatBitsToInt`, `floatBitsToUint`, `intBitsToFloat`, and
   `uintBitsToFloat` for matching scalar/vector widths.
 - The first portable packing slice is implemented in the generator for
   `packUnorm2x16`, `unpackUnorm2x16`, `packSnorm2x16`, `unpackSnorm2x16`,
   `packUnorm4x8`, `unpackUnorm4x8`, `packSnorm4x8`, and `unpackSnorm4x8`.
   Keep the CPU conversion explicit and covered by bit-level conformance tests.
-  Add `packHalf2x16`/`unpackHalf2x16` only after a shared netstandard IEEE-754
-  half conversion is approved; add `packDouble2x32`/`unpackDouble2x32` only
-  together with the future double-precision shader capability.
-- Keep the public Delta naming `select`, not `mix`, for boolean-mask selection.
+- [x] Add `packHalf2x16`/`unpackHalf2x16` using the shared netstandard IEEE-754
+  `half` conversion; add `packDouble2x32`/`unpackDouble2x32` only together
+  with the future double-precision shader capability.
+- [x] Keep the public Delta naming `select`, not `mix`, for boolean-mask selection.
   Complete the `select` overloads that correspond to GLSL boolean-vector
   selection, while retaining `delta_select` as the helper mapping where a
   helper is required. Do not add a second `mix` API merely to mirror GLSL
@@ -54,13 +52,15 @@ by hand.
 
 ### Double-precision capability
 
-- Add shader-contract types `dvec2`, `dvec3`, `dvec4`, `dmat2`, `dmat3`,
-  `dmat4`, and all rectangular `dmatCxR` forms only when a real Vulkan
-  float64 consumer is approved.
-- If approved, add the corresponding double overloads for common, geometric,
-  trigonometric, exponential, relational, and matrix functions, with an
-  explicit device-capability requirement. Until then, `double2/3/4` remain
-  CPU-only and must stay `Unsupported` in the manifest.
+- [x] Publish shader-contract types `dvec2`, `dvec3`, `dvec4`, `dmat2`,
+  `dmat3`, `dmat4`, and all rectangular `dmatCxR` forms. The CLR types are
+  `double2/3/4` and `doubleCxR`; each published type carries the `float64`
+  capability requirement and its exact std430 column layout.
+- [x] Publish the corresponding double overloads that have a real CPU
+  implementation for common, geometric, trigonometric, exponential,
+  relational, and matrix operations. The manifest carries complete CLR/GLSL
+  parameter and return types; DeltaShader must gate these symbols on device
+  float64 support. Unsupported double overloads remain `Unsupported`.
 
 ### Explicitly outside Delta.Maths
 

@@ -62,6 +62,11 @@ namespace Delta.MathsGen.Model
 
                 var arguments = string.Join(", ", ParseParameterNames(parameters));
                 var method = new ScalarMathMethod(match.Groups["return"].Value, match.Groups["name"].Value, parameters, arguments);
+                if (method.Name is "operator" or "Parse")
+                {
+                    continue;
+                }
+
                 var key = method.Name + "(" + method.Parameters + ")";
                 if (signatures.Add(key))
                 {

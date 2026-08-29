@@ -9,22 +9,25 @@ namespace Delta.MathsGen.Model
     {
         public static TypeSpec[] Create()
         {
-            var types = new List<TypeSpec>(9);
-            for (var columns = 2; columns <= 4; columns++)
+            var types = new List<TypeSpec>(18);
+            foreach (var scalar in new[] { "float", "double" })
             {
-                for (var rows = 2; rows <= 4; rows++)
+                for (var columns = 2; columns <= 4; columns++)
                 {
-                    types.Add(CreateMatrix(columns, rows));
+                    for (var rows = 2; rows <= 4; rows++)
+                    {
+                        types.Add(CreateMatrix(scalar, columns, rows));
+                    }
                 }
             }
 
             return types.ToArray();
         }
 
-        private static TypeSpec CreateMatrix(int columns, int rows)
+        private static TypeSpec CreateMatrix(string scalar, int columns, int rows)
         {
-            var name = MatrixName(columns, rows);
-            var vector = VectorName(rows);
+            var name = MatrixName(scalar, columns, rows);
+            var vector = VectorName(scalar, rows);
             var members = new List<MemberSpec>();
 
             for (var column = 0; column < columns; column++)
@@ -35,12 +38,12 @@ namespace Delta.MathsGen.Model
                     Type = Type(vector),
                     Summary = $"Column {column}.",
                 });
-                if (rows == 3)
+                if (NeedsMatrixPadding(scalar, rows))
                 {
                     members.Add(new FieldSpec
                     {
                         Name = PaddingName(column),
-                        Type = Type("float"),
+                        Type = Type(scalar),
                         Modifiers = Modifiers.Private,
                     });
                 }
@@ -62,7 +65,7 @@ namespace Delta.MathsGen.Model
                     Name = "identity",
                     Type = Type(name),
                     Modifiers = Modifiers.Public | Modifiers.Static | Modifiers.Readonly,
-                    Initializer = $"new {name}(1f)",
+                    Initializer = $"new {name}({One(scalar)})",
                     Summary = "The identity matrix.",
                 });
             }
@@ -72,22 +75,22 @@ namespace Delta.MathsGen.Model
                 Parameters = Enumerable.Range(0, columns)
                     .Select(column => Param(ColumnName(column), Type(vector)))
                     .ToArray(),
-                Body = AssignColumns(columns, includePadding: rows == 3),
+                Body = AssignColumns(scalar, columns, NeedsMatrixPadding(scalar, rows)),
                 Summary = "Creates a matrix from its columns in column-major order.",
             });
             members.Add(new ConstructorSpec
             {
-                Parameters = [Param("value", Type("float"))],
-                Body = ScalarConstructorBody(columns, rows),
+                Parameters = [Param("value", Type(scalar))],
+                Body = ScalarConstructorBody(scalar, columns, rows),
                 Summary = "Creates a matrix with value on the diagonal and zero elsewhere.",
             });
             members.Add(new ConstructorSpec
             {
-                Parameters = RowMajorParameters(columns, rows),
-                Body = RowMajorConstructorBody(columns, rows),
+                Parameters = RowMajorParameters(scalar, columns, rows),
+                Body = RowMajorConstructorBody(scalar, columns, rows),
                 Summary = "Creates a matrix from row-major named components in mathematical order.",
             });
-            AddMatrixConversions(members, columns, rows);
+            AddMatrixConversions(members, scalar, columns, rows);
 
             if (columns == rows)
             {
@@ -100,20 +103,20 @@ namespace Delta.MathsGen.Model
                 });
             }
 
-            AddMatrixAccessors(members, columns, rows);
-            AddMatrixProperties(members, columns, rows);
-            AddMatrixAlgebra(members, columns, rows);
+            AddMatrixAccessors(members, scalar, columns, rows);
+            AddMatrixProperties(members, scalar, columns, rows);
+            AddMatrixAlgebra(members, scalar, columns, rows);
             if (columns == rows)
             {
-                AddSquareAlgebra(members, columns, rows);
+                AddSquareAlgebra(members, scalar, columns, rows);
             }
 
-            if (columns == 4 && rows == 4)
+            if (scalar == "float" && columns == 4 && rows == 4)
             {
                 AddFloat4x4Geometry(members);
             }
 
-            AddMatrixOperators(members, columns, rows);
+            AddMatrixOperators(members, scalar, columns, rows);
             members.Add(new FunctionSpec
             {
                 Name = "Equals",
@@ -145,7 +148,7 @@ namespace Delta.MathsGen.Model
             });
 
             MarkShaderFunctionsStatic(members, name);
-            var stride = rows == 2 ? 8 : 16;
+            var stride = rows == 2 ? ScalarSize(scalar) * 2 : ScalarSize(scalar) * 4;
             return new TypeSpec
             {
                 Namespace = "Delta.Maths",
@@ -155,26 +158,26 @@ namespace Delta.MathsGen.Model
                 Interfaces = [$"IEquatable<{name}>"],
                 ShaderContract = new ShaderContract
                 {
-                    GlslName = GlslName(columns, rows),
+                    GlslName = GlslName(scalar, columns, rows),
                     Mapping = ShaderMappingKind.Builtin,
                     ColumnMajor = true,
                     Alignment = stride,
                     MatrixStride = stride,
                     MatrixColumns = columns,
                     MatrixRows = rows,
-                    ElementGlslType = "float",
+                    ElementGlslType = scalar,
                     Size = columns * stride,
-                    Capability = ShaderCapability.Std430,
+                    Capability = scalar == "double" ? ShaderCapability.Float64 : ShaderCapability.Std430,
                 },
-                Comment = $"A column-major {columns}x{rows} matrix represented by {columns} float{rows} columns.",
+                Comment = $"A column-major {columns}x{rows} matrix represented by {columns} {scalar}{rows} columns.",
                 Attributes = ["Serializable", "StructLayout(LayoutKind.Sequential)", "System.Runtime.Serialization.DataContract"],
                 Members = members.ToArray(),
             };
         }
 
-        private static void AddMatrixAccessors(List<MemberSpec> members, int columns, int rows)
+        private static void AddMatrixAccessors(List<MemberSpec> members, string scalar, int columns, int rows)
         {
-            var vector = VectorName(rows);
+            var vector = VectorName(scalar, rows);
             members.Add(new FunctionSpec
             {
                 Name = "GetColumn",
@@ -187,16 +190,16 @@ namespace Delta.MathsGen.Model
             members.Add(new FunctionSpec
             {
                 Name = "GetRow",
-                ReturnType = Type(VectorName(columns)),
+                ReturnType = Type(VectorName(scalar, columns)),
                 Parameters = [Param("index", Type("int"))],
                 Part = TypePart.Core,
-                Body = "return index switch { " + string.Join(", ", Enumerable.Range(0, rows).Select(row => $"{row} => new {VectorName(columns)}({string.Join(", ", Enumerable.Range(0, columns).Select(column => $"c{column}.{Component(row)}"))})")) + ", _ => throw new ArgumentOutOfRangeException(nameof(index)) };",
+                Body = "return index switch { " + string.Join(", ", Enumerable.Range(0, rows).Select(row => $"{row} => new {VectorName(scalar, columns)}({string.Join(", ", Enumerable.Range(0, columns).Select(column => $"c{column}.{Component(row)}"))})")) + ", _ => throw new ArgumentOutOfRangeException(nameof(index)) };",
                 Summary = "Returns a row using zero-based indexing.",
             });
             members.Add(new FunctionSpec
             {
                 Name = "GetElement",
-                ReturnType = Type("float"),
+                ReturnType = Type(scalar),
                 Parameters = [Param("column", Type("int")), Param("row", Type("int"))],
                 Part = TypePart.Core,
                 Body = "return GetColumn(column)[row];",
@@ -205,30 +208,33 @@ namespace Delta.MathsGen.Model
             {
                 Name = "SetElement",
                 ReturnType = Type("void"),
-                Parameters = [Param("column", Type("int")), Param("row", Type("int")), Param("value", Type("float"))],
+                Parameters = [Param("column", Type("int")), Param("row", Type("int")), Param("value", Type(scalar))],
                 Part = TypePart.Core,
                 Body = SetElementBody(columns, rows),
             });
         }
 
-        private static void AddMatrixConversions(List<MemberSpec> members, int columns, int rows)
+        private static void AddMatrixConversions(List<MemberSpec> members, string scalar, int columns, int rows)
         {
-            for (var sourceColumns = 2; sourceColumns <= 4; sourceColumns++)
+            foreach (var sourceScalar in new[] { "float", "double" })
             {
-                for (var sourceRows = 2; sourceRows <= 4; sourceRows++)
+                for (var sourceColumns = 2; sourceColumns <= 4; sourceColumns++)
                 {
-                    var source = MatrixName(sourceColumns, sourceRows);
-                    members.Add(new ConstructorSpec
+                    for (var sourceRows = 2; sourceRows <= 4; sourceRows++)
                     {
-                        Parameters = [Param("value", Type(source))],
-                        Body = MatrixConversionBody(columns, rows, sourceColumns, sourceRows),
-                        Summary = $"Creates a {MatrixName(columns, rows)} from a {source} using GLSL matrix conversion rules.",
-                    });
+                        var source = MatrixName(sourceScalar, sourceColumns, sourceRows);
+                        members.Add(new ConstructorSpec
+                        {
+                            Parameters = [Param("value", Type(source))],
+                            Body = MatrixConversionBody(scalar, columns, rows, sourceScalar, sourceColumns, sourceRows),
+                            Summary = $"Creates a {MatrixName(scalar, columns, rows)} from a {source} using GLSL matrix conversion rules.",
+                        });
+                    }
                 }
             }
         }
 
-        private static void AddMatrixProperties(List<MemberSpec> members, int columns, int rows)
+        private static void AddMatrixProperties(List<MemberSpec> members, string scalar, int columns, int rows)
         {
             for (var row = 0; row < rows; row++)
             {
@@ -239,7 +245,7 @@ namespace Delta.MathsGen.Model
                     members.Add(new PropertySpec
                     {
                         Name = $"M{row + 1}{column + 1}",
-                        Type = Type("float"),
+                        Type = Type(scalar),
                         Part = TypePart.Core,
                         Getter = $"{columnName}.{component}",
                         Setter = $"{columnName}.{component} = value",
@@ -248,12 +254,12 @@ namespace Delta.MathsGen.Model
             }
         }
 
-        private static void AddMatrixAlgebra(List<MemberSpec> members, int columns, int rows)
+        private static void AddMatrixAlgebra(List<MemberSpec> members, string scalar, int columns, int rows)
         {
-            var name = MatrixName(columns, rows);
-            var transposed = MatrixName(rows, columns);
-            var vector = VectorName(rows);
-            var sourceVector = VectorName(columns);
+            var name = MatrixName(scalar, columns, rows);
+            var transposed = MatrixName(scalar, rows, columns);
+            var vector = VectorName(scalar, rows);
+            var sourceVector = VectorName(scalar, columns);
             members.Add(new FunctionSpec
             {
                 Name = "Transpose",
@@ -261,7 +267,7 @@ namespace Delta.MathsGen.Model
                 Parameters = [Param("value", Type(name))],
                 Part = TypePart.Common,
                 Targets = FunctionTargets.Type | FunctionTargets.ShaderDeltaMaths,
-                ShaderContract = Builtin("transpose", "matrix"),
+                ShaderContract = Builtin("transpose", MatrixCapability(scalar)),
                 Body = "return new " + transposed + "(" + string.Join(", ", Enumerable.Range(0, rows).Select(row => $"new {sourceVector}({string.Join(", ", Enumerable.Range(0, columns).Select(column => $"value.c{column}.{Component(row)}"))})")) + ");",
             });
             members.Add(new FunctionSpec
@@ -271,7 +277,7 @@ namespace Delta.MathsGen.Model
                 Parameters = [Param("left", Type(name)), Param("right", Type(name))],
                 Part = TypePart.Common,
                 Targets = FunctionTargets.Type | FunctionTargets.ShaderDeltaMaths,
-                ShaderContract = Builtin("matrixCompMult", "matrix"),
+                ShaderContract = Builtin("matrixCompMult", MatrixCapability(scalar)),
                 Body = "return new " + name + "(" + string.Join(", ", Enumerable.Range(0, columns).Select(column => $"left.c{column} * right.c{column}")) + ");",
             });
             members.Add(new FunctionSpec
@@ -281,23 +287,23 @@ namespace Delta.MathsGen.Model
                 Parameters = [Param("c", Type(vector)), Param("r", Type(sourceVector))],
                 Part = TypePart.Common,
                 Targets = FunctionTargets.Type | FunctionTargets.ShaderDeltaMaths,
-                ShaderContract = Builtin("outerProduct", "matrix"),
+                ShaderContract = Builtin("outerProduct", MatrixCapability(scalar)),
                 Body = "return new " + name + "(" + string.Join(", ", Enumerable.Range(0, columns).Select(column => $"c * r.{Component(column)}")) + ");",
             });
         }
 
-        private static void AddSquareAlgebra(List<MemberSpec> members, int size, int rows)
+        private static void AddSquareAlgebra(List<MemberSpec> members, string scalar, int size, int rows)
         {
-            var name = MatrixName(size, rows);
+            var name = MatrixName(scalar, size, rows);
             members.Add(new FunctionSpec
             {
                 Name = "Determinant",
-                ReturnType = Type("float"),
+                ReturnType = Type(scalar),
                 Parameters = [Param("value", Type(name))],
                 Part = TypePart.Common,
                 Targets = FunctionTargets.Type | FunctionTargets.ShaderDeltaMaths,
-                ShaderContract = Builtin("determinant", "matrix"),
-                Body = DeterminantBody(size),
+                ShaderContract = Builtin("determinant", MatrixCapability(scalar)),
+                Body = DeterminantBody(scalar, size),
             });
             members.Add(new FunctionSpec
             {
@@ -306,7 +312,7 @@ namespace Delta.MathsGen.Model
                 Parameters = [Param("value", Type(name)), Param("result", Type(name), ParameterModifier.Out)],
                 Part = TypePart.Common,
                 Targets = FunctionTargets.Type | FunctionTargets.ShaderDeltaMaths,
-                Body = InverseBody(size),
+                Body = InverseBody(scalar, size),
             });
             members.Add(new FunctionSpec
             {
@@ -315,33 +321,34 @@ namespace Delta.MathsGen.Model
                 Parameters = [Param("value", Type(name))],
                 Part = TypePart.Common,
                 Targets = FunctionTargets.Type | FunctionTargets.ShaderDeltaMaths,
-                ShaderContract = Builtin("inverse", "matrix"),
+                ShaderContract = Builtin("inverse", MatrixCapability(scalar)),
                 Body = $"return TryInverse(value, out var result) ? result : {name}.identity;",
             });
         }
 
-        private static void AddMatrixOperators(List<MemberSpec> members, int columns, int rows)
+        private static void AddMatrixOperators(List<MemberSpec> members, string scalar, int columns, int rows)
         {
-            var name = MatrixName(columns, rows);
-            var vector = VectorName(rows);
-            var sourceVector = VectorName(columns);
-            AddOperator(members, "Add", "+", name, [Param("left", Type(name)), Param("right", Type(name))], $"return new {name}({string.Join(", ", Enumerable.Range(0, columns).Select(column => $"left.c{column} + right.c{column}"))});");
-            AddOperator(members, "Subtract", "-", name, [Param("left", Type(name)), Param("right", Type(name))], $"return new {name}({string.Join(", ", Enumerable.Range(0, columns).Select(column => $"left.c{column} - right.c{column}"))});");
-            AddOperator(members, "Negate", "-", name, [Param("value", Type(name))], $"return new {name}({string.Join(", ", Enumerable.Range(0, columns).Select(column => $"-value.c{column}"))});");
-            AddOperator(members, "Multiply", "*", name, [Param("left", Type(name)), Param("right", Type("float"))], $"return new {name}({string.Join(", ", Enumerable.Range(0, columns).Select(column => $"left.c{column} * right"))});");
-            AddOperator(members, "Multiply", "*", name, [Param("left", Type("float")), Param("right", Type(name))], $"return new {name}({string.Join(", ", Enumerable.Range(0, columns).Select(column => $"left * right.c{column}"))});");
-            AddOperator(members, "Divide", "/", name, [Param("left", Type(name)), Param("right", Type("float"))], $"return new {name}({string.Join(", ", Enumerable.Range(0, columns).Select(column => $"left.c{column} / right"))});");
-            AddOperator(members, "Multiply", "*", vector, [Param("left", Type(name)), Param("right", Type(sourceVector))], $"return new {vector}({string.Join(", ", Enumerable.Range(0, rows).Select(row => string.Join(" + ", Enumerable.Range(0, columns).Select(column => $"left.c{column}.{Component(row)} * right.{Component(column)}"))))});");
-            AddOperator(members, "Multiply", "*", VectorName(columns), [Param("left", Type(VectorName(rows))), Param("right", Type(name))], $"return new {VectorName(columns)}({string.Join(", ", Enumerable.Range(0, columns).Select(column => string.Join(" + ", Enumerable.Range(0, rows).Select(row => $"left.{Component(row)} * right.c{column}.{Component(row)}"))))});");
-            AddOperator(members, "Equality", "==", "bool", [Param("left", Type(name)), Param("right", Type(name))], "return " + string.Join(" && ", Enumerable.Range(0, columns).Select(column => $"left.c{column} == right.c{column}")) + ";");
-            AddOperator(members, "Inequality", "!=", "bool", [Param("left", Type(name)), Param("right", Type(name))], "return !(left == right);");
+            var name = MatrixName(scalar, columns, rows);
+            var vector = VectorName(scalar, rows);
+            var sourceVector = VectorName(scalar, columns);
+            AddOperator(members, scalar, "Add", "+", name, [Param("left", Type(name)), Param("right", Type(name))], $"return new {name}({string.Join(", ", Enumerable.Range(0, columns).Select(column => $"left.c{column} + right.c{column}"))});");
+            AddOperator(members, scalar, "Subtract", "-", name, [Param("left", Type(name)), Param("right", Type(name))], $"return new {name}({string.Join(", ", Enumerable.Range(0, columns).Select(column => $"left.c{column} - right.c{column}"))});");
+            AddOperator(members, scalar, "Negate", "-", name, [Param("value", Type(name))], $"return new {name}({string.Join(", ", Enumerable.Range(0, columns).Select(column => $"-value.c{column}"))});");
+            AddOperator(members, scalar, "Multiply", "*", name, [Param("left", Type(name)), Param("right", Type(scalar))], $"return new {name}({string.Join(", ", Enumerable.Range(0, columns).Select(column => $"left.c{column} * right"))});");
+            AddOperator(members, scalar, "Multiply", "*", name, [Param("left", Type(scalar)), Param("right", Type(name))], $"return new {name}({string.Join(", ", Enumerable.Range(0, columns).Select(column => $"left * right.c{column}"))});");
+            AddOperator(members, scalar, "Divide", "/", name, [Param("left", Type(name)), Param("right", Type(scalar))], $"return new {name}({string.Join(", ", Enumerable.Range(0, columns).Select(column => $"left.c{column} / right"))});");
+            AddOperator(members, scalar, "Multiply", "*", vector, [Param("left", Type(name)), Param("right", Type(sourceVector))], $"return new {vector}({string.Join(", ", Enumerable.Range(0, rows).Select(row => string.Join(" + ", Enumerable.Range(0, columns).Select(column => $"left.c{column}.{Component(row)} * right.{Component(column)}"))))});");
+            AddOperator(members, scalar, "Multiply", "*", VectorName(scalar, columns), [Param("left", Type(VectorName(scalar, rows))), Param("right", Type(name))], $"return new {VectorName(scalar, columns)}({string.Join(", ", Enumerable.Range(0, columns).Select(column => string.Join(" + ", Enumerable.Range(0, rows).Select(row => $"left.{Component(row)} * right.c{column}.{Component(row)}"))))});");
+            AddOperator(members, scalar, "Equality", "==", "bool", [Param("left", Type(name)), Param("right", Type(name))], "return " + string.Join(" && ", Enumerable.Range(0, columns).Select(column => $"left.c{column} == right.c{column}")) + ";");
+            AddOperator(members, scalar, "Inequality", "!=", "bool", [Param("left", Type(name)), Param("right", Type(name))], "return !(left == right);");
 
             for (var rightColumns = 2; rightColumns <= 4; rightColumns++)
             {
-                var right = MatrixName(rightColumns, columns);
-                var result = MatrixName(rightColumns, rows);
+                var right = MatrixName(scalar, rightColumns, columns);
+                var result = MatrixName(scalar, rightColumns, rows);
                 AddOperator(
                     members,
+                    scalar,
                     "Multiply",
                     "*",
                     result,
@@ -350,7 +357,7 @@ namespace Delta.MathsGen.Model
             }
         }
 
-        private static void AddOperator(List<MemberSpec> members, string name, string symbol, string returnType, ParameterSpec[] parameters, string body)
+        private static void AddOperator(List<MemberSpec> members, string scalar, string name, string symbol, string returnType, ParameterSpec[] parameters, string body)
         {
             members.Add(new OperatorSpec
             {
@@ -360,7 +367,7 @@ namespace Delta.MathsGen.Model
                 Operator = symbol,
                 ReturnType = Type(returnType),
                 Parameters = parameters,
-                ShaderContract = Builtin(symbol, "matrix"),
+                ShaderContract = Builtin(symbol, MatrixCapability(scalar)),
                 Body = body,
             });
         }
@@ -502,27 +509,28 @@ namespace Delta.MathsGen.Model
             });
         }
 
-        private static string DeterminantBody(int size) => size switch
+        private static string DeterminantBody(string scalar, int size) => size switch
         {
             2 => "return value.M11 * value.M22 - value.M12 * value.M21;",
             3 => "return value.M11 * (value.M22 * value.M33 - value.M23 * value.M32) - value.M12 * (value.M21 * value.M33 - value.M23 * value.M31) + value.M13 * (value.M21 * value.M32 - value.M22 * value.M31);",
-            4 =>
-            """
-            static float minor(float a11, float a12, float a13, float a21, float a22, float a23, float a31, float a32, float a33) => a11 * (a22 * a33 - a23 * a32) - a12 * (a21 * a33 - a23 * a31) + a13 * (a21 * a32 - a22 * a31);
+            4 => $"""
+            static {scalar} minor({scalar} a11, {scalar} a12, {scalar} a13, {scalar} a21, {scalar} a22, {scalar} a23, {scalar} a31, {scalar} a32, {scalar} a33) => a11 * (a22 * a33 - a23 * a32) - a12 * (a21 * a33 - a23 * a31) + a13 * (a21 * a32 - a22 * a31);
             return value.M11 * minor(value.M22, value.M23, value.M24, value.M32, value.M33, value.M34, value.M42, value.M43, value.M44) - value.M12 * minor(value.M21, value.M23, value.M24, value.M31, value.M33, value.M34, value.M41, value.M43, value.M44) + value.M13 * minor(value.M21, value.M22, value.M24, value.M31, value.M32, value.M34, value.M41, value.M42, value.M44) - value.M14 * minor(value.M21, value.M22, value.M23, value.M31, value.M32, value.M33, value.M41, value.M42, value.M43);
             """,
             _ => throw new ArgumentOutOfRangeException(nameof(size)),
         };
 
-        private static string InverseBody(int size)
+        private static string InverseBody(string scalar, int size)
         {
-            var name = MatrixName(size, size);
+            var name = MatrixName(scalar, size, size);
+            var one = One(scalar);
+            var threshold = InverseThreshold(scalar);
             return size switch
             {
                 2 => $$"""
                 var determinant = Determinant(value);
-                if (DeltaMaths.Abs(determinant) <= 1e-8f) { result = default; return false; }
-                var inverse = 1f / determinant;
+                if (DeltaMaths.Abs(determinant) <= {{threshold}}) { result = default; return false; }
+                var inverse = {{one}} / determinant;
                 result = new {{name}}(value.M22 * inverse, -value.M12 * inverse, -value.M21 * inverse, value.M11 * inverse);
                 return true;
                 """,
@@ -537,23 +545,27 @@ namespace Delta.MathsGen.Model
                 var c32 = value.M12 * value.M31 - value.M11 * value.M32;
                 var c33 = value.M11 * value.M22 - value.M12 * value.M21;
                 var determinant = value.M11 * c11 + value.M12 * c12 + value.M13 * c13;
-                if (DeltaMaths.Abs(determinant) <= 1e-8f) { result = default; return false; }
-                var inverse = 1f / determinant;
+                if (DeltaMaths.Abs(determinant) <= {{threshold}}) { result = default; return false; }
+                var inverse = {{one}} / determinant;
                 result = new {{name}}(c11 * inverse, c21 * inverse, c31 * inverse, c12 * inverse, c22 * inverse, c32 * inverse, c13 * inverse, c23 * inverse, c33 * inverse);
                 return true;
                 """,
-                4 => InverseFourBody(),
+                4 => InverseFourBody(scalar),
                 _ => throw new ArgumentOutOfRangeException(nameof(size)),
             };
         }
 
-        private static string InverseFourBody() =>
-            """
+        private static string InverseFourBody(string scalar)
+        {
+            var name = MatrixName(scalar, 4, 4);
+            var one = One(scalar);
+            var threshold = InverseThreshold(scalar);
+            return $$"""
             var determinant = Determinant(value);
-            if (DeltaMaths.Abs(determinant) <= 1e-8f) { result = default; return false; }
-            var inverse = 1f / determinant;
-            static float minor(float a11, float a12, float a13, float a21, float a22, float a23, float a31, float a32, float a33) => a11 * (a22 * a33 - a23 * a32) - a12 * (a21 * a33 - a23 * a31) + a13 * (a21 * a32 - a22 * a31);
-            result = new float4x4(
+            if (DeltaMaths.Abs(determinant) <= {{threshold}}) { result = default; return false; }
+            var inverse = {{one}} / determinant;
+            static {{scalar}} minor({{scalar}} a11, {{scalar}} a12, {{scalar}} a13, {{scalar}} a21, {{scalar}} a22, {{scalar}} a23, {{scalar}} a31, {{scalar}} a32, {{scalar}} a33) => a11 * (a22 * a33 - a23 * a32) - a12 * (a21 * a33 - a23 * a31) + a13 * (a21 * a32 - a22 * a31);
+            result = new {{name}}(
                 minor(value.M22, value.M23, value.M24, value.M32, value.M33, value.M34, value.M42, value.M43, value.M44) * inverse,
                 -minor(value.M12, value.M13, value.M14, value.M32, value.M33, value.M34, value.M42, value.M43, value.M44) * inverse,
                 minor(value.M12, value.M13, value.M14, value.M22, value.M23, value.M24, value.M42, value.M43, value.M44) * inverse,
@@ -572,8 +584,9 @@ namespace Delta.MathsGen.Model
                 minor(value.M11, value.M12, value.M13, value.M21, value.M22, value.M23, value.M31, value.M32, value.M33) * inverse);
             return true;
             """;
+        }
 
-        private static string AssignColumns(int columns, bool includePadding)
+        private static string AssignColumns(string scalar, int columns, bool includePadding)
         {
             var lines = new List<string>(columns * (includePadding ? 2 : 1));
             for (var column = 0; column < columns; column++)
@@ -581,63 +594,65 @@ namespace Delta.MathsGen.Model
                 lines.Add($"this.c{column} = c{column};");
                 if (includePadding)
                 {
-                    lines.Add($"this._padding{column} = 0f;");
+                    lines.Add($"this._padding{column} = {Zero(scalar)};");
                 }
             }
 
             return string.Join("\n", lines.Where(line => includePadding || !line.Contains("padding", StringComparison.Ordinal)));
         }
 
-        private static string ScalarConstructorBody(int columns, int rows)
+        private static string ScalarConstructorBody(string scalar, int columns, int rows)
         {
             var lines = new List<string>(columns + 1);
             for (var column = 0; column < columns; column++)
             {
-                var values = Enumerable.Range(0, rows).Select(row => row == column ? "value" : "0f");
-                lines.Add($"c{column} = new {VectorName(rows)}({string.Join(", ", values)});");
-                if (rows == 3)
+                var values = Enumerable.Range(0, rows).Select(row => row == column ? "value" : Zero(scalar));
+                lines.Add($"c{column} = new {VectorName(scalar, rows)}({string.Join(", ", values)});");
+                if (NeedsMatrixPadding(scalar, rows))
                 {
-                    lines.Add($"_padding{column} = 0f;");
+                    lines.Add($"_padding{column} = {Zero(scalar)};");
                 }
             }
 
             return string.Join("\n", lines);
         }
 
-        private static string MatrixConversionBody(int columns, int rows, int sourceColumns, int sourceRows)
+        private static string MatrixConversionBody(string scalar, int columns, int rows, string sourceScalar, int sourceColumns, int sourceRows)
         {
             var lines = new List<string>(columns + 1);
             for (var column = 0; column < columns; column++)
             {
                 var values = Enumerable.Range(0, rows).Select(row =>
                     row < sourceRows && column < sourceColumns
-                        ? $"value.c{column}.{Component(row)}"
-                        : row == column ? "1f" : "0f");
-                lines.Add($"c{column} = new {VectorName(rows)}({string.Join(", ", values)});");
-                if (rows == 3)
+                        ? sourceScalar == scalar
+                            ? $"value.c{column}.{Component(row)}"
+                            : $"({scalar})value.c{column}.{Component(row)}"
+                        : row == column ? One(scalar) : Zero(scalar));
+                lines.Add($"c{column} = new {VectorName(scalar, rows)}({string.Join(", ", values)});");
+                if (NeedsMatrixPadding(scalar, rows))
                 {
-                    lines.Add($"_padding{column} = 0f;");
+                    lines.Add($"_padding{column} = {Zero(scalar)};");
                 }
             }
 
             return string.Join("\n", lines);
         }
 
-        private static ParameterSpec[] RowMajorParameters(int columns, int rows) =>
+        private static ParameterSpec[] RowMajorParameters(string scalar, int columns, int rows) =>
             Enumerable.Range(0, rows)
-                .SelectMany(row => Enumerable.Range(0, columns).Select(column => Param($"m{row + 1}{column + 1}", Type("float"))))
+                .SelectMany(row => Enumerable.Range(0, columns).Select(column => Param($"m{row + 1}{column + 1}", Type(scalar))))
                 .ToArray();
 
-        private static string RowMajorConstructorBody(int columns, int rows)
+        private static string RowMajorConstructorBody(string scalar, int columns, int rows)
         {
             var lines = new List<string>(columns + 1);
             for (var column = 0; column < columns; column++)
             {
                 var values = Enumerable.Range(0, rows).Select(row => $"m{row + 1}{column + 1}");
-                lines.Add($"c{column} = new {VectorName(rows)}({string.Join(", ", values)});");
-                if (rows == 3)
+                lines.Add($"c{column} = new {VectorName(scalar, rows)}({string.Join(", ", values)});");
+                if (NeedsMatrixPadding(scalar, rows))
                 {
-                    lines.Add($"_padding{column} = 0f;");
+                    lines.Add($"_padding{column} = {Zero(scalar)};");
                 }
             }
 
@@ -702,13 +717,15 @@ namespace Delta.MathsGen.Model
             return new ShaderContract();
         }
 
-        private static ShaderContract Builtin(string name, string capability) => new()
+        private static ShaderContract Builtin(string name, ShaderCapability capability) => new()
         {
             GlslName = name,
             Mapping = ShaderMappingKind.Builtin,
-            Capability = ParseCapability(capability),
+            Capability = capability,
             Stages = ShaderStages.All,
         };
+
+        private static ShaderContract Builtin(string name, string capability) => Builtin(name, ParseCapability(capability));
 
         private static ShaderContract Helper(string name, string capability) => new()
         {
@@ -724,14 +741,33 @@ namespace Delta.MathsGen.Model
             _ => throw new InvalidOperationException($"Unsupported shader capability '{capability}'."),
         };
 
-        private static bool IsMatrix(string name) => name.StartsWith("float", StringComparison.Ordinal)
+        private static ShaderCapability MatrixCapability(string scalar) => scalar == "double"
+            ? ShaderCapability.Float64
+            : ShaderCapability.Matrix;
+
+        private static bool IsMatrix(string name) => (name.StartsWith("float", StringComparison.Ordinal)
+            || name.StartsWith("double", StringComparison.Ordinal))
             && name.Contains('x', StringComparison.Ordinal);
 
-        private static string MatrixName(int columns, int rows) => $"float{columns}x{rows}";
+        private static string MatrixName(string scalar, int columns, int rows) => $"{scalar}{columns}x{rows}";
 
-        private static string GlslName(int columns, int rows) => columns == rows ? $"mat{columns}" : $"mat{columns}x{rows}";
+        private static string GlslName(string scalar, int columns, int rows)
+        {
+            var prefix = scalar == "double" ? "dmat" : "mat";
+            return columns == rows ? $"{prefix}{columns}" : $"{prefix}{columns}x{rows}";
+        }
 
-        private static string VectorName(int dimension) => $"float{dimension}";
+        private static string VectorName(string scalar, int dimension) => $"{scalar}{dimension}";
+
+        private static int ScalarSize(string scalar) => scalar == "double" ? 8 : 4;
+
+        private static string Zero(string scalar) => scalar == "double" ? "0.0" : "0f";
+
+        private static string One(string scalar) => scalar == "double" ? "1.0" : "1f";
+
+        private static string InverseThreshold(string scalar) => scalar == "double" ? "1e-12" : "1e-8f";
+
+        private static bool NeedsMatrixPadding(string scalar, int rows) => rows == 3 && scalar != "double";
 
         private static string ColumnName(int column) => $"c{column}";
 

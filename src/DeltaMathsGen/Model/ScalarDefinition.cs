@@ -34,6 +34,11 @@ namespace Delta.MathsGen.Model
         public string NormalizeSafeThreshold { get; init; } = "0";
         public string[] ImplicitTargets { get; init; } = [];
         public string[] ExplicitTargets { get; init; } = [];
+        public string? ShaderVectorPrefix { get; init; }
+        public string? ShaderElementGlslType { get; init; }
+        public ShaderCapability ShaderVectorCapability { get; init; } = ShaderCapability.Unknown;
+        public int ShaderElementSize { get; init; } = 4;
+        public bool PadThreeComponentVector { get; init; }
 
         public bool Supports(ScalarCapabilities required) =>
             (Capabilities & required) == required;
@@ -84,6 +89,8 @@ namespace Delta.MathsGen.Model
                 NormalizeSafeThreshold = "1.17549435E-38f",
                 ImplicitTargets = ["double"],
                 ExplicitTargets = ["int", "uint", "fix"],
+                ShaderVectorPrefix = "vec",
+                ShaderVectorCapability = ShaderCapability.Std430,
             },
             new()
             {
@@ -97,6 +104,11 @@ namespace Delta.MathsGen.Model
                     ScalarCapabilities.UnaryPlus | ScalarCapabilities.Increment,
                 NormalizeSafeThreshold = "2.2250738585072014E-308",
                 ExplicitTargets = ["int", "uint", "float", "fix"],
+                ShaderVectorPrefix = "dvec",
+                ShaderElementGlslType = "double",
+                ShaderVectorCapability = ShaderCapability.Float64,
+                ShaderElementSize = 8,
+                PadThreeComponentVector = true,
             },
             new()
             {
@@ -107,6 +119,24 @@ namespace Delta.MathsGen.Model
                     ScalarCapabilities.Real | ScalarCapabilities.FixedPoint | ScalarCapabilities.Rounding |
                     ScalarCapabilities.Trigonometry | ScalarCapabilities.Increment,
                 ExplicitTargets = ["int", "float", "double"],
+            },
+            new()
+            {
+                Name = "half",
+                ZeroLiteral = "half.Zero",
+                Capabilities = ScalarCapabilities.Arithmetic | ScalarCapabilities.Signed |
+                    ScalarCapabilities.Ordered | ScalarCapabilities.Remainder |
+                    ScalarCapabilities.Real | ScalarCapabilities.FloatingPoint |
+                    ScalarCapabilities.Rounding | ScalarCapabilities.Trigonometry |
+                    ScalarCapabilities.Hyperbolic | ScalarCapabilities.Exponential |
+                    ScalarCapabilities.UnaryPlus | ScalarCapabilities.Increment,
+                NormalizeSafeThreshold = "half.Epsilon",
+                ExplicitTargets = ["int"],
+                ShaderVectorPrefix = "f16vec",
+                ShaderElementGlslType = "float16_t",
+                ShaderVectorCapability = ShaderCapability.Float16,
+                ShaderElementSize = 2,
+                PadThreeComponentVector = true,
             },
         ];
     }

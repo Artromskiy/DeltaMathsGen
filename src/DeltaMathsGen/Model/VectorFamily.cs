@@ -24,6 +24,15 @@ namespace Delta.MathsGen.Model
             var context = new VectorContext { Scalar = Scalar, Dimension = Dimension };
             var members = new List<MemberSpec>();
             members.AddRange(CreateFields(fields));
+            if (Scalar.PadThreeComponentVector && Dimension == 3)
+            {
+                members.Add(new FieldSpec
+                {
+                    Name = "_padding",
+                    Type = Type(Scalar.Name),
+                    Modifiers = Modifiers.Private,
+                });
+            }
             members.Add(new FieldSpec
             {
                 Name = "zero",
@@ -91,7 +100,7 @@ namespace Delta.MathsGen.Model
 
         private ShaderContract CreateShaderContract()
         {
-            var glslScalarName = Scalar.Name switch
+            var glslScalarName = Scalar.ShaderVectorPrefix ?? Scalar.Name switch
             {
                 "bool" => "bvec",
                 "int" => "ivec",
@@ -106,8 +115,18 @@ namespace Delta.MathsGen.Model
                 {
                     GlslName = glslScalarName + Dimension,
                     Mapping = ShaderMappingKind.Builtin,
-                    Alignment = Dimension == 2 ? 8 : 16,
-                    Capability = ShaderCapability.Std430,
+                    Alignment = Dimension == 2
+                        ? Scalar.ShaderElementSize * 2
+                        : Scalar.ShaderElementSize * 4,
+                    Capability = Scalar.ShaderVectorCapability == ShaderCapability.Unknown
+                        ? ShaderCapability.Std430
+                        : Scalar.ShaderVectorCapability,
+                    ElementGlslType = Scalar.ShaderElementGlslType,
+                    Size = Scalar.ShaderVectorPrefix is null
+                        ? null
+                        : Dimension == 3 && Scalar.PadThreeComponentVector
+                            ? Scalar.ShaderElementSize * 4
+                            : Scalar.ShaderElementSize * Dimension,
                 };
         }
 
@@ -162,13 +181,13 @@ namespace Delta.MathsGen.Model
         private ConstructorSpec CreateConstructor(string fields) => new()
         {
             Parameters = fields.Select(component => Param(component.ToString(), Type(Scalar.Name))).ToArray(),
-            Body = string.Join("\n", fields.Select(component => $"this.{component} = {component};")),
+            Body = WithPadding(string.Join("\n", fields.Select(component => $"this.{component} = {component};"))),
         };
 
         private ConstructorSpec CreateScalarConstructor(string fields) => new()
         {
             Parameters = [Param("value", Type(Scalar.Name))],
-            Body = string.Join("\n", fields.Select(component => $"{component} = value;")),
+            Body = WithPadding(string.Join("\n", fields.Select(component => $"{component} = value;"))),
         };
 
         private ConstructorSpec[] CreateVectorConstructors(string fields)
@@ -182,7 +201,7 @@ namespace Delta.MathsGen.Model
                 constructors.Add(new ConstructorSpec
                 {
                     Parameters = [Param("value", Type(sourceName))],
-                    Body = string.Join("\n", assignments),
+                    Body = WithPadding(string.Join("\n", assignments)),
                 });
             }
             AddMixedConstructors(constructors, fields);
@@ -218,10 +237,14 @@ namespace Delta.MathsGen.Model
                 constructors.Add(new ConstructorSpec
                 {
                     Parameters = parameters.ToArray(),
-                    Body = string.Join("\n", assignments),
+                    Body = WithPadding(string.Join("\n", assignments)),
                 });
             }
         }
+
+        private string WithPadding(string body) => Scalar.PadThreeComponentVector && Dimension == 3
+            ? body + "\n_padding = " + Scalar.ZeroLiteral + ";"
+            : body;
 
         private static int[][] ComponentPartitions(int total)
         {
@@ -414,7 +437,7 @@ namespace Delta.MathsGen.Model
 
         private ShaderContract CreateOperatorShaderContract(string symbol, bool unary = false)
         {
-            if (Scalar.Name is not ("float" or "int" or "uint"))
+            if (Scalar.Name is not ("float" or "half" or "double" or "int" or "uint"))
             {
                 return new ShaderContract();
             }
@@ -440,7 +463,12 @@ namespace Delta.MathsGen.Model
             {
                 GlslName = symbol,
                 Mapping = ShaderMappingKind.Builtin,
-                Capability = ShaderCapability.Vector,
+                Capability = Scalar.Name switch
+                {
+                    "half" => ShaderCapability.Float16,
+                    "double" => ShaderCapability.Float64,
+                    _ => ShaderCapability.Vector,
+                },
                 Stages = ShaderStages.All,
             };
         }

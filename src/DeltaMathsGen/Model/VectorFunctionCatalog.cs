@@ -84,6 +84,14 @@ namespace Delta.MathsGen.Model
             },
             new()
             {
+                Name = "BooleanNot",
+                Requires = ScalarCapabilities.Boolean,
+                Build = context => context.Scalar.Name == "bool"
+                    ? [ComponentWise(context, "Not", Type(context.Name), Unary(context), field => $"!value.{field}", TypePart.Relational)]
+                    : [],
+            },
+            new()
+            {
                 Name = "AbsSign",
                 Requires = ScalarCapabilities.Signed,
                 Build = context =>
@@ -142,7 +150,7 @@ namespace Delta.MathsGen.Model
             {
                 Name = "FloatingRemainder",
                 Requires = ScalarCapabilities.FloatingPoint,
-                Build = context => context.Scalar.Name == "float"
+                Build = context => context.Scalar.Name is "float" or "half" or "double"
                     ?
                     [
                         ComponentWise(context, "Mod", Type(context.Name),
@@ -156,9 +164,25 @@ namespace Delta.MathsGen.Model
             },
             new()
             {
+                Name = "FloatingDecomposition",
+                Requires = ScalarCapabilities.FloatingPoint,
+                Build = context => context.Scalar.Name is "float" or "half"
+                    ? FloatingDecomposition(context)
+                    : [],
+            },
+            new()
+            {
                 Name = "Packing",
                 Requires = ScalarCapabilities.FloatingPoint,
                 Build = Packing,
+            },
+            new()
+            {
+                Name = "BitPreservingConversions",
+                Requires = ScalarCapabilities.FloatingPoint,
+                Build = context => context.Scalar.Name == "float"
+                    ? BitPreservingConversions(context)
+                    : [],
             },
             new()
             {
@@ -342,6 +366,12 @@ namespace Delta.MathsGen.Model
                 Function("UnpackUnorm2x16", Type(context.Name), [P("value", Type("uint"))],
                     "return new((value & 0xffffu) / 65535f, ((value >> 16) & 0xffffu) / 65535f);",
                     TypePart.Common, context),
+                Function("PackHalf2x16", Type("uint"), [P("value", Type(context.Name))],
+                    "return DeltaMaths.PackHalf(value.x) | (DeltaMaths.PackHalf(value.y) << 16);",
+                    TypePart.Common, context),
+                Function("UnpackHalf2x16", Type(context.Name), [P("value", Type("uint"))],
+                    "return new(DeltaMaths.UnpackHalf(value & 0xffffu), DeltaMaths.UnpackHalf(value >> 16));",
+                    TypePart.Common, context),
                 Function("PackSnorm2x16", Type("uint"), [P("value", Type(context.Name))],
                     $$"""
                     var x = unchecked((uint)(ushort)(short)DeltaMaths.RoundEven(DeltaMaths.Clamp(value.x, -1f, 1f) * 32767f));
@@ -389,6 +419,50 @@ namespace Delta.MathsGen.Model
                         DeltaMaths.Clamp(z / 127f, -1f, 1f),
                         DeltaMaths.Clamp(w / 127f, -1f, 1f));
                     """, TypePart.Common, context),
+            ];
+        }
+
+        private static FunctionSpec[] FloatingDecomposition(VectorContext context)
+        {
+            var vector = Type(context.Name);
+            var integerVector = Type("int" + context.Dimension);
+            var lines = context.Fields
+                .Select(field => $"var fractional{field} = DeltaMaths.Modf(value.{field}, out var integer{field});")
+                .ToList();
+            lines.Add($"integerPart = new({string.Join(", ", context.Fields.Select(field => "integer" + field))});");
+            lines.Add($"return new({string.Join(", ", context.Fields.Select(field => "fractional" + field))});");
+            var modf = Function("Modf", vector,
+                [P("value", vector), P("integerPart", vector, ParameterModifier.Out)],
+                string.Join("\n", lines), TypePart.Common, context);
+
+            lines = context.Fields
+                .Select(field => $"var mantissa{field} = DeltaMaths.Frexp(value.{field}, out var exponent{field});")
+                .ToList();
+            lines.Add($"exponent = new({string.Join(", ", context.Fields.Select(field => "exponent" + field))});");
+            lines.Add($"return new({string.Join(", ", context.Fields.Select(field => "mantissa" + field))});");
+            var frexp = Function("Frexp", vector,
+                [P("value", vector), P("exponent", integerVector, ParameterModifier.Out)],
+                string.Join("\n", lines), TypePart.Common, context);
+
+            var ldexp = ComponentWise(context, "Ldexp", vector,
+                [P("value", vector), P("exponent", integerVector)],
+                field => $"DeltaMaths.Ldexp(value.{field}, exponent.{field})", TypePart.Common);
+            return [modf, frexp, ldexp];
+        }
+
+        private static FunctionSpec[] BitPreservingConversions(VectorContext context)
+        {
+            var vector = Type(context.Name);
+            return
+            [
+                ComponentWise(context, "FloatBitsToInt", Type("int" + context.Dimension), Unary(context),
+                    field => $"DeltaMaths.FloatBitsToInt(value.{field})", TypePart.Common),
+                ComponentWise(context, "FloatBitsToUint", Type("uint" + context.Dimension), Unary(context),
+                    field => $"DeltaMaths.FloatBitsToUint(value.{field})", TypePart.Common),
+                ComponentWise(context, "IntBitsToFloat", vector, [P("value", Type("int" + context.Dimension))],
+                    field => $"DeltaMaths.IntBitsToFloat(value.{field})", TypePart.Common),
+                ComponentWise(context, "UintBitsToFloat", vector, [P("value", Type("uint" + context.Dimension))],
+                    field => $"DeltaMaths.UintBitsToFloat(value.{field})", TypePart.Common),
             ];
         }
 
@@ -566,7 +640,7 @@ namespace Delta.MathsGen.Model
         private static ShaderContract CreateShaderContract(VectorContext context, string name, ParameterSpec[] parameters)
         {
             var scalar = context.Scalar.Name;
-            var shaderScalar = scalar is "bool" or "int" or "uint" or "float";
+            var shaderScalar = scalar is "bool" or "int" or "uint" or "float" or "half" or "double";
             if (!shaderScalar)
             {
                 return new ShaderContract();
@@ -576,59 +650,79 @@ namespace Delta.MathsGen.Model
             {
                 "Select" when parameters.Length == 3 && parameters[0].Type.Name == context.Name &&
                     parameters[1].Type.Name == context.Name && parameters[2].Type.Name == context.BoolVectorName
-                    && scalar != "bool" => Helper("delta_select", "vector"),
-                "Equal" when parameters.All(parameter => parameter.Type.Name == context.Name) => Builtin("equal", "vector"),
-                "NotEqual" when parameters.All(parameter => parameter.Type.Name == context.Name) => Builtin("notEqual", "vector"),
+                    && scalar != "bool" => Helper("delta_select", "vector", context),
+                "LessThan" or "LessThanOrEqual" or "GreaterThan" or "GreaterThanOrEqual"
+                    when (scalar is "float" or "half" or "double" or "int" or "uint") && parameters.Length == 2 && AllParametersAreVector(context, parameters)
+                    => Builtin(name switch
+                    {
+                        "LessThanOrEqual" => "lessThanEqual",
+                        "GreaterThanOrEqual" => "greaterThanEqual",
+                        _ => LowercaseFirst(name),
+                    }, "vector", context),
+                "Not" when scalar == "bool" && parameters.Length == 1 && parameters[0].Type.Name == context.Name
+                    => Builtin("not", "vector", context),
+                "Equal" when parameters.All(parameter => parameter.Type.Name == context.Name) => Builtin("equal", "vector", context),
+                "NotEqual" when parameters.All(parameter => parameter.Type.Name == context.Name) => Builtin("notEqual", "vector", context),
                 "Min" or "Max" when scalar != "bool" && FirstParameterIsVector(context, parameters)
-                    => Builtin(LowercaseFirst(name), "vector"),
+                    => Builtin(LowercaseFirst(name), "vector", context),
                 "Clamp" when scalar != "bool" && FirstParameterIsVector(context, parameters)
-                    => Builtin("clamp", "vector"),
-                "Abs" when scalar is "float" or "int" => Builtin("abs", "vector"),
-                "Sign" when scalar is "float" or "int" => Builtin("sign", "vector"),
-                "Mod" when scalar == "float" => Builtin("mod", "vector"),
+                    => Builtin("clamp", "vector", context),
+                "Abs" when scalar is "float" or "half" or "double" or "int" => Builtin("abs", "vector", context),
+                "Sign" when scalar is "float" or "half" or "double" or "int" => Builtin("sign", "vector", context),
+                "Mod" when scalar is "float" or "half" or "double" => Builtin("mod", "vector", context),
+                "Modf" when (scalar is "float" or "half" or "double") && parameters.Length == 2 && parameters[1].Modifier == ParameterModifier.Out
+                    => Builtin("modf", "vector", context),
+                "Frexp" when (scalar is "float" or "half" or "double") && parameters.Length == 2 && parameters[1].Modifier == ParameterModifier.Out
+                    => Builtin("frexp", "vector", context),
+                "Ldexp" when (scalar is "float" or "half" or "double") && parameters.Length == 2 && parameters[1].Type.Name == "int" + context.Dimension
+                    => Builtin("ldexp", "vector", context),
+                "FloatBitsToInt" when scalar == "float" => Builtin("floatBitsToInt", "vector"),
+                "FloatBitsToUint" when scalar == "float" => Builtin("floatBitsToUint", "vector"),
+                "IntBitsToFloat" when scalar == "float" => Builtin("intBitsToFloat", "vector"),
+                "UintBitsToFloat" when scalar == "float" => Builtin("uintBitsToFloat", "vector"),
                 "BitCount" or "FindLSB" or "FindMSB" or "BitfieldReverse" or "BitfieldExtract" or "BitfieldInsert"
                     when scalar is "int" or "uint" => Builtin(LowercaseFirst(name), "vector"),
                 "UaddCarry" or "UsubBorrow" when scalar == "uint" => Builtin(LowercaseFirst(name), "vector"),
                 "UmulExtended" when scalar == "uint" => Builtin("umulExtended", "vector"),
                 "ImulExtended" when scalar == "int" => Builtin("imulExtended", "vector"),
-                "Fract" when scalar == "float" => Builtin("fract", "vector"),
-                "InverseSqrt" when scalar == "float" => Builtin("inversesqrt", "vector"),
-                "PackUnorm2x16" or "UnpackUnorm2x16" or "PackSnorm2x16" or "UnpackSnorm2x16"
+                "Fract" when scalar is "float" or "half" or "double" => Builtin("fract", "vector", context),
+                "InverseSqrt" when scalar is "float" or "half" or "double" => Builtin("inversesqrt", "vector", context),
+                "PackUnorm2x16" or "UnpackUnorm2x16" or "PackSnorm2x16" or "UnpackSnorm2x16" or "PackHalf2x16" or "UnpackHalf2x16"
                     when scalar == "float" && context.Dimension == 2 => Builtin(LowercaseFirst(name), "vector"),
                 "PackUnorm4x8" or "UnpackUnorm4x8" or "PackSnorm4x8" or "UnpackSnorm4x8"
                     when scalar == "float" && context.Dimension == 4 => Builtin(LowercaseFirst(name), "vector"),
-                "Radians" or "Degrees" when scalar == "float" => Builtin(LowercaseFirst(name), "vector"),
-                "Floor" or "Ceil" or "Round" or "RoundEven" or "Truncate" when scalar == "float"
+                "Radians" or "Degrees" when scalar is "float" or "half" or "double" => Builtin(LowercaseFirst(name), "vector", context),
+                "Floor" or "Ceil" or "Round" or "RoundEven" or "Truncate" when scalar is "float" or "half" or "double"
                     => Builtin(name switch
                     {
                         "Round" or "RoundEven" => "roundEven",
                         "Truncate" => "trunc",
                         _ => LowercaseFirst(name),
-                    }, "vector"),
+                    }, "vector", context),
                 "Sin" or "Cos" or "Tan" or "Asin" or "Acos" or "Atan"
-                    when scalar == "float" => Builtin(LowercaseFirst(name), "vector"),
+                    when scalar is "float" or "half" or "double" => Builtin(LowercaseFirst(name), "vector", context),
                 "Sinh" or "Cosh" or "Tanh" or "Asinh" or "Acosh" or "Atanh"
-                    when scalar == "float" => Builtin(LowercaseFirst(name), "vector"),
+                    when scalar is "float" or "half" or "double" => Builtin(LowercaseFirst(name), "vector", context),
                 "Exp" or "Exp2" or "Log" or "Log2" or "Sqrt"
-                    when scalar == "float" => Builtin(LowercaseFirst(name), "vector"),
-                "Pow" when scalar == "float" && AllParametersAreVector(context, parameters)
-                    => Builtin("pow", "vector"),
-                "Fma" when scalar == "float" && AllParametersAreVector(context, parameters)
-                    => Builtin("fma", "vector"),
-                "Lerp" when scalar == "float" => Builtin("mix", "vector"),
-                "Smoothstep" when scalar == "float" => Builtin("smoothstep", "vector"),
-                "Step" when scalar == "float" => Builtin("step", "vector"),
-                "Dot" when scalar == "float" => Builtin("dot", "vector"),
-                "Length" or "Distance" when scalar == "float" => Builtin(LowercaseFirst(name), "vector"),
-                "Atan" when scalar == "float" => Builtin("atan", "vector"),
-                "Atan2" when scalar == "float" && FirstParameterIsVector(context, parameters) => Builtin("atan", "vector"),
-                "Normalize" when scalar == "float" => Builtin("normalize", "vector"),
-                "FaceForward" when scalar == "float" => Builtin("faceforward", "vector"),
-                "Reflect" when scalar == "float" => Builtin("reflect", "vector"),
-                "Refract" when scalar == "float" => Builtin("refract", "vector"),
-                "Cross" when scalar == "float" && context.Dimension == 3 => Builtin("cross", "vector"),
-                "IsNaN" when scalar == "float" => Builtin("isnan", "vector"),
-                "IsInfinity" when scalar == "float" => Builtin("isinf", "vector"),
+                    when scalar is "float" or "half" or "double" => Builtin(LowercaseFirst(name), "vector", context),
+                "Pow" when scalar is "float" or "half" or "double" && AllParametersAreVector(context, parameters)
+                    => Builtin("pow", "vector", context),
+                "Fma" when scalar is "float" or "half" or "double" && AllParametersAreVector(context, parameters)
+                    => Builtin("fma", "vector", context),
+                "Lerp" when scalar is "float" or "half" or "double" => Builtin("mix", "vector", context),
+                "Smoothstep" when scalar is "float" or "half" or "double" => Builtin("smoothstep", "vector", context),
+                "Step" when scalar is "float" or "half" or "double" => Builtin("step", "vector", context),
+                "Dot" when scalar is "float" or "half" or "double" => Builtin("dot", "vector", context),
+                "Length" or "Distance" when scalar is "float" or "half" or "double" => Builtin(LowercaseFirst(name), "vector", context),
+                "Atan" when scalar is "float" or "half" or "double" => Builtin("atan", "vector", context),
+                "Atan2" when scalar is "float" or "half" or "double" && FirstParameterIsVector(context, parameters) => Builtin("atan", "vector", context),
+                "Normalize" when scalar is "float" or "half" or "double" => Builtin("normalize", "vector", context),
+                "FaceForward" when scalar is "float" or "half" or "double" => Builtin("faceforward", "vector", context),
+                "Reflect" when scalar is "float" or "half" or "double" => Builtin("reflect", "vector", context),
+                "Refract" when scalar is "float" or "half" or "double" => Builtin("refract", "vector", context),
+                "Cross" when scalar is "float" or "half" or "double" && context.Dimension == 3 => Builtin("cross", "vector", context),
+                "IsNaN" when scalar is "float" or "half" or "double" => Builtin("isnan", "vector", context),
+                "IsInfinity" when scalar is "float" or "half" or "double" => Builtin("isinf", "vector", context),
                 _ => new ShaderContract(),
             };
         }
@@ -639,21 +733,29 @@ namespace Delta.MathsGen.Model
         private static bool FirstParameterIsVector(VectorContext context, ParameterSpec[] parameters) =>
             parameters.Length > 0 && parameters[0].Type.Name == context.Name;
 
-        private static ShaderContract Builtin(string name, string capability) => new()
+        private static ShaderContract Builtin(string name, string capability, VectorContext? context = null) => new()
         {
             GlslName = name,
             Mapping = ShaderMappingKind.Builtin,
-            Capability = ParseCapability(capability),
+            Capability = ShaderCapabilityFor(context, capability),
             Stages = ShaderStages.All,
         };
 
-        private static ShaderContract Helper(string name, string capability) => new()
+        private static ShaderContract Helper(string name, string capability, VectorContext? context = null) => new()
         {
             GlslName = name,
             Mapping = ShaderMappingKind.Helper,
-            Capability = ParseCapability(capability),
+            Capability = ShaderCapabilityFor(context, capability),
             Stages = ShaderStages.All,
         };
+
+        private static ShaderCapability ShaderCapabilityFor(VectorContext? context, string capability) =>
+            context?.Scalar.Name switch
+            {
+                "half" => ShaderCapability.Float16,
+                "double" => ShaderCapability.Float64,
+                _ => ParseCapability(capability),
+            };
 
         private static ShaderCapability ParseCapability(string capability) => capability switch
         {

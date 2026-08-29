@@ -15,6 +15,8 @@ namespace Delta.MathsGen.Model.Rendering
                 ["int"] = "int",
                 ["uint"] = "uint",
                 ["float"] = "float",
+                ["double"] = "double",
+                ["half"] = "float16_t",
             };
 
         private static readonly Dictionary<string, string> IntegerScalarGlslNames =
@@ -170,10 +172,10 @@ namespace Delta.MathsGen.Model.Rendering
                 ClrName = DeclarationHelpers.LowercaseFirst(method.Name),
                 DeltaMathsName = DeclarationHelpers.LowercaseFirst(method.Name),
                 ParameterClrNames = parameterTypes,
-                GlslParameterTypes = parameterTypes,
+                GlslParameterTypes = parameterTypes.Select(type => ScalarGlslNames.TryGetValue(type, out var glslType) ? glslType : type).ToArray(),
                 ParameterModifiers = ScalarParameterModifiers(method.Parameters),
                 ReturnClrName = method.ReturnType,
-                GlslReturnType = method.ReturnType,
+                GlslReturnType = ScalarGlslNames.TryGetValue(method.ReturnType, out var glslReturnType) ? glslReturnType : method.ReturnType,
                 GlslName = glslName,
                 Mapping = ShaderMappingKind.Builtin.ToString(),
                 ShaderZone = ShaderMetadata.ZoneName(ShaderZoneKind.DeltaMaths),
@@ -182,9 +184,16 @@ namespace Delta.MathsGen.Model.Rendering
                     Mapping = ShaderMappingKind.Builtin,
                     Stages = ShaderStages.All,
                 }),
-                RequiredCapability = ShaderMetadata.CapabilityName(ShaderCapability.Scalar),
+                RequiredCapability = ShaderMetadata.CapabilityName(ScalarCapability(method.ReturnType, parameterTypes)),
             };
         }
+
+        private static ShaderCapability ScalarCapability(string returnType, string[] parameterTypes) =>
+            returnType == "double" || parameterTypes.Any(type => type == "double")
+                ? ShaderCapability.Float64
+                : returnType == "half" || parameterTypes.Any(type => type == "half")
+                    ? ShaderCapability.Float16
+                    : ShaderCapability.Scalar;
 
         private static ManifestFunction ToManifestFacadeFunction(
             FunctionSpec function,
@@ -224,54 +233,96 @@ namespace Delta.MathsGen.Model.Rendering
         {
             glslName = string.Empty;
             var parameterTypes = ScalarParameterTypes(method.Parameters);
+            var parameterModifiers = ScalarParameterModifiers(method.Parameters);
             if (TryGetIntegerScalarGlslName(method, parameterTypes, out glslName))
             {
                 return true;
             }
 
-            if (method.ReturnType is not ("float" or "bool"))
+            if (method.ReturnType is "float" or "half" or "double")
+            {
+                var floatingType = method.ReturnType;
+                glslName = method.Name switch
+                {
+                    "Modf" when parameterTypes.SequenceEqual([floatingType, floatingType], StringComparer.Ordinal)
+                        && parameterModifiers.SequenceEqual(["none", "out"], StringComparer.Ordinal) => "modf",
+                    "Frexp" when parameterTypes.SequenceEqual([floatingType, "int"], StringComparer.Ordinal)
+                        && parameterModifiers.SequenceEqual(["none", "out"], StringComparer.Ordinal) => "frexp",
+                    "Ldexp" when parameterTypes.SequenceEqual([floatingType, "int"], StringComparer.Ordinal)
+                        && parameterModifiers.SequenceEqual(["none", "none"], StringComparer.Ordinal) => "ldexp",
+                    "IntBitsToFloat" when parameterTypes.SequenceEqual(["int"], StringComparer.Ordinal) => "intBitsToFloat",
+                    "UintBitsToFloat" when parameterTypes.SequenceEqual(["uint"], StringComparer.Ordinal) => "uintBitsToFloat",
+                    _ => string.Empty,
+                };
+                if (glslName.Length != 0)
+                {
+                    return true;
+                }
+            }
+
+            if (method.ReturnType is "int" or "uint"
+                && parameterTypes.SequenceEqual(["float"], StringComparer.Ordinal)
+                && parameterModifiers.SequenceEqual(["none"], StringComparer.Ordinal))
+            {
+                glslName = method.Name switch
+                {
+                    "FloatBitsToInt" when method.ReturnType == "int" => "floatBitsToInt",
+                    "FloatBitsToUint" when method.ReturnType == "uint" => "floatBitsToUint",
+                    _ => string.Empty,
+                };
+                if (glslName.Length != 0)
+                {
+                    return true;
+                }
+            }
+
+            if (method.ReturnType is not ("float" or "half" or "double" or "bool"))
             {
                 return false;
             }
 
-            if (parameterTypes.Any(parameterType => parameterType != "float"))
+            var floatingParameterType = method.ReturnType is "float" or "half" or "double"
+                ? method.ReturnType
+                : parameterTypes.FirstOrDefault(parameterType => parameterType is "float" or "half" or "double");
+            if (floatingParameterType is not ("float" or "half" or "double")
+                || parameterTypes.Any(parameterType => parameterType != floatingParameterType))
             {
                 return false;
             }
 
             glslName = method.Name switch
             {
-                "Lerp" when parameterTypes.SequenceEqual(["float", "float", "float"], StringComparer.Ordinal) => "mix",
-                "Mod" when parameterTypes.SequenceEqual(["float", "float"], StringComparer.Ordinal) => "mod",
+                "Lerp" when parameterTypes.SequenceEqual([floatingParameterType, floatingParameterType, floatingParameterType], StringComparer.Ordinal) => "mix",
+                "Mod" when parameterTypes.SequenceEqual([floatingParameterType, floatingParameterType], StringComparer.Ordinal) => "mod",
                 "Fract" or "InverseSqrt" or "Radians" or "Degrees" or "Floor" or "Ceil"
-                    when parameterTypes.SequenceEqual(["float"], StringComparer.Ordinal) =>
+                    when parameterTypes.SequenceEqual([floatingParameterType], StringComparer.Ordinal) =>
                     method.Name switch
                     {
                         "InverseSqrt" => "inversesqrt",
                         _ => DeclarationHelpers.LowercaseFirst(method.Name),
                     },
                 "Sin" or "Cos" or "Tan" or "Asin" or "Acos" or "Atan"
-                    when parameterTypes.SequenceEqual(["float"], StringComparer.Ordinal) =>
+                    when parameterTypes.SequenceEqual([floatingParameterType], StringComparer.Ordinal) =>
                     DeclarationHelpers.LowercaseFirst(method.Name),
                 "Sinh" or "Cosh" or "Tanh" or "Asinh" or "Acosh" or "Atanh"
-                    when parameterTypes.SequenceEqual(["float"], StringComparer.Ordinal) =>
+                    when parameterTypes.SequenceEqual([floatingParameterType], StringComparer.Ordinal) =>
                     DeclarationHelpers.LowercaseFirst(method.Name),
                 "Exp" or "Exp2" or "Log" or "Log2" or "Sqrt"
-                    when parameterTypes.SequenceEqual(["float"], StringComparer.Ordinal) =>
+                    when parameterTypes.SequenceEqual([floatingParameterType], StringComparer.Ordinal) =>
                     DeclarationHelpers.LowercaseFirst(method.Name),
-                "Pow" or "Fma" when parameterTypes.All(parameter => parameter == "float") && parameterTypes.Length > 1 =>
+                "Pow" or "Fma" when parameterTypes.All(parameter => parameter == floatingParameterType) && parameterTypes.Length > 1 =>
                     DeclarationHelpers.LowercaseFirst(method.Name),
-                "RoundEven" when parameterTypes.SequenceEqual(["float"], StringComparer.Ordinal) => "roundEven",
-                "Truncate" when parameterTypes.SequenceEqual(["float"], StringComparer.Ordinal) => "trunc",
-                "Round" when parameterTypes.SequenceEqual(["float"], StringComparer.Ordinal) => "roundEven",
-                "Atan2" when parameterTypes.SequenceEqual(["float", "float"], StringComparer.Ordinal) => "atan",
-                "Step" when parameterTypes.SequenceEqual(["float", "float"], StringComparer.Ordinal) => "step",
-                "Smoothstep" when parameterTypes.SequenceEqual(["float", "float", "float"], StringComparer.Ordinal) => "smoothstep",
-                "Min" or "Max" when parameterTypes.SequenceEqual(["float", "float"], StringComparer.Ordinal) =>
+                "RoundEven" when parameterTypes.SequenceEqual([floatingParameterType], StringComparer.Ordinal) => "roundEven",
+                "Truncate" when parameterTypes.SequenceEqual([floatingParameterType], StringComparer.Ordinal) => "trunc",
+                "Round" when parameterTypes.SequenceEqual([floatingParameterType], StringComparer.Ordinal) => "roundEven",
+                "Atan2" when parameterTypes.SequenceEqual([floatingParameterType, floatingParameterType], StringComparer.Ordinal) => "atan",
+                "Step" when parameterTypes.SequenceEqual([floatingParameterType, floatingParameterType], StringComparer.Ordinal) => "step",
+                "Smoothstep" when parameterTypes.SequenceEqual([floatingParameterType, floatingParameterType, floatingParameterType], StringComparer.Ordinal) => "smoothstep",
+                "Min" or "Max" when parameterTypes.SequenceEqual([floatingParameterType, floatingParameterType], StringComparer.Ordinal) =>
                     DeclarationHelpers.LowercaseFirst(method.Name),
-                "Clamp" when parameterTypes.SequenceEqual(["float", "float", "float"], StringComparer.Ordinal) => "clamp",
-                "IsNaN" when parameterTypes.SequenceEqual(["float"], StringComparer.Ordinal) => "isnan",
-                "IsInfinity" when parameterTypes.SequenceEqual(["float"], StringComparer.Ordinal) => "isinf",
+                "Clamp" when parameterTypes.SequenceEqual([floatingParameterType, floatingParameterType, floatingParameterType], StringComparer.Ordinal) => "clamp",
+                "IsNaN" when parameterTypes.SequenceEqual([floatingParameterType], StringComparer.Ordinal) => "isnan",
+                "IsInfinity" when parameterTypes.SequenceEqual([floatingParameterType], StringComparer.Ordinal) => "isinf",
                 _ => string.Empty,
             };
             return glslName.Length != 0;
