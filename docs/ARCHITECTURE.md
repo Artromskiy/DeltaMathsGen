@@ -15,7 +15,8 @@ The lifecycle is:
 1. `Program` reads the fixed `ScalarTypes.All` catalog.
 2. Each scalar is combined with dimensions 2, 3 and 4 to create a
    `VectorFamily` and its `VectorContext`.
-3. `MatrixQuaternionDefinitions.Create()` adds `float4x4` and `quaternion`.
+3. `MatrixQuaternionDefinitions.Create()` adds the nine GLSL single-precision
+   matrix shapes (`float2x2` through `float4x4`) and `quaternion`.
 4. `ModelValidator` checks scalar conversions, vector rules, member
    signatures, maths forwarding and shader metadata.
 5. `TypeFileLayout` groups each type's members by `TypePart` and
@@ -105,13 +106,26 @@ shader symbol. `None` remains available for an explicitly absent value.
 `GlslName`, `GlslType`, `GlslReturnType`, `parameterGlslTypes` and all other
 GLSL type/name fields remain strings. They are ABI spelling, not closed CLR
 categories. The renderer converts the closed model enums back to the existing
-manifest strings, so the manifest shape and text remain unchanged.
+manifest strings; matrix shape metadata is emitted alongside those strings for
+consumers such as DeltaShader.
 
 The manifest contains type layout (`columnMajor`, `alignment`,
-`matrixStride`), stage names, constructors, swizzles, function identities and
-GLSL signatures. `float4x4` is four sequential `float4` columns and uses
-column-vector CPU/GLSL semantics. `quaternion` is a sequential `vec4` with
-`(x, y, z, w)` storage. `double` and `fix` vector families remain CPU-only.
+`matrixStride`, `matrixColumns`, `matrixRows`, `elementGlslType` and `size`),
+stage names, constructors, swizzles, function identities and GLSL signatures.
+The generated matrix set is `floatCxR` for every C/R combination from 2 through
+4. It uses four or fewer sequential column vectors and column-vector
+CPU/GLSL semantics. A three-row column has an explicit 16-byte std430 stride;
+the CLR struct therefore includes private padding fields that are not part of
+the public API. Square matrices expose GLSL's `determinant` and `inverse`,
+while `TryInverse` remains a CPU-safe operation. `quaternion` is a sequential
+`vec4` with `(x, y, z, w)` storage. `double` and `fix` vector families remain
+CPU-only.
+
+Matrix constructors include column-vector forms, the diagonal scalar form,
+full `Mij` scalar forms, and conversions from every generated matrix shape.
+Conversions use GLSL's overlapping-region, zero-fill and identity-diagonal
+rules. Full scalar forms retain the existing CLR row-major argument order and
+are documented separately from GLSL's column-major scalar sequence.
 
 ## DeltaMaths runtime boundary
 

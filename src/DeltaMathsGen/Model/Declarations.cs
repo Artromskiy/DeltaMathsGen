@@ -11,6 +11,7 @@ namespace Delta.MathsGen.Model
         Partial = 4,
         Readonly = 8,
         Override = 16,
+        Private = 32,
     }
 
     [Flags]
@@ -75,6 +76,10 @@ namespace Delta.MathsGen.Model
         public bool? ColumnMajor { get; init; }
         public int? Alignment { get; init; }
         public int? MatrixStride { get; init; }
+        public int? MatrixColumns { get; init; }
+        public int? MatrixRows { get; init; }
+        public string? ElementGlslType { get; init; }
+        public int? Size { get; init; }
     }
 
     internal sealed class ParameterSpec

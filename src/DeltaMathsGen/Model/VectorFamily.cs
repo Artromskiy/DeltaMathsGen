@@ -264,7 +264,7 @@ namespace Delta.MathsGen.Model
                     Name = "Equals",
                     ReturnType = Type("bool"),
                     Modifiers = Modifiers.Public | Modifiers.Override,
-                    Parameters = [Param("obj", Type("object"))],
+                    Parameters = [Param("obj", Type("object?"))],
                     Body = $"return obj is {name} other && Equals(other);",
                 },
                 new FunctionSpec

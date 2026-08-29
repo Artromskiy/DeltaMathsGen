@@ -10,7 +10,9 @@ namespace Delta.MathsGen.Model.Rendering
 
         public static string Modifiers(Modifiers modifiers)
         {
-            var result = modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Public) ? "public" : "";
+            var result = modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Public)
+                ? "public"
+                : modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Private) ? "private" : "";
             if (modifiers.HasFlag(global::Delta.MathsGen.Model.Modifiers.Static))
             {
                 result += " static";

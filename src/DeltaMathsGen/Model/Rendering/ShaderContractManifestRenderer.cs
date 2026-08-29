@@ -93,6 +93,10 @@ namespace Delta.MathsGen.Model.Rendering
                 ColumnMajor = type.ShaderContract.ColumnMajor,
                 Alignment = type.ShaderContract.Alignment,
                 MatrixStride = type.ShaderContract.MatrixStride,
+                MatrixColumns = type.ShaderContract.MatrixColumns,
+                MatrixRows = type.ShaderContract.MatrixRows,
+                ElementGlslType = type.ShaderContract.ElementGlslType,
+                Size = type.ShaderContract.Size,
                 RequiredCapability = RequiredCapability(type.ShaderContract),
                 Swizzles = type.Members
                     .OfType<PropertySpec>()
@@ -373,6 +377,10 @@ namespace Delta.MathsGen.Model.Rendering
             [JsonPropertyName("columnMajor")] public bool? ColumnMajor { get; init; }
             [JsonPropertyName("alignment")] public int? Alignment { get; init; }
             [JsonPropertyName("matrixStride")] public int? MatrixStride { get; init; }
+            [JsonPropertyName("matrixColumns")] public int? MatrixColumns { get; init; }
+            [JsonPropertyName("matrixRows")] public int? MatrixRows { get; init; }
+            [JsonPropertyName("elementGlslType")] public string? ElementGlslType { get; init; }
+            [JsonPropertyName("size")] public int? Size { get; init; }
             [JsonPropertyName("requiredCapability")] public string? RequiredCapability { get; init; }
             [JsonPropertyName("constructors")] public required ManifestConstructor[] Constructors { get; init; }
             [JsonPropertyName("swizzles")] public required ManifestSwizzle[] Swizzles { get; init; }
