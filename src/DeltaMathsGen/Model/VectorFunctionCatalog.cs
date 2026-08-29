@@ -156,6 +156,12 @@ namespace Delta.MathsGen.Model
             },
             new()
             {
+                Name = "Packing",
+                Requires = ScalarCapabilities.FloatingPoint,
+                Build = Packing,
+            },
+            new()
+            {
                 Name = "Rounding",
                 Requires = ScalarCapabilities.Rounding,
                 Build = context => (context.Scalar.Name == "fix"
@@ -312,6 +318,74 @@ namespace Delta.MathsGen.Model
             ];
         }
 
+        private static FunctionSpec[] Packing(VectorContext context)
+        {
+            if (context.Scalar.Name != "float" || context.Dimension is not (2 or 4))
+            {
+                return [];
+            }
+
+            return context.Dimension == 2 ?
+            [
+                Function("PackUnorm2x16", Type("uint"), [P("value", Type(context.Name))],
+                    $$"""
+                    var x = (uint)DeltaMaths.RoundEven(DeltaMaths.Clamp(value.x, 0f, 1f) * 65535f);
+                    var y = (uint)DeltaMaths.RoundEven(DeltaMaths.Clamp(value.y, 0f, 1f) * 65535f);
+                    return x | (y << 16);
+                    """, TypePart.Common, context),
+                Function("UnpackUnorm2x16", Type(context.Name), [P("value", Type("uint"))],
+                    "return new((value & 0xffffu) / 65535f, ((value >> 16) & 0xffffu) / 65535f);",
+                    TypePart.Common, context),
+                Function("PackSnorm2x16", Type("uint"), [P("value", Type(context.Name))],
+                    $$"""
+                    var x = unchecked((uint)(ushort)(short)DeltaMaths.RoundEven(DeltaMaths.Clamp(value.x, -1f, 1f) * 32767f));
+                    var y = unchecked((uint)(ushort)(short)DeltaMaths.RoundEven(DeltaMaths.Clamp(value.y, -1f, 1f) * 32767f));
+                    return x | (y << 16);
+                    """, TypePart.Common, context),
+                Function("UnpackSnorm2x16", Type(context.Name), [P("value", Type("uint"))],
+                    $$"""
+                    var x = unchecked((short)(value & 0xffffu));
+                    var y = unchecked((short)(value >> 16));
+                    return new(
+                        DeltaMaths.Clamp(x / 32767f, -1f, 1f),
+                        DeltaMaths.Clamp(y / 32767f, -1f, 1f));
+                    """, TypePart.Common, context),
+            ] :
+            [
+                Function("PackUnorm4x8", Type("uint"), [P("value", Type(context.Name))],
+                    $$"""
+                    var x = (uint)DeltaMaths.RoundEven(DeltaMaths.Clamp(value.x, 0f, 1f) * 255f);
+                    var y = (uint)DeltaMaths.RoundEven(DeltaMaths.Clamp(value.y, 0f, 1f) * 255f);
+                    var z = (uint)DeltaMaths.RoundEven(DeltaMaths.Clamp(value.z, 0f, 1f) * 255f);
+                    var w = (uint)DeltaMaths.RoundEven(DeltaMaths.Clamp(value.w, 0f, 1f) * 255f);
+                    return x | (y << 8) | (z << 16) | (w << 24);
+                    """, TypePart.Common, context),
+                Function("UnpackUnorm4x8", Type(context.Name), [P("value", Type("uint"))],
+                    "return new((value & 0xffu) / 255f, ((value >> 8) & 0xffu) / 255f, ((value >> 16) & 0xffu) / 255f, ((value >> 24) & 0xffu) / 255f);",
+                    TypePart.Common, context),
+                Function("PackSnorm4x8", Type("uint"), [P("value", Type(context.Name))],
+                    $$"""
+                    var x = unchecked((uint)(byte)(sbyte)DeltaMaths.RoundEven(DeltaMaths.Clamp(value.x, -1f, 1f) * 127f));
+                    var y = unchecked((uint)(byte)(sbyte)DeltaMaths.RoundEven(DeltaMaths.Clamp(value.y, -1f, 1f) * 127f));
+                    var z = unchecked((uint)(byte)(sbyte)DeltaMaths.RoundEven(DeltaMaths.Clamp(value.z, -1f, 1f) * 127f));
+                    var w = unchecked((uint)(byte)(sbyte)DeltaMaths.RoundEven(DeltaMaths.Clamp(value.w, -1f, 1f) * 127f));
+                    return x | (y << 8) | (z << 16) | (w << 24);
+                    """, TypePart.Common, context),
+                Function("UnpackSnorm4x8", Type(context.Name), [P("value", Type("uint"))],
+                    $$"""
+                    var x = unchecked((sbyte)(value & 0xffu));
+                    var y = unchecked((sbyte)(value >> 8));
+                    var z = unchecked((sbyte)(value >> 16));
+                    var w = unchecked((sbyte)(value >> 24));
+                    return new(
+                        DeltaMaths.Clamp(x / 127f, -1f, 1f),
+                        DeltaMaths.Clamp(y / 127f, -1f, 1f),
+                        DeltaMaths.Clamp(z / 127f, -1f, 1f),
+                        DeltaMaths.Clamp(w / 127f, -1f, 1f));
+                    """, TypePart.Common, context),
+            ];
+        }
+
         private static FunctionSpec[] Algebra(VectorContext context)
         {
             var vector = Type(context.Name);
@@ -433,6 +507,10 @@ namespace Delta.MathsGen.Model
                 "Mod" when scalar == "float" => Builtin("mod", "vector"),
                 "Fract" when scalar == "float" => Builtin("fract", "vector"),
                 "InverseSqrt" when scalar == "float" => Builtin("inversesqrt", "vector"),
+                "PackUnorm2x16" or "UnpackUnorm2x16" or "PackSnorm2x16" or "UnpackSnorm2x16"
+                    when scalar == "float" && context.Dimension == 2 => Builtin(LowercaseFirst(name), "vector"),
+                "PackUnorm4x8" or "UnpackUnorm4x8" or "PackSnorm4x8" or "UnpackSnorm4x8"
+                    when scalar == "float" && context.Dimension == 4 => Builtin(LowercaseFirst(name), "vector"),
                 "Radians" or "Degrees" when scalar == "float" => Builtin(LowercaseFirst(name), "vector"),
                 "Floor" or "Ceil" or "Round" or "RoundEven" or "Truncate" when scalar == "float"
                     => Builtin(name switch
