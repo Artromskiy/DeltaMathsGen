@@ -419,12 +419,19 @@ namespace Delta.MathsGen.Model
                 return new ShaderContract();
             }
 
-            if (unary && symbol is not ("+" or "-"))
+            if (unary && symbol is not ("+" or "-" or "~"))
             {
                 return new ShaderContract();
             }
 
-            if (!unary && symbol is not ("+" or "-" or "*" or "/"))
+            if (!unary && symbol is not ("+" or "-" or "*" or "/" or "%" or "<<" or ">>" or "&" or "|" or "^"))
+            {
+                return new ShaderContract();
+            }
+
+            var integerOperator = Scalar.Name is "int" or "uint";
+            var integerOnlyOperator = symbol is "%" or "~" or "<<" or ">>" or "&" or "|" or "^";
+            if (integerOnlyOperator && !integerOperator)
             {
                 return new ShaderContract();
             }

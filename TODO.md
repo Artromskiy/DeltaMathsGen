@@ -4,8 +4,6 @@
 - Make the producer workflow build DeltaMathsGen, generate twice with no second
   diff, validate `shader-contract.json` layout/schema, then hand off to both
   DeltaMaths target builds/tests.
-- Remove DeltaText implementation detail from `ARCHITECTURE.md`; link to the
-  DeltaText owner instead.
 
 ## GLSL 4.60 contract gaps
 
@@ -46,10 +44,10 @@ by hand.
 
 ### Integer operators and built-ins
 
-- Publish metadata for the existing integer/vector operators `%`, `~`, `<<`,
+- [x] Publish metadata for the existing integer/vector operators `%`, `~`, `<<`,
   `>>`, `&`, `|`, and `^`; they currently exist in generated CPU types but are
   not shader-supported in the manifest.
-- Add the integer built-ins `uaddCarry`, `usubBorrow`, `umulExtended`,
+- [x] Add the integer built-ins `uaddCarry`, `usubBorrow`, `umulExtended`,
   `imulExtended`, `bitfieldExtract`, `bitfieldInsert`, `bitfieldReverse`,
   `bitCount`, `findLSB`, and `findMSB`, with explicit handling for `out`
   parameters and undefined argument ranges.

@@ -38,13 +38,14 @@ namespace Delta.MathsGen.Model
                     ReturnType = Type(vector),
                     Parameters = [Param("value", Type(vector))],
                     Body = $"return new({string.Join(", ", fields.Select(c => $"~value.{c}"))});",
+                    ShaderContract = IntegerOperatorShaderContract(scalar.Name, "~"),
                 });
             }
 
             if (scalar.Supports(ScalarCapabilities.Shift))
             {
-                members.Add(Binary(vector, "int", fields, "<<", vector, "int"));
-                members.Add(Binary(vector, "int", fields, ">>", vector, "int"));
+                members.Add(Binary(vector, scalar.Name, fields, "<<", vector, "int"));
+                members.Add(Binary(vector, scalar.Name, fields, ">>", vector, "int"));
             }
 
             if (scalar.Supports(ScalarCapabilities.Boolean))
@@ -101,9 +102,22 @@ namespace Delta.MathsGen.Model
             Modifiers = Modifiers.Public | Modifiers.Static,
             Operator = symbol,
             ReturnType = Type(vector),
-            Parameters = [Param("left", Type(left == scalar ? scalar : vector)), Param("right", Type(right == scalar ? scalar : vector))],
-            Body = $"return new({string.Join(", ", fields.Select(c => Operand("left", left, scalar, c) + " " + symbol + " " + Operand("right", right, scalar, c)))});",
+            Parameters = [Param("left", Type(left == vector ? vector : left)), Param("right", Type(right == vector ? vector : right))],
+            Body = $"return new({string.Join(", ", fields.Select(c => Operand("left", left, vector, c) + " " + symbol + " " + Operand("right", right, vector, c)))});",
+            ShaderContract = IntegerOperatorShaderContract(scalar, symbol),
         };
+
+        private static ShaderContract IntegerOperatorShaderContract(string scalar, string symbol) =>
+            (scalar is "int" or "uint")
+                && (symbol is "%" or "~" or "<<" or ">>" or "&" or "|" or "^")
+                ? new ShaderContract
+                {
+                    GlslName = symbol,
+                    Mapping = ShaderMappingKind.Builtin,
+                    Capability = ShaderCapability.Vector,
+                    Stages = ShaderStages.All,
+                }
+                : new ShaderContract();
 
         private static OperatorSpec Unary(string vector, string fields, string symbol) => new()
         {
@@ -129,12 +143,12 @@ namespace Delta.MathsGen.Model
                 Param("right", Type(right)),
             ],
             Body = $"return new({string.Join(", ", context.Fields.Select(field =>
-                Operand("left", left, context.Scalar.Name, field[0]) + " " + symbol + " " +
-                Operand("right", right, context.Scalar.Name, field[0])))});",
+                Operand("left", left, context.Name, field[0]) + " " + symbol + " " +
+                Operand("right", right, context.Name, field[0])))});",
         };
 
-        private static string Operand(string name, string type, string scalar, char field) =>
-            type == scalar ? name : $"{name}.{field}";
+        private static string Operand(string name, string type, string vector, char field) =>
+            type == vector ? $"{name}.{field}" : name;
 
         private static string OperatorName(string symbol) => symbol switch
         {

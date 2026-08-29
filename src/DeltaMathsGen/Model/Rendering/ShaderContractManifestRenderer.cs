@@ -17,6 +17,27 @@ namespace Delta.MathsGen.Model.Rendering
                 ["float"] = "float",
             };
 
+        private static readonly Dictionary<string, string> IntegerScalarGlslNames =
+            new(StringComparer.Ordinal)
+            {
+                ["UaddCarry|uint|uint,uint,uint"] = "uaddCarry",
+                ["UsubBorrow|uint|uint,uint,uint"] = "usubBorrow",
+                ["UmulExtended|void|uint,uint,uint,uint"] = "umulExtended",
+                ["ImulExtended|void|int,int,int,int"] = "imulExtended",
+                ["BitCount|int|int"] = "bitCount",
+                ["BitCount|int|uint"] = "bitCount",
+                ["FindLSB|int|int"] = "findLSB",
+                ["FindLSB|int|uint"] = "findLSB",
+                ["FindMSB|int|int"] = "findMSB",
+                ["FindMSB|int|uint"] = "findMSB",
+                ["BitfieldReverse|int|int"] = "bitfieldReverse",
+                ["BitfieldReverse|uint|uint"] = "bitfieldReverse",
+                ["BitfieldExtract|int|int,int,int"] = "bitfieldExtract",
+                ["BitfieldExtract|uint|uint,int,int"] = "bitfieldExtract",
+                ["BitfieldInsert|int|int,int,int,int"] = "bitfieldInsert",
+                ["BitfieldInsert|uint|uint,uint,int,int"] = "bitfieldInsert",
+            };
+
         private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
         public static string Render(TypeSpec[] types, ScalarMathMethod[] scalarMethods)
@@ -128,6 +149,7 @@ namespace Delta.MathsGen.Model.Rendering
                 DeltaMathsName = function.DeltaMathsName,
                 ParameterClrNames = function.Parameters.Select(parameter => parameter.Type.Name).ToArray(),
                 GlslParameterTypes = function.Parameters.Select(parameter => GlslType(parameter.Type.Name, types)).ToArray(),
+                ParameterModifiers = function.Parameters.Select(parameter => ShaderMetadata.ModifierName(parameter.Modifier)).ToArray(),
                 ReturnClrName = function.ReturnType.Name,
                 GlslReturnType = GlslType(function.ReturnType.Name, types),
                 GlslName = function.ShaderContract.GlslName,
@@ -149,6 +171,7 @@ namespace Delta.MathsGen.Model.Rendering
                 DeltaMathsName = DeclarationHelpers.LowercaseFirst(method.Name),
                 ParameterClrNames = parameterTypes,
                 GlslParameterTypes = parameterTypes,
+                ParameterModifiers = ScalarParameterModifiers(method.Parameters),
                 ReturnClrName = method.ReturnType,
                 GlslReturnType = method.ReturnType,
                 GlslName = glslName,
@@ -175,6 +198,7 @@ namespace Delta.MathsGen.Model.Rendering
                 DeltaMathsName = function.DeltaMathsName,
                 ParameterClrNames = function.Parameters.Select(parameter => parameter.Type.Name).ToArray(),
                 GlslParameterTypes = function.Parameters.Select(parameter => GlslType(parameter.Type.Name, types)).ToArray(),
+                ParameterModifiers = function.Parameters.Select(parameter => ShaderMetadata.ModifierName(parameter.Modifier)).ToArray(),
                 ReturnClrName = function.ReturnType.Name,
                 GlslReturnType = GlslType(function.ReturnType.Name, types),
                 GlslName = function.ShaderContract.GlslName,
@@ -199,12 +223,17 @@ namespace Delta.MathsGen.Model.Rendering
         private static bool TryGetScalarGlslName(ScalarMathMethod method, out string glslName)
         {
             glslName = string.Empty;
+            var parameterTypes = ScalarParameterTypes(method.Parameters);
+            if (TryGetIntegerScalarGlslName(method, parameterTypes, out glslName))
+            {
+                return true;
+            }
+
             if (method.ReturnType is not ("float" or "bool"))
             {
                 return false;
             }
 
-            var parameterTypes = ScalarParameterTypes(method.Parameters);
             if (parameterTypes.Any(parameterType => parameterType != "float"))
             {
                 return false;
@@ -248,6 +277,24 @@ namespace Delta.MathsGen.Model.Rendering
             return glslName.Length != 0;
         }
 
+        private static bool TryGetIntegerScalarGlslName(
+            ScalarMathMethod method,
+            string[] parameterTypes,
+            out string glslName)
+        {
+            if (IntegerScalarGlslNames.TryGetValue(
+                    method.Name + "|" + method.ReturnType + "|" + string.Join(",", parameterTypes),
+                    out var mappedName)
+                && mappedName is not null)
+            {
+                glslName = mappedName;
+                return true;
+            }
+
+            glslName = string.Empty;
+            return false;
+        }
+
         private static string[] ScalarParameterTypes(string parameters)
         {
             if (string.IsNullOrWhiteSpace(parameters))
@@ -265,6 +312,27 @@ namespace Delta.MathsGen.Model.Rendering
                     }
 
                     return tokens[^2];
+                })
+                .ToArray();
+        }
+
+        private static string[] ScalarParameterModifiers(string parameters)
+        {
+            if (string.IsNullOrWhiteSpace(parameters))
+            {
+                return [];
+            }
+
+            return parameters.Split(',')
+                .Select(parameter =>
+                {
+                    var tokens = parameter.Trim().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+                    return tokens.Length == 0 ? "none" : tokens[0] switch
+                    {
+                        "out" => "out",
+                        "ref" => "ref",
+                        _ => "none",
+                    };
                 })
                 .ToArray();
         }
@@ -409,6 +477,7 @@ namespace Delta.MathsGen.Model.Rendering
             [JsonPropertyName("mathsName")] public required string DeltaMathsName { get; init; }
             [JsonPropertyName("parameterClrNames")] public required string[] ParameterClrNames { get; init; }
             [JsonPropertyName("parameterGlslTypes")] public required string?[] GlslParameterTypes { get; init; }
+            [JsonPropertyName("parameterModifiers")] public required string[] ParameterModifiers { get; init; }
             [JsonPropertyName("returnClrName")] public required string ReturnClrName { get; init; }
             [JsonPropertyName("returnGlslType")] public string? GlslReturnType { get; init; }
             [JsonPropertyName("glslName")] public string? GlslName { get; init; }

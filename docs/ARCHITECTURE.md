@@ -165,7 +165,6 @@ its declaration and contract in DeltaMathsGen, then regenerate and test the outp
 DeltaMathsGen owns declarations and generated contract text. DeltaMaths owns the runtime
 types and tests that consume the generated output. The committed
 `shader-contract.json` is the generated ABI artifact consumed and validated by
-DeltaShader; consumers never recreate it. Text shaping and glyph generation are
-owned and documented by [DeltaText](../DeltaText/README.md), not by this
-generator architecture. No consumer should duplicate producer metadata to
-bypass a missing declaration.
+the shader compiler; consumers never recreate it. Text shaping and glyph
+generation are outside this generator architecture. No consumer should
+duplicate producer metadata to bypass a missing declaration.

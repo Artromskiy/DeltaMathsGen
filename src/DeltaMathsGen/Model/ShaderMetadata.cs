@@ -33,6 +33,15 @@ namespace Delta.MathsGen.Model
             _ => throw new InvalidOperationException($"Unsupported parameter modifier value '{modifier}'."),
         };
 
+        public static string ModifierName(ParameterModifier modifier) => modifier switch
+        {
+            ParameterModifier.None => "none",
+            ParameterModifier.Unknown => throw new InvalidOperationException("Unknown parameter modifier cannot be serialized."),
+            ParameterModifier.Out => "out",
+            ParameterModifier.Ref => "ref",
+            _ => throw new InvalidOperationException($"Unsupported parameter modifier value '{modifier}'."),
+        };
+
         public static bool IsKnownCapability(ShaderCapability capability) => capability is
             ShaderCapability.Vector or ShaderCapability.Matrix or ShaderCapability.Quaternion or ShaderCapability.Std430 or ShaderCapability.Scalar;
 

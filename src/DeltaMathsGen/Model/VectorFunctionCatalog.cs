@@ -162,6 +162,12 @@ namespace Delta.MathsGen.Model
             },
             new()
             {
+                Name = "IntegerBitOperations",
+                Requires = ScalarCapabilities.Bitwise,
+                Build = IntegerBitOperations,
+            },
+            new()
+            {
                 Name = "Rounding",
                 Requires = ScalarCapabilities.Rounding,
                 Build = context => (context.Scalar.Name == "fix"
@@ -386,6 +392,81 @@ namespace Delta.MathsGen.Model
             ];
         }
 
+        private static FunctionSpec[] IntegerBitOperations(VectorContext context)
+        {
+            var vector = Type(context.Name);
+            var bitCount = ComponentWise(context, "BitCount", Type("int" + context.Dimension), Unary(context),
+                field => $"DeltaMaths.BitCount(value.{field})", TypePart.Common);
+            var findLsb = ComponentWise(context, "FindLSB", Type("int" + context.Dimension), Unary(context),
+                field => $"DeltaMaths.FindLSB(value.{field})", TypePart.Common);
+            var findMsb = ComponentWise(context, "FindMSB", Type("int" + context.Dimension), Unary(context),
+                field => $"DeltaMaths.FindMSB(value.{field})", TypePart.Common);
+            var bitfieldReverse = ComponentWise(context, "BitfieldReverse", vector, Unary(context),
+                field => $"DeltaMaths.BitfieldReverse(value.{field})", TypePart.Common);
+            var bitfieldExtract = ComponentWise(context, "BitfieldExtract", vector,
+                [P("value", vector), P("offset", Type("int")), P("bits", Type("int"))],
+                field => $"DeltaMaths.BitfieldExtract(value.{field}, offset, bits)", TypePart.Common);
+            var bitfieldInsert = ComponentWise(context, "BitfieldInsert", vector,
+                [P("baseValue", vector), P("insert", vector), P("offset", Type("int")), P("bits", Type("int"))],
+                field => $"DeltaMaths.BitfieldInsert(baseValue.{field}, insert.{field}, offset, bits)", TypePart.Common);
+            var functions = new List<FunctionSpec>
+            {
+                bitCount,
+                findLsb,
+                findMsb,
+                bitfieldReverse,
+                bitfieldExtract,
+                bitfieldInsert,
+            };
+
+            if (context.Scalar.Name == "uint")
+            {
+                functions.Add(ExtendedAdd(context, "UaddCarry", "carry"));
+                functions.Add(ExtendedSubtract(context));
+                functions.Add(ExtendedMultiply(context, "UmulExtended"));
+            }
+            else
+            {
+                functions.Add(ExtendedMultiply(context, "ImulExtended"));
+            }
+
+            return functions.ToArray();
+        }
+
+        private static FunctionSpec ExtendedAdd(VectorContext context, string name, string outputName)
+        {
+            var vector = Type(context.Name);
+            var lines = context.Fields
+                .Select(field => $"var result{field} = DeltaMaths.{name}(a.{field}, b.{field}, out var {outputName}{field});")
+                .ToList();
+            lines.Add($"{outputName} = new({string.Join(", ", context.Fields.Select(field => outputName + field))});");
+            lines.Add($"return new({string.Join(", ", context.Fields.Select(field => "result" + field))});");
+            return Function(name, vector,
+                [P("a", vector), P("b", vector), P(outputName, vector, ParameterModifier.Out)],
+                string.Join("\n", lines), TypePart.Common, context);
+        }
+
+        private static FunctionSpec ExtendedSubtract(VectorContext context) =>
+            ExtendedAdd(context, "UsubBorrow", "borrow");
+
+        private static FunctionSpec ExtendedMultiply(VectorContext context, string name)
+        {
+            var vector = Type(context.Name);
+            var lines = context.Fields
+                .Select(field => $"DeltaMaths.{name}(a.{field}, b.{field}, out var msb{field}, out var lsb{field});")
+                .ToList();
+            lines.Add($"msb = new({string.Join(", ", context.Fields.Select(field => "msb" + field))});");
+            lines.Add($"lsb = new({string.Join(", ", context.Fields.Select(field => "lsb" + field))});");
+            return Function(name, Type("void"),
+                [
+                    P("a", Type(context.Name)),
+                    P("b", Type(context.Name)),
+                    P("msb", Type(context.Name), ParameterModifier.Out),
+                    P("lsb", Type(context.Name), ParameterModifier.Out),
+                ],
+                string.Join("\n", lines), TypePart.Common, context);
+        }
+
         private static FunctionSpec[] Algebra(VectorContext context)
         {
             var vector = Type(context.Name);
@@ -505,6 +586,11 @@ namespace Delta.MathsGen.Model
                 "Abs" when scalar is "float" or "int" => Builtin("abs", "vector"),
                 "Sign" when scalar is "float" or "int" => Builtin("sign", "vector"),
                 "Mod" when scalar == "float" => Builtin("mod", "vector"),
+                "BitCount" or "FindLSB" or "FindMSB" or "BitfieldReverse" or "BitfieldExtract" or "BitfieldInsert"
+                    when scalar is "int" or "uint" => Builtin(LowercaseFirst(name), "vector"),
+                "UaddCarry" or "UsubBorrow" when scalar == "uint" => Builtin(LowercaseFirst(name), "vector"),
+                "UmulExtended" when scalar == "uint" => Builtin("umulExtended", "vector"),
+                "ImulExtended" when scalar == "int" => Builtin("imulExtended", "vector"),
                 "Fract" when scalar == "float" => Builtin("fract", "vector"),
                 "InverseSqrt" when scalar == "float" => Builtin("inversesqrt", "vector"),
                 "PackUnorm2x16" or "UnpackUnorm2x16" or "PackSnorm2x16" or "UnpackSnorm2x16"
