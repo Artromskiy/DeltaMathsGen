@@ -35,6 +35,12 @@ The second invocation must produce no additional diff. Inspect
 Cross-project verification uses
 [../REVIEW_PLAYBOOK.md](../REVIEW_PLAYBOOK.md).
 
+DeltaMathsGen owns shader-visible contract generation, not compiled shader
+publication. All generated `.spv`, `.glsl` and shader manifest files belong
+to the single DeltaShader catalog at
+`../DeltaShader/src/DeltaShader/CompiledShaders`; do not create a generator-
+local compiled-shader directory or mix lock files into that catalog.
+
 ## Generator source authoring
 
 For multiline generated code and templates, prefer C# raw string literals
