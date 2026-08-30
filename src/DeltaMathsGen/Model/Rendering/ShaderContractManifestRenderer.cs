@@ -317,6 +317,7 @@ namespace Delta.MathsGen.Model.Rendering
             {
                 "Lerp" when parameterTypes.SequenceEqual([floatingParameterType, floatingParameterType, floatingParameterType], StringComparer.Ordinal) => "mix",
                 "Mod" when parameterTypes.SequenceEqual([floatingParameterType, floatingParameterType], StringComparer.Ordinal) => "mod",
+                "Abs" when parameterTypes.SequenceEqual([floatingParameterType], StringComparer.Ordinal) => "abs",
                 "Fract" or "InverseSqrt" or "Radians" or "Degrees" or "Floor" or "Ceil"
                     when parameterTypes.SequenceEqual([floatingParameterType], StringComparer.Ordinal) =>
                     method.Name switch
