@@ -12,8 +12,8 @@ Read only what the task needs:
 - [../DeltaMaths/AGENTS.md](../DeltaMaths/AGENTS.md) when generated runtime/API output
   changes; [../DeltaShader/AGENTS.md](../DeltaShader/AGENTS.md) when the shader
   contract changes.
-- [../HIGH_PRIORITY_TODO.md](../HIGH_PRIORITY_TODO.md) for the independent
-  generation/ABI acceptance lane.
+- [../CONTRACTS.md](../CONTRACTS.md) for the independent generation/ABI
+  ownership boundary.
 
 Never edit generated DeltaMaths files directly. Preserve the column-vector,
 column-major `T * R * S` convention and explicit
