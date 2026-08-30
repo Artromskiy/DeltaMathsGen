@@ -16,10 +16,11 @@ by hand.
 
 ### Pure functions and select semantics
 
-- The first portable packing slice is implemented in the generator for
+- The portable packing slice is implemented in the generator for
   `packUnorm2x16`, `unpackUnorm2x16`, `packSnorm2x16`, `unpackSnorm2x16`,
   `packUnorm4x8`, `unpackUnorm4x8`, `packSnorm4x8`, and `unpackSnorm4x8`.
-  Keep the CPU conversion explicit and covered by bit-level conformance tests.
+  `packDouble2x32`, and `unpackDouble2x32`. Keep the CPU conversion explicit
+  and covered by bit-level conformance tests.
 - Keep `maths.round` mapped to `roundEven` until a separate, explicitly
   documented CPU contract for GLSL's implementation-dependent `round` is
   approved. `maths.roundEven` remains the exact nearest-even operation.

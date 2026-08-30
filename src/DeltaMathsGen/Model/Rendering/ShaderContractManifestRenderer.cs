@@ -62,7 +62,7 @@ namespace Delta.MathsGen.Model.Rendering
                         item.Function.Targets.HasFlag(FunctionTargets.ShaderDeltaMaths) &&
                         item.Function.ShaderContract.Mapping != ShaderMappingKind.Unsupported)
                     .Select(item => ToManifestFacadeFunction(item.Function, typeByName)))
-                .Concat(ShaderScalarFunctions(scalarMethods))
+                .Concat(ShaderScalarFunctions(scalarMethods, typeByName))
                 .ToArray();
             var duplicateFunction = functionManifests
                 .GroupBy(function => function.Identity, StringComparer.Ordinal)
@@ -162,7 +162,10 @@ namespace Delta.MathsGen.Model.Rendering
             };
         }
 
-        private static ManifestFunction ToManifestScalarFunction(ScalarMathMethod method, string glslName)
+        private static ManifestFunction ToManifestScalarFunction(
+            ScalarMathMethod method,
+            string glslName,
+            IReadOnlyDictionary<string, TypeSpec> types)
         {
             var parameterTypes = ScalarParameterTypes(method.Parameters);
             return new ManifestFunction
@@ -172,10 +175,10 @@ namespace Delta.MathsGen.Model.Rendering
                 ClrName = DeclarationHelpers.LowercaseFirst(method.Name),
                 DeltaMathsName = DeclarationHelpers.LowercaseFirst(method.Name),
                 ParameterClrNames = parameterTypes,
-                GlslParameterTypes = parameterTypes.Select(type => ScalarGlslNames.TryGetValue(type, out var glslType) ? glslType : type).ToArray(),
+                GlslParameterTypes = parameterTypes.Select(type => GlslType(type, types)).ToArray(),
                 ParameterModifiers = ScalarParameterModifiers(method.Parameters),
                 ReturnClrName = method.ReturnType,
-                GlslReturnType = ScalarGlslNames.TryGetValue(method.ReturnType, out var glslReturnType) ? glslReturnType : method.ReturnType,
+                GlslReturnType = GlslType(method.ReturnType, types),
                 GlslName = glslName,
                 Mapping = ShaderMappingKind.Builtin.ToString(),
                 ShaderZone = ShaderMetadata.ZoneName(ShaderZoneKind.DeltaMaths),
@@ -218,13 +221,15 @@ namespace Delta.MathsGen.Model.Rendering
             };
         }
 
-        private static IEnumerable<ManifestFunction> ShaderScalarFunctions(ScalarMathMethod[] methods)
+        private static IEnumerable<ManifestFunction> ShaderScalarFunctions(
+            ScalarMathMethod[] methods,
+            IReadOnlyDictionary<string, TypeSpec> types)
         {
             foreach (var method in methods)
             {
                 if (TryGetScalarGlslName(method, out var glslName))
                 {
-                    yield return ToManifestScalarFunction(method, glslName);
+                    yield return ToManifestScalarFunction(method, glslName, types);
                 }
             }
         }
@@ -236,6 +241,24 @@ namespace Delta.MathsGen.Model.Rendering
             var parameterModifiers = ScalarParameterModifiers(method.Parameters);
             if (TryGetIntegerScalarGlslName(method, parameterTypes, out glslName))
             {
+                return true;
+            }
+
+            if (method.Name == "PackDouble2x32"
+                && method.ReturnType == "double"
+                && parameterTypes.SequenceEqual(["uint2"], StringComparer.Ordinal)
+                && parameterModifiers.SequenceEqual(["none"], StringComparer.Ordinal))
+            {
+                glslName = "packDouble2x32";
+                return true;
+            }
+
+            if (method.Name == "UnpackDouble2x32"
+                && method.ReturnType == "uint2"
+                && parameterTypes.SequenceEqual(["double"], StringComparer.Ordinal)
+                && parameterModifiers.SequenceEqual(["none"], StringComparer.Ordinal))
+            {
+                glslName = "unpackDouble2x32";
                 return true;
             }
 
