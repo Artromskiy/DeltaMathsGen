@@ -7,23 +7,25 @@
 
 ## GLSL 4.60 contract gaps
 
-The current Delta.Maths shader contract intentionally covers the pure
-single-precision vector/matrix subset used by the engine. The following is the
-selected follow-up for closing the remaining GLSL 4.60 pure-math gaps. New
-symbols must be declared here in the generator model, receive complete
-metadata, and be regenerated into DeltaMaths; generated files are never edited
-by hand.
+The current Delta.Maths shader contract covers a generated subset of GLSL 4.60,
+including float, double and half vector types and float/double matrix shapes.
+The following is the selected follow-up for closing the remaining pure-math
+gaps. New symbols must be declared here in the generator model, receive
+complete metadata, and be regenerated into DeltaMaths; generated files are
+never edited by hand.
 
 ### Pure functions and select semantics
 
-- The portable packing slice is implemented in the generator for
+- The current portable packing slice covers
   `packUnorm2x16`, `unpackUnorm2x16`, `packSnorm2x16`, `unpackSnorm2x16`,
-  `packUnorm4x8`, `unpackUnorm4x8`, `packSnorm4x8`, and `unpackSnorm4x8`.
-  `packDouble2x32`, and `unpackDouble2x32`. Keep the CPU conversion explicit
-  and covered by bit-level conformance tests.
-- Keep `maths.round` mapped to `roundEven` until a separate, explicitly
-  documented CPU contract for GLSL's implementation-dependent `round` is
-  approved. `maths.roundEven` remains the exact nearest-even operation.
+  `packUnorm4x8`, `unpackUnorm4x8`, `packSnorm4x8`, `unpackSnorm4x8`,
+  `packDouble2x32`, and `unpackDouble2x32`. Vector declarations and lowercase
+  forwarding are generated; the double-word conversion itself is implemented
+  in the handwritten scalar runtime. Keep the CPU conversion covered by
+  bit-level conformance tests.
+- `maths.round` and the generated vector `Round` methods currently map to GLSL
+  `roundEven`; their CPU implementation is nearest-even as well.
+  `maths.roundEven` remains available as the explicit nearest-even spelling.
 
 ### Explicitly outside Delta.Maths
 

@@ -2,7 +2,8 @@
 
 Declarative .NET 8 generator for `DeltaMaths`. It owns vectors, matrices,
 quaternions, lowercase `maths` APIs and the generated
-`DeltaMaths/src/DeltaMaths/Vectors/shader-contract.json`.
+`../DeltaMaths/src/DeltaMaths/Vectors/shader-contract.json` when the two
+repositories are checked out as siblings under `Furnace`.
 DeltaMaths consumes the generated runtime/API output; the committed JSON file is
 the generated ABI artifact that DeltaShader validates and consumes, never
 recreates.

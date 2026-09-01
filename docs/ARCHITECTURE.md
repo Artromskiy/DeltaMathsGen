@@ -8,15 +8,17 @@ backend or a future shader intrinsic already exists.
 ## Generation lifecycle
 
 `DeltaMathsGen` is a console application targeting `net8.0`. Its only command
-argument is the generated vectors directory, normally `DeltaMaths/src/DeltaMaths/Vectors`.
+argument is the generated vectors directory, normally
+`../DeltaMaths/src/DeltaMaths/Vectors` when the repositories are siblings.
 
 The lifecycle is:
 
 1. `Program` reads the fixed `ScalarTypes.All` catalog.
 2. Each scalar is combined with dimensions 2, 3 and 4 to create a
    `VectorFamily` and its `VectorContext`.
-3. `MatrixQuaternionDefinitions.Create()` adds the nine GLSL single-precision
-   matrix shapes (`float2x2` through `float4x4`) and `quaternion`.
+3. `MatrixQuaternionDefinitions.Create()` adds 18 GLSL matrix shapes: every
+   `floatCxR` and `doubleCxR` combination where C and R are 2, 3 or 4, plus
+   `quaternion`.
 4. `ModelValidator` checks scalar conversions, vector rules, member
    signatures, maths forwarding and shader metadata.
 5. `TypeFileLayout` groups each type's members by `TypePart` and
@@ -33,7 +35,7 @@ The lifecycle is:
 Generation is deterministic: ordering uses ordinal name/signature ordering and
 the process culture is invariant. Generated files are outputs, never editing
 targets. Add a type, member, or shader symbol in the model and regenerate;
-do not patch `DeltaMaths/src/DeltaMaths/Vectors` by hand.
+do not patch `../DeltaMaths/src/DeltaMaths/Vectors` by hand.
 
 ```mermaid
 flowchart TD
@@ -45,9 +47,9 @@ flowchart TD
     F --> G[TypeFileLayout + CSharpRenderer]
     F --> H[ShaderDeltaMathsRenderer]
     F --> I[ShaderContractManifestRenderer]
-    G --> J[DeltaMaths/src/DeltaMaths/Vectors partial C#]
+    G --> J[../DeltaMaths/src/DeltaMaths/Vectors partial C#]
     H --> J
-    I --> K[DeltaMaths/src/DeltaMaths/Vectors/shader-contract.json]
+    I --> K[../DeltaMaths/src/DeltaMaths/Vectors/shader-contract.json]
     J --> L[DeltaMaths runtime]
     K --> M[DeltaShader contract consumer]
 ```
@@ -112,14 +114,15 @@ consumers such as DeltaShader.
 The manifest contains type layout (`columnMajor`, `alignment`,
 `matrixStride`, `matrixColumns`, `matrixRows`, `elementGlslType` and `size`),
 stage names, constructors, swizzles, function identities and GLSL signatures.
-The generated matrix set is `floatCxR` for every C/R combination from 2 through
-4. It uses four or fewer sequential column vectors and column-vector
-CPU/GLSL semantics. A three-row column has an explicit 16-byte std430 stride;
-the CLR struct therefore includes private padding fields that are not part of
-the public API. Square matrices expose GLSL's `determinant` and `inverse`,
-while `TryInverse` remains a CPU-safe operation. `quaternion` is a sequential
-`vec4` with `(x, y, z, w)` storage. `double` and `fix` vector families remain
-CPU-only.
+The generated matrix set contains `floatCxR` and `doubleCxR` for every C/R
+combination from 2 through 4. It uses four or fewer sequential column vectors
+and column-vector CPU/GLSL semantics. Three-row columns use the scalar-specific
+std430 stride (16 bytes for float and 32 bytes for double); the CLR structs
+therefore include private padding fields that are not part of the public API.
+Square matrices expose GLSL's `determinant` and `inverse`, while `TryInverse`
+remains a CPU-safe operation. `quaternion` is a sequential `vec4` with
+`(x, y, z, w)` storage. `fix` remains CPU-only; double and half shader entries
+are capability-gated by `float64` and `float16` respectively.
 
 Matrix constructors include column-vector forms, the diagonal scalar form,
 full `Mij` scalar forms, and conversions from every generated matrix shape.
@@ -129,8 +132,9 @@ are documented separately from GLSL's column-major scalar sequence.
 
 ## DeltaMaths runtime boundary
 
-`DeltaMaths` is a portable `netstandard2.0`/`netstandard2.1` assembly. Generated
-partial structs live in `DeltaMaths/src/DeltaMaths/Vectors`; handwritten scalar and extension
+`DeltaMaths` is a portable multi-target assembly for `netstandard2.0`,
+`netstandard2.1`, `net8.0` and `net10.0`. Generated partial structs live in
+`../DeltaMaths/src/DeltaMaths/Vectors`; handwritten scalar and extension
 facades live in the project root. The generated `maths` class forwards
 shader-like lowercase calls such as `maths.normalize`, while the handwritten
 `DeltaMaths` class remains the stable scalar API. Consumers use values directly;

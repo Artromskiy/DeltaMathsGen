@@ -1,7 +1,8 @@
 # DeltaMathsGen agent guide
 
 Scope: declarative generation of `DeltaMaths` source and
-`DeltaMaths/src/DeltaMaths/Vectors/shader-contract.json`.
+`../DeltaMaths/src/DeltaMaths/Vectors/shader-contract.json` when the two
+repositories are checked out as siblings under `Furnace`.
 
 Read only what the task needs:
 

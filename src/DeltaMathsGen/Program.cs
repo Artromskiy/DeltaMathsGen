@@ -9,19 +9,29 @@ namespace Delta.MathsGen
 {
     internal sealed class Program
     {
-        private static void Main(string[] args)
+        private static int Main(string[] args)
         {
-            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
-            Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+            SetInvariantCulture();
 
             if (args.Length != 1)
             {
-                Console.Error.WriteLine("Usage: DeltaMathsGen <vectors-output-directory>");
-                Environment.ExitCode = 2;
-                return;
+                return PrintUsageError();
             }
 
             GenerateDeclarativeVectors(args[0]);
+            return 0;
+        }
+
+        private static void SetInvariantCulture()
+        {
+            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+        }
+
+        private static int PrintUsageError()
+        {
+            Console.Error.WriteLine("Usage: DeltaMathsGen <vectors-output-directory>");
+            return 2;
         }
 
         private static void GenerateDeclarativeVectors(string folder)
