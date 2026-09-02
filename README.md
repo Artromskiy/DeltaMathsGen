@@ -1,27 +1,44 @@
 # DeltaMathsGen
 
-Declarative .NET 8 generator for `DeltaMaths`. It owns vectors, matrices,
-quaternions, lowercase `maths` APIs and the generated
-`../DeltaMaths/src/DeltaMaths/Vectors/shader-contract.json` when the two
-repositories are checked out as siblings under `Furnace`.
-DeltaMaths consumes the generated runtime/API output; the committed JSON file is
-the generated ABI artifact that DeltaShader validates and consumes, never
-recreates.
+DeltaMathsGen is a .NET 8 command-line generator for the public DeltaMaths
+vector, matrix, quaternion and shader-contract sources.
 
-The model is intentionally explicit:
+## What it provides
 
-- `ScalarDefinition` declares scalar capabilities;
-- function catalogs select operations by capability and dimension;
-- shader symbols are marked `Builtin`, `Helper` or `Unsupported` and never
-  inferred from CLR names;
-- `ModelValidator` rejects inconsistent declarations before writing files;
-- `.delta-generated-files` owns stale generated-file cleanup.
+- Generates the Delta.Maths vector and matrix API from declarative definitions.
+- Produces the lowercase `maths` façade alongside typed APIs.
+- Emits deterministic shader metadata consumed by DeltaShader.
+- Validates declarations before producing output.
+- Keeps CPU and GLSL naming and layout metadata in one source model.
 
-GPU-only operations such as derivatives belong to DeltaShader. `float4x4` uses
-four column vectors and `CreateTRS` is `T * R * S`; generator changes must not
-introduce another convention.
+## Quick start
 
-Add scalar types through `ScalarTypes.All` and operations through the relevant
-catalog. Handwritten extensions live outside generated files. Use
-[WORKFLOW.md](WORKFLOW.md) to regenerate and verify, [TODO.md](TODO.md) for
-selected work and [AGENTS.md](AGENTS.md) for task routing.
+Build the `DeltaMathsGen` executable and pass the DeltaMaths vectors source
+directory as its only argument.
+
+```text
+DeltaMathsGen <DeltaMaths vectors directory>
+```
+
+## Core concepts
+
+Declarations describe scalar capabilities, vector families and shader-visible
+operations. The generator validates them, then emits runtime code and contract
+metadata as one deterministic result. Matrix declarations follow DeltaMaths'
+column-vector and column-major convention.
+
+## Capabilities and limits
+
+The generator targets the DeltaMaths API and shader contract; it does not
+compile shaders or provide GPU-only intrinsics such as derivatives. See the
+[DeltaMaths runtime](../DeltaMaths/docs/README.md) for supported targets.
+
+## Packages and examples
+
+DeltaMathsGen is an executable source tool, not the runtime `DeltaMaths`
+package. Its output is consumed by the [DeltaMaths runtime](../DeltaMaths/docs/README.md).
+
+## Further reading
+
+- [DeltaMaths public API](../DeltaMaths/docs/README.md)
+- [Generated shader contract](../DeltaMaths/src/DeltaMaths/Vectors/shader-contract.json)
