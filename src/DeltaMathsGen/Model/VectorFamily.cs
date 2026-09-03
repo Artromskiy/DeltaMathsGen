@@ -86,7 +86,7 @@ namespace Delta.MathsGen.Model
 
             return new TypeSpec
             {
-                Namespace = "Delta.Maths",
+                Namespace = "Delta",
                 Name = name,
                 Kind = "struct",
                 Modifiers = Modifiers.Public | Modifiers.Partial,

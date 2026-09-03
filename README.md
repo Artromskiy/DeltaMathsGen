@@ -5,7 +5,7 @@ vector, matrix, quaternion and shader-contract sources.
 
 ## What it provides
 
-- Generates the Delta.Maths vector and matrix API from declarative definitions.
+- Generates the Delta vector and matrix API from declarative definitions.
 - Produces the lowercase `maths` façade alongside typed APIs.
 - Emits deterministic shader metadata consumed by DeltaShader.
 - Validates declarations before producing output.

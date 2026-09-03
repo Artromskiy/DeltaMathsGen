@@ -23,7 +23,7 @@ namespace Delta.MathsGen.Model.Rendering
             writer.Line("#nullable enable");
             writer.Line("using System.Runtime.CompilerServices;");
             writer.Line();
-            writer.Block("namespace Delta.Maths", () =>
+            writer.Block("namespace Delta", () =>
             {
                 writer.Block("public static partial class maths", () =>
                 {

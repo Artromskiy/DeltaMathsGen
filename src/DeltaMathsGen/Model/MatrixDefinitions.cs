@@ -151,7 +151,7 @@ namespace Delta.MathsGen.Model
             var stride = rows == 2 ? ScalarSize(scalar) * 2 : ScalarSize(scalar) * 4;
             return new TypeSpec
             {
-                Namespace = "Delta.Maths",
+                Namespace = "Delta",
                 Name = name,
                 Kind = "struct",
                 Modifiers = Modifiers.Public | Modifiers.Partial,

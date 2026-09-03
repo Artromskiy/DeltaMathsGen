@@ -139,7 +139,7 @@ namespace Delta.MathsGen.Model
 
     internal sealed class TypeSpec
     {
-        public string Namespace { get; init; } = "Delta.Maths";
+        public string Namespace { get; init; } = "Delta";
         public required string Name { get; init; }
         public string? Comment { get; init; }
         public string Kind { get; init; } = "struct";

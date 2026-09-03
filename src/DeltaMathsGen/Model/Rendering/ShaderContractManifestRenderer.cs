@@ -75,7 +75,7 @@ namespace Delta.MathsGen.Model.Rendering
             var manifest = new Manifest
             {
                 SchemaVersion = "1.1.0",
-                Namespace = "Delta.Maths",
+                Namespace = "Delta",
                 Types = types
                     .OrderBy(type => type.Name, StringComparer.Ordinal)
                     .Select(type => ToManifestType(type, typeByName))

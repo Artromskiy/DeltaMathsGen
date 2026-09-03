@@ -206,7 +206,7 @@ namespace Delta.MathsGen.Model
             MarkShaderFunctionsStatic(members, "quaternion");
             return new TypeSpec
             {
-                Namespace = "Delta.Maths",
+                Namespace = "Delta",
                 Name = "quaternion",
                 Kind = "struct",
                 Modifiers = Modifiers.Public | Modifiers.Partial,

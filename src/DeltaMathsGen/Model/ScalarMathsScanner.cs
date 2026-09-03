@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -37,7 +38,7 @@ namespace Delta.MathsGen.Model
             ArgumentNullException.ThrowIfNull(sourcePaths);
             var result = new List<ScalarMathMethod>();
             var signatures = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var path in sourcePaths)
+            foreach (var path in sourcePaths.OrderBy(path => path, StringComparer.Ordinal))
             {
                 ScanSource(File.ReadAllText(path, _encoding), result, signatures);
             }
@@ -67,12 +68,24 @@ namespace Delta.MathsGen.Model
                     continue;
                 }
 
-                var key = method.Name + "(" + method.Parameters + ")";
+                var key = SignatureKey(method);
                 if (signatures.Add(key))
                 {
                     result.Add(method);
                 }
             }
+        }
+
+        private static string SignatureKey(ScalarMathMethod method)
+        {
+            var parameterTypes = method.Parameters
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(parameter =>
+                {
+                    var tokens = parameter.Trim().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+                    return tokens.Length <= 1 ? parameter.Trim() : string.Join(" ", tokens.Take(tokens.Length - 1));
+                });
+            return method.ReturnType + " " + method.Name + "(" + string.Join(",", parameterTypes) + ")";
         }
 
         private static string[] ParseParameterNames(string parameters)
