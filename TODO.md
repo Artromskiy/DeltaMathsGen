@@ -7,7 +7,7 @@
 
 ## GLSL 4.60 contract gaps
 
-The current Delta.Maths shader contract covers a generated subset of GLSL 4.60,
+The current Delta shader contract covers a generated subset of GLSL 4.60,
 including float, double and half vector types and float/double matrix shapes.
 The following is the selected follow-up for closing the remaining pure-math
 gaps. New symbols must be declared here in the generator model, receive
@@ -27,7 +27,7 @@ never edited by hand.
   `roundEven`; their CPU implementation is nearest-even as well.
   `maths.roundEven` remains available as the explicit nearest-even spelling.
 
-### Explicitly outside Delta.Maths
+### Explicitly outside Delta
 
 Do not add these to the runtime maths library. DeltaShader owns their symbol
 and stage lowering, and DeltaRender owns resource/ABI execution:
